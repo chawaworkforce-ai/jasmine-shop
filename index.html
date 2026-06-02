@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Jasmine Shop</title>
+<style>
+  :root{
+    --bg:#f6f5f0; --card:#ffffff; --ink:#23291f; --muted:#7c8473;
+    --line:#e7e4d8; --brand:#4f7a4d; --brand-d:#3c6140; --accent:#c8a04b;
+    --danger:#b3402f; --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Noto Sans Thai","Noto Sans Myanmar",-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg); color:var(--ink); padding-bottom:96px;
+  }
+  header{position:sticky;top:0;z-index:20;background:var(--brand);color:#fff;
+    padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 2px 10px rgba(0,0,0,.12);}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:.3px}
+  .brand .dot{width:26px;height:26px;border-radius:50%;background:var(--accent);
+    display:grid;place-items:center;font-size:14px}
+  .lang{display:flex;gap:4px}
+  .lang button{border:0;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;
+    background:rgba(255,255,255,.18);color:#fff;cursor:pointer}
+  .lang button.on{background:#fff;color:var(--brand-d)}
+  .userbar{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--muted);font-size:13px}
+  .userbar img{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--line)}
+  .state{padding:40px 20px;text-align:center;color:var(--muted)}
+  .spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--brand);
+    border-radius:50%;margin:0 auto 14px;animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .errbox{margin:16px;padding:16px;border:1px solid var(--danger);border-radius:var(--radius);
+    background:#fdecea;color:var(--danger);font-size:14px;line-height:1.5;display:none;white-space:pre-wrap}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;display:flex;flex-direction:column}
+  .thumb{width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--line);display:block}
+  .body{padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+  .pname{font-weight:700;font-size:14px;line-height:1.35}
+  .pdesc{font-size:12px;color:var(--muted);line-height:1.4}
+  .price{font-weight:800;color:var(--brand-d);font-size:15px;margin-top:auto}
+  .price span{font-size:12px;font-weight:600;color:var(--muted)}
+  .stepper{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+  .stepper button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
+    background:#fff;font-size:20px;font-weight:700;color:var(--brand-d);cursor:pointer;line-height:1}
+  .stepper .add{flex:1;height:34px;border-radius:10px;border:0;background:var(--brand);
+    color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+  .qty{min-width:30px;text-align:center;font-weight:800;font-size:16px}
+  .qtygroup{display:flex;align-items:center;gap:8px;flex:1;justify-content:space-between}
+  .cartbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;
+    border-top:1px solid var(--line);padding:12px 16px;display:none;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+  .cartbar.show{display:block}
+  .cartbar .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .cartbar .sum{font-size:13px;color:var(--muted)}
+  .cartbar .sum b{display:block;font-size:20px;color:var(--ink)}
+  .cartbar .confirm{border:0;border-radius:12px;background:var(--brand);color:#fff;
+    padding:14px 22px;font-size:16px;font-weight:800;cursor:pointer;flex-shrink:0}
+  .cartbar .confirm:disabled{opacity:.5}
+  .success{margin:16px;padding:22px 18px;border-radius:var(--radius);background:#eef6ee;
+    border:1px solid #cfe3cf;text-align:center;display:none}
+  .success .check{width:56px;height:56px;border-radius:50%;background:var(--brand);color:#fff;
+    display:grid;place-items:center;font-size:30px;margin:0 auto 10px}
+  .success h2{margin:6px 0;font-size:18px}
+  .success .oid{font-weight:800;color:var(--brand-d);font-size:16px;margin:4px 0}
+  .success ul{text-align:left;margin:12px 0;padding:0 0 0 4px;list-style:none;font-size:14px}
+  .success li{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line)}
+  .success .again{margin-top:14px;border:0;background:var(--brand);color:#fff;
+    border-radius:12px;padding:12px 24px;font-weight:700;cursor:pointer}
+  .note{font-size:12px;color:var(--muted);margin-top:8px}
+  #debug{margin:16px;padding:10px;border-radius:10px;background:#1f241b;color:#9fe39f;
+    font:12px/1.5 monospace;white-space:pre-wrap;display:none}
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="brand"><span class="dot">🌼</span><span>Jasmine Shop</span></div>
+    <div class="lang">
+      <button data-lang="th" class="on">ไทย</button>
+      <button data-lang="en">EN</button>
+      <button data-lang="my">မြန်မာ</button>
+    </div>
+  </header>
+
+  <div class="userbar" id="userbar" style="display:none">
+    <img id="uPic" alt=""><span id="uName"></span>
+  </div>
+
+  <div class="errbox" id="errbox"></div>
+
+  <div class="state" id="loading">
+    <div class="spinner"></div>
+    <div id="loadingText">กำลังเปิดร้าน...</div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="success" id="success">
+    <div class="check">✓</div>
+    <h2 id="okTitle">สั่งซื้อสำเร็จ</h2>
+    <div class="oid" id="okId"></div>
+    <ul id="okItems"></ul>
+    <div id="okNote" class="note"></div>
+    <button class="again" id="againBtn">สั่งเพิ่ม</button>
+  </div>
+
+  <div class="cartbar" id="cartbar">
+    <div class="row">
+      <div class="sum"><span id="cartCount"></span><b id="cartTotal">0 ฿</b></div>
+      <button class="confirm" id="confirmBtn">ยืนยันออเดอร์</button>
+    </div>
+  </div>
+
+  <pre id="debug"></pre>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    // ====== ตั้งค่า ======
+    var LIFF_ID = '2010242926-nreePSO4';
+    // ลิงก์ Apps Script /exec ของคุณ (ฝังให้แล้ว) -- ถ้าวันหลังสร้าง deployment ใหม่ ค่อยแก้ตรงนี้
+    var API_URL = 'https://script.google.com/macros/s/AKfycbxn_hBzAy512R8msX-qXd4y1G_o4DFu78PZwENZRmQlt5R3Ns1bprUN3PeYxWMMrzv9ew/exec';
+    var DEBUG   = true; // ตอนใช้งานจริงเปลี่ยนเป็น false
+
+    var I18N = {
+      th:{open:'กำลังเปิดร้าน...',loadErr:'โหลดสินค้าไม่สำเร็จ',empty:'ยังไม่มีสินค้า',
+          add:'เพิ่ม',confirm:'ยืนยันออเดอร์',items:'รายการ',baht:'฿',sending:'กำลังบันทึก...',
+          okTitle:'สั่งซื้อสำเร็จ',orderNo:'เลขที่ออเดอร์',again:'สั่งเพิ่ม',
+          sent:'ส่งสรุปออเดอร์เข้าแชต LINE แล้ว',notSent:'บันทึกออเดอร์เรียบร้อย ทางร้านได้รับแล้ว',
+          loginNeed:'กำลังพาไปเข้าสู่ระบบ LINE...'},
+      en:{open:'Opening shop...',loadErr:'Failed to load products',empty:'No products yet',
+          add:'Add',confirm:'Confirm order',items:'items',baht:'฿',sending:'Saving...',
+          okTitle:'Order placed',orderNo:'Order No.',again:'Order more',
+          sent:'Order summary sent to your LINE chat',notSent:'Order saved. The shop has received it.',
+          loginNeed:'Redirecting to LINE login...'},
+      my:{open:'ဆိုင်ဖွင့်နေသည်...',loadErr:'ပစ္စည်းများ ဖွင့်၍မရပါ',empty:'ပစ္စည်း မရှိသေးပါ',
+          add:'ထည့်မည်',confirm:'အော်ဒါ အတည်ပြုမည်',items:'ခု',baht:'ဘတ်',sending:'သိမ်းနေသည်...',
+          okTitle:'မှာယူမှု အောင်မြင်ပါသည်',orderNo:'အော်ဒါနံပါတ်',again:'ထပ်မှာမည်',
+          sent:'အော်ဒါအချက်အလက်ကို LINE chat သို့ ပို့ပြီးပါပြီ',notSent:'အော်ဒါ သိမ်းပြီးပါပြီ။ ဆိုင်မှ လက်ခံရရှိပါပြီ။',
+          loginNeed:'LINE login သို့ ပြန်ညွှန်းနေသည်...'}
+    };
+
+    var lang='th', products=[], cart={}, profile=null;
+    function $(id){ return document.getElementById(id); }
+    function t(k){ return (I18N[lang] && I18N[lang][k]) || I18N.th[k] || k; }
+    function dbg(m){ if(!DEBUG) return; var b=$('debug'); b.style.display='block'; b.textContent+=m+'\n'; }
+
+    function showError(msg){
+      $('loading').style.display='none';
+      var box=$('errbox'); box.style.display='block'; box.textContent='⚠️ '+msg; dbg('ERROR: '+msg);
+    }
+    window.onerror = function(m){ showError('JS Error: ' + m); };
+
+    function pName(p){
+      if(lang==='en' && p.name_en) return p.name_en;
+      if(lang==='my' && p.name_my) return p.name_my;
+      return p.name;
+    }
+
+    function start(){
+      $('loadingText').textContent = t('open');
+      if(typeof liff === 'undefined'){ showError('โหลด LIFF SDK ไม่สำเร็จ'); return; }
+      liff.init({ liffId: LIFF_ID })
+        .then(function(){
+          dbg('liff.init OK  isInClient='+liff.isInClient()+'  isLoggedIn='+liff.isLoggedIn());
+          if(!liff.isLoggedIn() && !liff.isInClient()){
+            $('loadingText').textContent = t('loginNeed'); liff.login(); return null;
+          }
+          return liff.getProfile();
+        })
+        .then(function(p){
+          if(!p) return;
+          profile = { userId:p.userId, displayName:p.displayName, pictureUrl:p.pictureUrl };
+          dbg('profile='+profile.displayName);
+          $('uName').textContent = profile.displayName || '';
+          if(profile.pictureUrl) $('uPic').src = profile.pictureUrl;
+          $('userbar').style.display='flex';
+          loadProducts();
+        })
+        .catch(function(err){
+          showError('LIFF init failed: ' + (err && err.message ? err.message : err));
+        });
+    }
+
+    // ====== โหลดสินค้า ผ่าน fetch (GET) ======
+    function loadProducts(){
+      fetch(API_URL + '?action=products')
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res || !res.ok){ showError(t('loadErr')+' : '+(res && res.error)); return; }
+          products = res.products || [];
+          $('loading').style.display='none';
+          renderGrid();
+        })
+        .catch(function(err){ showError(t('loadErr')+' : '+err); });
+    }
+
+    function renderGrid(){
+      var grid=$('grid'); grid.innerHTML='';
+      if(products.length===0){ grid.innerHTML='<div class="state">'+t('empty')+'</div>'; return; }
+      products.forEach(function(p){
+        var card=document.createElement('div'); card.className='card';
+        var img=p.image_url || 'https://placehold.co/600x600?text=No+Image';
+        card.innerHTML=
+          '<img class="thumb" src="'+escAttr(img)+'" alt="" '+
+            'onerror="this.src=\'https://placehold.co/600x600?text=No+Image\'">'+
+          '<div class="body">'+
+            '<div class="pname">'+escHtml(pName(p))+'</div>'+
+            (p.description?'<div class="pdesc">'+escHtml(p.description)+'</div>':'')+
+            '<div class="price">'+p.price+' <span>'+t('baht')+'</span></div>'+
+            '<div class="stepper" data-id="'+escAttr(p.id)+'"></div>'+
+          '</div>';
+        grid.appendChild(card);
+        renderStepper(card.querySelector('.stepper'), p.id);
+      });
+    }
+
+    function renderStepper(el, id){
+      var qty=cart[id]||0;
+      if(qty<=0){
+        el.innerHTML='<button class="add">'+t('add')+'</button>';
+        el.querySelector('.add').onclick=function(){ setQty(id,1); };
+      } else {
+        el.innerHTML='<div class="qtygroup"><button class="minus">−</button>'+
+          '<span class="qty">'+qty+'</span><button class="plus">+</button></div>';
+        el.querySelector('.minus').onclick=function(){ setQty(id,qty-1); };
+        el.querySelector('.plus').onclick =function(){ setQty(id,qty+1); };
+      }
+    }
+
+    function setQty(id,q){
+      q=Math.max(0,q);
+      if(q===0) delete cart[id]; else cart[id]=q;
+      var el=document.querySelector('.stepper[data-id="'+cssEsc(id)+'"]');
+      if(el) renderStepper(el,id);
+      updateCartBar();
+    }
+
+    function cartSummary(){
+      var count=0,total=0;
+      products.forEach(function(p){ var q=cart[p.id]||0; if(q>0){ count+=q; total+=p.price*q; } });
+      return { count:count, total:total };
+    }
+    function updateCartBar(){
+      var s=cartSummary(), bar=$('cartbar');
+      if(s.count>0){
+        bar.classList.add('show');
+        $('cartCount').textContent=s.count+' '+t('items')+'  ';
+        $('cartTotal').textContent=s.total+' '+t('baht');
+        $('confirmBtn').textContent=t('confirm');
+      } else { bar.classList.remove('show'); }
+    }
+
+    // ====== ยืนยันออเดอร์ ผ่าน fetch (POST) ======
+    function confirmOrder(){
+      var items=[];
+      Object.keys(cart).forEach(function(id){ items.push({ id:id, qty:cart[id] }); });
+      if(items.length===0) return;
+      if(!profile){ showError('ยังไม่ได้ข้อมูลผู้ใช้ LINE'); return; }
+      var btn=$('confirmBtn'); btn.disabled=true; btn.textContent=t('sending');
+      fetch(API_URL, { method:'POST', body: JSON.stringify({ profile:profile, items:items }) })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          btn.disabled=false; btn.textContent=t('confirm');
+          if(!res || !res.ok){ showError('Cannot save order: '+(res && res.error)); return; }
+          onOrderSuccess(res);
+        })
+        .catch(function(err){
+          btn.disabled=false; btn.textContent=t('confirm');
+          showError('Cannot save order: '+err);
+        });
+    }
+
+    function onOrderSuccess(res){
+      cart={}; updateCartBar();
+      $('grid').style.display='none';
+      $('cartbar').classList.remove('show');
+      $('okTitle').textContent=t('okTitle');
+      $('okId').textContent=t('orderNo')+' : '+res.orderId;
+      var ul=$('okItems'); ul.innerHTML='';
+      var lines=['🌼 Jasmine Shop', t('orderNo')+' '+res.orderId];
+      res.items.forEach(function(it){
+        var li=document.createElement('li');
+        li.innerHTML='<span>'+escHtml(it.name)+' x'+it.qty+'</span><span>'+it.subtotal+' '+t('baht')+'</span>';
+        ul.appendChild(li);
+        lines.push('• '+it.name+' x'+it.qty+' = '+it.subtotal+t('baht'));
+      });
+      var liT=document.createElement('li');
+      liT.innerHTML='<b>'+t('items')+'</b><b>'+res.total+' '+t('baht')+'</b>';
+      ul.appendChild(liT);
+      lines.push('รวม/Total '+res.total+t('baht'));
+      $('success').style.display='block';
+      window.scrollTo(0,0);
+      var noteEl=$('okNote');
+      if(typeof liff!=='undefined' && liff.isInClient()){
+        liff.sendMessages([{ type:'text', text: lines.join('\n') }])
+          .then(function(){ noteEl.textContent='✓ '+t('sent'); })
+          .catch(function(e){ noteEl.textContent=t('notSent'); dbg('sendMessages fail: '+e); });
+      } else { noteEl.textContent=t('notSent'); }
+    }
+
+    function bindUI(){
+      var btns=document.querySelectorAll('.lang button');
+      btns.forEach(function(b){
+        b.onclick=function(){
+          lang=b.getAttribute('data-lang');
+          btns.forEach(function(x){ x.classList.remove('on'); });
+          b.classList.add('on');
+          renderGrid(); updateCartBar();
+        };
+      });
+      $('confirmBtn').onclick=confirmOrder;
+      $('againBtn').onclick=function(){
+        $('success').style.display='none';
+        $('grid').style.display='grid';
+        $('okNote').textContent='';
+        window.scrollTo(0,0);
+      };
+    }
+
+    function escHtml(s){ return String(s).replace(/[&<>"]/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+    function escAttr(s){ return escHtml(s); }
+    function cssEsc(s){ return String(s).replace(/"/g,'\\"'); }
+
+    bindUI();
+    start();
+  })();
+  </script>
+</body>
+</html>
