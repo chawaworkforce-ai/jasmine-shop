@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="my">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -12,10 +12,8 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
-  body{
-    font-family:"Noto Sans Thai","Noto Sans Myanmar",-apple-system,"Segoe UI",sans-serif;
-    background:var(--bg); color:var(--ink); padding-bottom:96px;
-  }
+  body{font-family:"Noto Sans Myanmar","Padauk","Noto Sans",-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg); color:var(--ink); padding-bottom:96px;}
   header{position:sticky;top:0;z-index:20;background:var(--brand);color:#fff;
     padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
     box-shadow:0 2px 10px rgba(0,0,0,.12);}
@@ -23,7 +21,7 @@
   .brand .dot{width:26px;height:26px;border-radius:50%;background:var(--accent);
     display:grid;place-items:center;font-size:14px}
   .lang{display:flex;gap:4px}
-  .lang button{border:0;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;
+  .lang button{border:0;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;
     background:rgba(255,255,255,.18);color:#fff;cursor:pointer}
   .lang button.on{background:#fff;color:var(--brand-d)}
   .userbar{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--muted);font-size:13px}
@@ -41,6 +39,8 @@
   .body{padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
   .pname{font-weight:700;font-size:14px;line-height:1.35}
   .pdesc{font-size:12px;color:var(--muted);line-height:1.4}
+  .stockline{font-size:11px;color:var(--muted)}
+  .stockline.out{color:var(--danger);font-weight:700}
   .price{font-weight:800;color:var(--brand-d);font-size:15px;margin-top:auto}
   .price span{font-size:12px;font-weight:600;color:var(--muted)}
   .stepper{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
@@ -48,6 +48,7 @@
     background:#fff;font-size:20px;font-weight:700;color:var(--brand-d);cursor:pointer;line-height:1}
   .stepper .add{flex:1;height:34px;border-radius:10px;border:0;background:var(--brand);
     color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+  .stepper .add:disabled{background:#bbb;cursor:default}
   .qty{min-width:30px;text-align:center;font-weight:800;font-size:16px}
   .qtygroup{display:flex;align-items:center;gap:8px;flex:1;justify-content:space-between}
   .cartbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;
@@ -79,9 +80,8 @@
   <header>
     <div class="brand"><span class="dot">🌼</span><span>Jasmine Shop</span></div>
     <div class="lang">
-      <button data-lang="th" class="on">ไทย</button>
+      <button data-lang="my" class="on">မြန်မာ</button>
       <button data-lang="en">EN</button>
-      <button data-lang="my">မြန်မာ</button>
     </div>
   </header>
 
@@ -93,24 +93,24 @@
 
   <div class="state" id="loading">
     <div class="spinner"></div>
-    <div id="loadingText">กำลังเปิดร้าน...</div>
+    <div id="loadingText">ဆိုင်ဖွင့်နေသည်...</div>
   </div>
 
   <div class="grid" id="grid"></div>
 
   <div class="success" id="success">
     <div class="check">✓</div>
-    <h2 id="okTitle">สั่งซื้อสำเร็จ</h2>
+    <h2 id="okTitle"></h2>
     <div class="oid" id="okId"></div>
     <ul id="okItems"></ul>
     <div id="okNote" class="note"></div>
-    <button class="again" id="againBtn">สั่งเพิ่ม</button>
+    <button class="again" id="againBtn"></button>
   </div>
 
   <div class="cartbar" id="cartbar">
     <div class="row">
       <div class="sum"><span id="cartCount"></span><b id="cartTotal">0 ฿</b></div>
-      <button class="confirm" id="confirmBtn">ยืนยันออเดอร์</button>
+      <button class="confirm" id="confirmBtn"></button>
     </div>
   </div>
 
@@ -123,31 +123,30 @@
 
     // ====== ตั้งค่า ======
     var LIFF_ID = '2010242926-nreePSO4';
-    // ลิงก์ Apps Script /exec ของคุณ (ฝังให้แล้ว) -- ถ้าวันหลังสร้าง deployment ใหม่ ค่อยแก้ตรงนี้
     var API_URL = 'https://script.google.com/macros/s/AKfycbxn_hBzAy512R8msX-qXd4y1G_o4DFu78PZwENZRmQlt5R3Ns1bprUN3PeYxWMMrzv9ew/exec';
-    var DEBUG   = true; // ตอนใช้งานจริงเปลี่ยนเป็น false
+    var DEBUG   = false; // เปลี่ยนเป็น true ถ้าต้องการดูสถานะตอนแก้ปัญหา
 
+    // ====== คำแปล (มြန်မာ / English) ======
     var I18N = {
-      th:{open:'กำลังเปิดร้าน...',loadErr:'โหลดสินค้าไม่สำเร็จ',empty:'ยังไม่มีสินค้า',
-          add:'เพิ่ม',confirm:'ยืนยันออเดอร์',items:'รายการ',baht:'฿',sending:'กำลังบันทึก...',
-          okTitle:'สั่งซื้อสำเร็จ',orderNo:'เลขที่ออเดอร์',again:'สั่งเพิ่ม',
-          sent:'ส่งสรุปออเดอร์เข้าแชต LINE แล้ว',notSent:'บันทึกออเดอร์เรียบร้อย ทางร้านได้รับแล้ว',
-          loginNeed:'กำลังพาไปเข้าสู่ระบบ LINE...'},
-      en:{open:'Opening shop...',loadErr:'Failed to load products',empty:'No products yet',
-          add:'Add',confirm:'Confirm order',items:'items',baht:'฿',sending:'Saving...',
-          okTitle:'Order placed',orderNo:'Order No.',again:'Order more',
-          sent:'Order summary sent to your LINE chat',notSent:'Order saved. The shop has received it.',
-          loginNeed:'Redirecting to LINE login...'},
       my:{open:'ဆိုင်ဖွင့်နေသည်...',loadErr:'ပစ္စည်းများ ဖွင့်၍မရပါ',empty:'ပစ္စည်း မရှိသေးပါ',
           add:'ထည့်မည်',confirm:'အော်ဒါ အတည်ပြုမည်',items:'ခု',baht:'ဘတ်',sending:'သိမ်းနေသည်...',
           okTitle:'မှာယူမှု အောင်မြင်ပါသည်',orderNo:'အော်ဒါနံပါတ်',again:'ထပ်မှာမည်',
-          sent:'အော်ဒါအချက်အလက်ကို LINE chat သို့ ပို့ပြီးပါပြီ',notSent:'အော်ဒါ သိမ်းပြီးပါပြီ။ ဆိုင်မှ လက်ခံရရှိပါပြီ။',
-          loginNeed:'LINE login သို့ ပြန်ညွှန်းနေသည်...'}
+          left:'ကျန်',outOfStock:'ကုန်သွားပြီ',
+          sent:'အော်ဒါအချက်အလက်ကို LINE chat သို့ ပို့ပြီးပါပြီ',
+          notSent:'အော်ဒါ သိမ်းပြီးပါပြီ။ ဆိုင်မှ လက်ခံရရှိပါပြီ။',
+          loginNeed:'LINE login သို့ ပြန်ညွှန်းနေသည်...'},
+      en:{open:'Opening shop...',loadErr:'Failed to load products',empty:'No products yet',
+          add:'Add',confirm:'Confirm order',items:'items',baht:'฿',sending:'Saving...',
+          okTitle:'Order placed',orderNo:'Order No.',again:'Order more',
+          left:'left',outOfStock:'Out of stock',
+          sent:'Order summary sent to your LINE chat',
+          notSent:'Order saved. The shop has received it.',
+          loginNeed:'Redirecting to LINE login...'}
     };
 
-    var lang='th', products=[], cart={}, profile=null;
+    var lang='my', products=[], cart={}, profile=null;
     function $(id){ return document.getElementById(id); }
-    function t(k){ return (I18N[lang] && I18N[lang][k]) || I18N.th[k] || k; }
+    function t(k){ return (I18N[lang] && I18N[lang][k]) || I18N.my[k] || k; }
     function dbg(m){ if(!DEBUG) return; var b=$('debug'); b.style.display='block'; b.textContent+=m+'\n'; }
 
     function showError(msg){
@@ -156,18 +155,24 @@
     }
     window.onerror = function(m){ showError('JS Error: ' + m); };
 
+    function prodById(id){ for(var i=0;i<products.length;i++){ if(products[i].id===id) return products[i]; } return null; }
+
+    // ชื่อ/รายละเอียด ตามภาษา (ไม่ดึงภาษาไทยมาโชว์)
     function pName(p){
-      if(lang==='en' && p.name_en) return p.name_en;
-      if(lang==='my' && p.name_my) return p.name_my;
-      return p.name;
+      if(lang==='en') return p.name_en || p.name_my || p.name || p.id;
+      return p.name_my || p.name_en || p.name || p.id;
+    }
+    function pDesc(p){
+      if(lang==='en') return p.desc_en || p.desc_my || '';
+      return p.desc_my || p.desc_en || '';
     }
 
     function start(){
       $('loadingText').textContent = t('open');
-      if(typeof liff === 'undefined'){ showError('โหลด LIFF SDK ไม่สำเร็จ'); return; }
+      if(typeof liff === 'undefined'){ showError('LIFF SDK load failed'); return; }
       liff.init({ liffId: LIFF_ID })
         .then(function(){
-          dbg('liff.init OK  isInClient='+liff.isInClient()+'  isLoggedIn='+liff.isLoggedIn());
+          dbg('liff.init OK isInClient='+liff.isInClient()+' isLoggedIn='+liff.isLoggedIn());
           if(!liff.isLoggedIn() && !liff.isInClient()){
             $('loadingText').textContent = t('loginNeed'); liff.login(); return null;
           }
@@ -182,12 +187,9 @@
           $('userbar').style.display='flex';
           loadProducts();
         })
-        .catch(function(err){
-          showError('LIFF init failed: ' + (err && err.message ? err.message : err));
-        });
+        .catch(function(err){ showError('LIFF init failed: '+(err && err.message ? err.message : err)); });
     }
 
-    // ====== โหลดสินค้า ผ่าน fetch (GET) ======
     function loadProducts(){
       fetch(API_URL + '?action=products')
         .then(function(r){ return r.json(); })
@@ -206,22 +208,34 @@
       products.forEach(function(p){
         var card=document.createElement('div'); card.className='card';
         var img=p.image_url || 'https://placehold.co/600x600?text=No+Image';
+        var desc=pDesc(p);
+        var stockHtml='';
+        if(p.stock!==null && p.stock!==undefined){
+          if(p.stock<=0) stockHtml='<div class="stockline out">'+t('outOfStock')+'</div>';
+          else stockHtml='<div class="stockline">'+t('left')+' '+p.stock+'</div>';
+        }
         card.innerHTML=
           '<img class="thumb" src="'+escAttr(img)+'" alt="" '+
             'onerror="this.src=\'https://placehold.co/600x600?text=No+Image\'">'+
           '<div class="body">'+
             '<div class="pname">'+escHtml(pName(p))+'</div>'+
-            (p.description?'<div class="pdesc">'+escHtml(p.description)+'</div>':'')+
+            (desc?'<div class="pdesc">'+escHtml(desc)+'</div>':'')+
+            stockHtml+
             '<div class="price">'+p.price+' <span>'+t('baht')+'</span></div>'+
             '<div class="stepper" data-id="'+escAttr(p.id)+'"></div>'+
           '</div>';
         grid.appendChild(card);
-        renderStepper(card.querySelector('.stepper'), p.id);
+        renderStepper(card.querySelector('.stepper'), p);
       });
     }
 
-    function renderStepper(el, id){
-      var qty=cart[id]||0;
+    function renderStepper(el, p){
+      var id=p.id, qty=cart[id]||0;
+      var out = (p.stock!==null && p.stock!==undefined && p.stock<=0);
+      if(out){
+        el.innerHTML='<button class="add" disabled>'+t('outOfStock')+'</button>';
+        return;
+      }
       if(qty<=0){
         el.innerHTML='<button class="add">'+t('add')+'</button>';
         el.querySelector('.add').onclick=function(){ setQty(id,1); };
@@ -234,10 +248,12 @@
     }
 
     function setQty(id,q){
-      q=Math.max(0,q);
+      var p=prodById(id);
+      var max=(p && p.stock!==null && p.stock!==undefined)?p.stock:Infinity;
+      q=Math.max(0,Math.min(q,max));
       if(q===0) delete cart[id]; else cart[id]=q;
       var el=document.querySelector('.stepper[data-id="'+cssEsc(id)+'"]');
-      if(el) renderStepper(el,id);
+      if(el && p) renderStepper(el,p);
       updateCartBar();
     }
 
@@ -256,12 +272,11 @@
       } else { bar.classList.remove('show'); }
     }
 
-    // ====== ยืนยันออเดอร์ ผ่าน fetch (POST) ======
     function confirmOrder(){
       var items=[];
       Object.keys(cart).forEach(function(id){ items.push({ id:id, qty:cart[id] }); });
       if(items.length===0) return;
-      if(!profile){ showError('ยังไม่ได้ข้อมูลผู้ใช้ LINE'); return; }
+      if(!profile){ showError('No LINE profile'); return; }
       var btn=$('confirmBtn'); btn.disabled=true; btn.textContent=t('sending');
       fetch(API_URL, { method:'POST', body: JSON.stringify({ profile:profile, items:items }) })
         .then(function(r){ return r.json(); })
@@ -293,7 +308,8 @@
       var liT=document.createElement('li');
       liT.innerHTML='<b>'+t('items')+'</b><b>'+res.total+' '+t('baht')+'</b>';
       ul.appendChild(liT);
-      lines.push('รวม/Total '+res.total+t('baht'));
+      lines.push('Total '+res.total+t('baht'));
+      $('againBtn').textContent=t('again');
       $('success').style.display='block';
       window.scrollTo(0,0);
       var noteEl=$('okNote');
@@ -312,6 +328,7 @@
           btns.forEach(function(x){ x.classList.remove('on'); });
           b.classList.add('on');
           renderGrid(); updateCartBar();
+          $('againBtn').textContent=t('again');
         };
       });
       $('confirmBtn').onclick=confirmOrder;
@@ -321,6 +338,7 @@
         $('okNote').textContent='';
         window.scrollTo(0,0);
       };
+      $('againBtn').textContent=t('again');
     }
 
     function escHtml(s){ return String(s).replace(/[&<>"]/g,function(c){
