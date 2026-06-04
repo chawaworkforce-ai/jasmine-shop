@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>รายงานหน้างาน</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --green:#2f7d55; --green-d:#256544; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans Thai",sans-serif;
+        background:var(--bg); color:var(--ink); }
+  header{ background:var(--green); color:#fff; padding:16px; position:sticky; top:0; z-index:5; }
+  header h1{ font-size:16px; margin:0; font-weight:600; }
+  header p{ font-size:13px; margin:4px 0 0; opacity:.85; }
+  #status{ padding:24px 16px; text-align:center; color:var(--muted); font-size:14px; }
+  .grid{ padding:12px; display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .wcard{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 10px;
+          text-align:center; cursor:pointer; transition:transform .05s; }
+  .wcard:active{ transform:scale(.97); }
+  .ava{ width:50px; height:50px; border-radius:50%; margin:0 auto 8px; background:#e6f0ea; color:var(--green-d);
+        display:flex; align-items:center; justify-content:center; font-weight:600; font-size:16px; overflow:hidden; }
+  .ava img{ width:100%; height:100%; object-fit:cover; }
+  .wname{ font-size:13px; line-height:1.3; }
+  .wsite{ font-size:11px; color:var(--muted); margin-top:3px; }
+
+  /* overlay เลือกหัวข้อ */
+  .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:flex-end; z-index:20; }
+  .overlay.open{ display:flex; }
+  .sheet{ background:#fff; width:100%; border-radius:18px 18px 0 0; padding:18px 16px 24px; max-height:88vh; overflow:auto; }
+  .sheet h2{ font-size:16px; margin:0 0 2px; }
+  .sheet .sub{ font-size:12px; color:var(--muted); margin:0 0 14px; }
+  .issue{ display:block; width:100%; text-align:left; background:#fff; border:1.5px solid var(--line);
+          border-radius:12px; padding:13px 14px; font-size:15px; margin-bottom:9px; color:var(--ink); cursor:pointer; }
+  .issue.sel{ border-color:var(--green); background:#eef6f1; color:var(--green-d); font-weight:600; }
+  textarea{ width:100%; border:1.5px solid var(--line); border-radius:12px; padding:12px; font-size:14px;
+            font-family:inherit; resize:none; margin-top:4px; }
+  .row{ display:flex; gap:10px; margin-top:14px; }
+  .btn{ flex:1; border:0; border-radius:12px; padding:14px; font-size:15px; font-weight:600; cursor:pointer; }
+  .btn-send{ background:var(--green); color:#fff; }
+  .btn-send:disabled{ background:#b9c7c0; }
+  .btn-cancel{ background:#eef0ef; color:var(--ink); flex:0 0 90px; }
+  .ok{ text-align:center; padding:30px 16px; }
+  .ok .check{ font-size:40px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>รายงานหน้างาน</h1>
+    <p id="hsite">กำลังเชื่อมต่อ…</p>
+  </header>
+  <div id="status">กำลังโหลด…</div>
+  <div class="grid" id="grid" style="display:none"></div>
+
+  <!-- overlay -->
+  <div class="overlay" id="ov">
+    <div class="sheet">
+      <h2 id="ovName">น้อง</h2>
+      <p class="sub" id="ovSite"></p>
+      <div id="issues"></div>
+      <textarea id="note" rows="2" placeholder="โน้ตเพิ่มเติม (ถ้ามี)"></textarea>
+      <div class="row">
+        <button class="btn btn-cancel" onclick="closeOv()">ยกเลิก</button>
+        <button class="btn btn-send" id="sendBtn" onclick="submitReport()" disabled>ส่งรายงาน</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  const ISSUES = ["แต่งกายไม่เรียบร้อย","สูบบุหรี่ในเวลาทำงาน","เล่นโทรศัพท์มากเกินไป","ทำงานช้า / อู้งาน","ทาแป้ง / เคี้ยวหมากในเวลาทำงาน","เกิดอุบัติเหตุ"];
+
+  let profile = null, currentWorker = null, selectedIssue = null;
+
+  function setStatus(t){ const s=document.getElementById('status'); s.style.display='block'; s.textContent=t; }
+  function hideStatus(){ document.getElementById('status').style.display='none'; }
+  function showError(t){ setStatus("⚠️ "+t); }
+  function initials(name){ const p=String(name||'').trim().split(/\s+/); return ((p[0]||'')[0]||'')+((p[1]||'')[0]||''); }
+
+  async function main(){
+    try{
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      profile = await liff.getProfile();
+      loadWorkers();
+    }catch(e){ showError("เปิดผ่านแอป LINE ไม่สำเร็จ: "+(e.message||e)); }
+  }
+
+  async function loadWorkers(){
+    setStatus("กำลังโหลดรายชื่อน้อง…");
+    try{
+      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({ action:"workers", userId: profile.userId }) });
+      const data = await res.json();
+      if(!data.ok){ showError(data.error||"โหลดไม่สำเร็จ"); return; }
+      if(!data.workers || data.workers.length===0){ showError(data.note || "ยังไม่มีน้องในไซต์ของคุณ"); return; }
+      document.getElementById('hsite').textContent = "โรงงาน: " + data.sites.join(" · ");
+      renderWorkers(data.workers);
+    }catch(e){ showError(String(e.message||e)); }
+  }
+
+  function renderWorkers(workers){
+    hideStatus();
+    const g = document.getElementById('grid');
+    g.style.display='grid';
+    g.innerHTML = workers.map(function(w){
+      const ava = w.photo_url
+        ? '<img src="'+w.photo_url+'" alt="">'
+        : initials(w.name);
+      return '<div class="wcard" onclick=\'openOv('+JSON.stringify(w).replace(/'/g,"&#39;")+')\'>'
+           +   '<div class="ava">'+ava+'</div>'
+           +   '<div class="wname">'+w.name+'</div>'
+           +   '<div class="wsite">'+w.site+'</div>'
+           + '</div>';
+    }).join('');
+  }
+
+  function openOv(w){
+    currentWorker = w; selectedIssue = null;
+    document.getElementById('ovName').textContent = w.name;
+    document.getElementById('ovSite').textContent = "โรงงาน: " + w.site;
+    document.getElementById('note').value = "";
+    document.getElementById('sendBtn').disabled = true;
+    const box = document.getElementById('issues');
+    box.innerHTML = ISSUES.map(function(it,i){ return '<button class="issue" data-i="'+i+'" onclick="pickIssue('+i+')">'+it+'</button>'; }).join('');
+    document.getElementById('ov').classList.add('open');
+  }
+  function closeOv(){ document.getElementById('ov').classList.remove('open'); }
+
+  function pickIssue(i){
+    selectedIssue = ISSUES[i];
+    document.querySelectorAll('.issue').forEach(function(el){ el.classList.toggle('sel', el.dataset.i==i); });
+    document.getElementById('sendBtn').disabled = false;
+  }
+
+  async function submitReport(){
+    if(!selectedIssue) return;
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true; btn.textContent = "กำลังส่ง…";
+    try{
+      const payload = {
+        action:"report", userId: profile.userId, reporterName: profile.displayName,
+        card_id: currentWorker.card_id, worker_name: currentWorker.name, site: currentWorker.site,
+        issue: selectedIssue, note: document.getElementById('note').value.trim()
+      };
+      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify(payload) });
+      const data = await res.json();
+      if(!data.ok){ alert("ส่งไม่สำเร็จ: "+(data.error||"")); btn.disabled=false; btn.textContent="ส่งรายงาน"; return; }
+      document.querySelector('.sheet').innerHTML =
+        '<div class="ok"><div class="check">✅</div><p>ส่งรายงานเรียบร้อย<br>แอดมินได้รับแจ้งเตือนแล้ว</p>'
+        + '<button class="btn btn-send" onclick="closeOv();location.reload()">เสร็จสิ้น</button></div>';
+    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="ส่งรายงาน"; }
+  }
+
+  main();
+</script>
+</body>
+</html>
