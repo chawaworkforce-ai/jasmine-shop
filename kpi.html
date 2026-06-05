@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>KPI รายเดือน</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --gold:#a76a1f; --gold-d:#7d4e12; --star:#f5b50a; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--gold); color:#fff; padding:16px; position:sticky; top:0; z-index:5; }
+  header h1{ font-size:16px; margin:0; font-weight:600; }
+  header p{ font-size:13px; margin:4px 0 0; opacity:.9; }
+  #status{ padding:24px 16px; text-align:center; color:var(--muted); font-size:14px; }
+  .grid{ padding:12px; display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .wcard{ background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; transition:transform .05s; }
+  .wcard:active{ transform:scale(.97); }
+  .ava{ width:100%; aspect-ratio:4/5; background:#f3ead9; color:var(--gold-d); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:34px; }
+  .ava img{ width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
+  .wbody{ padding:9px 10px 11px; }
+  .wname{ font-size:14px; line-height:1.3; font-weight:600; }
+  .wsite{ font-size:11px; color:var(--muted); margin-top:2px; }
+
+  .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:flex-end; z-index:20; }
+  .overlay.open{ display:flex; }
+  .sheet{ background:#fff; width:100%; border-radius:18px 18px 0 0; padding:18px 16px 24px; max-height:90vh; overflow:auto; }
+  .sheet h2{ font-size:16px; margin:0 0 2px; }
+  .sheet .sub{ font-size:12px; color:var(--muted); margin:0 0 12px; }
+
+  .reps{ border-radius:12px; padding:10px 12px; font-size:13px; margin-bottom:16px; }
+  .reps.none{ background:#eef6f1; color:#256544; }
+  .reps.has{ background:#fdeceb; color:#a3322b; }
+  .reps .rh{ font-weight:600; margin-bottom:4px; }
+  .reps ul{ margin:4px 0 0; padding-left:18px; } .reps li{ margin:2px 0; }
+
+  .ksec{ margin-bottom:14px; }
+  .klabel{ font-size:14px; font-weight:600; line-height:1.35; margin-bottom:6px; }
+  .stars{ display:flex; gap:8px; }
+  .stars span{ font-size:30px; line-height:1; color:#dcdcdc; cursor:pointer; }
+  .stars span.on{ color:var(--star); }
+
+  .total{ text-align:center; background:#f7f1e6; color:var(--gold-d); font-weight:700; font-size:16px; border-radius:12px; padding:12px; margin:6px 0 12px; }
+  textarea{ width:100%; border:1.5px solid var(--line); border-radius:12px; padding:12px; font-size:14px; font-family:inherit; resize:none; }
+  .row{ display:flex; gap:10px; margin-top:14px; }
+  .btn{ flex:1; border:0; border-radius:12px; padding:14px; font-size:15px; font-weight:600; cursor:pointer; }
+  .btn-send{ background:var(--gold); color:#fff; } .btn-send:disabled{ background:#d8cbb4; }
+  .btn-cancel{ background:#eef0ef; color:var(--ink); flex:0 0 90px; }
+  .ok{ text-align:center; padding:30px 16px; } .ok .check{ font-size:40px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>⭐ KPI รายเดือน</h1>
+    <p id="hsite">กำลังเชื่อมต่อ…</p>
+  </header>
+  <div id="status">กำลังโหลด…</div>
+  <div class="grid" id="grid" style="display:none"></div>
+
+  <div class="overlay" id="ov">
+    <div class="sheet" id="sheet">
+      <h2 id="ovName">น้อง</h2>
+      <p class="sub" id="ovSite"></p>
+      <div class="reps" id="reps" style="display:none"></div>
+      <div id="sections"></div>
+      <div class="total" id="total">คะแนนรวม 0 / 25</div>
+      <textarea id="note" rows="2" placeholder="โน้ตเพิ่มเติม (ถ้ามี)"></textarea>
+      <div class="row">
+        <button class="btn btn-cancel" onclick="closeOv()">ยกเลิก</button>
+        <button class="btn btn-send" id="sendBtn" onclick="submitKpi()" disabled>บันทึก KPI</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  const CRITERIA = [
+    "ความขยัน",
+    "ความเข้าใจในการทำงาน",
+    "ความเข้ากันได้กับเพื่อนร่วมงาน",
+    "การแต่งกาย & ปฏิบัติตามระเบียบโรงงาน",
+    "ไม่ทำสินค้าของโรงงานเสียหาย"
+  ];
+  let profile = null, currentWorker = null, ratings = [0,0,0,0,0];
+
+  function setStatus(t){ const s=document.getElementById('status'); s.style.display='block'; s.textContent=t; }
+  function hideStatus(){ document.getElementById('status').style.display='none'; }
+  function showError(t){ setStatus("⚠️ "+t); }
+  function initials(name){ const p=String(name||'').trim().split(/\s+/); return ((p[0]||'')[0]||'')+((p[1]||'')[0]||''); }
+  function esc(s){ return String(s||'').replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
+
+  async function main(){
+    try{
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      profile = await liff.getProfile();
+      loadWorkers();
+    }catch(e){ showError("เปิดผ่านแอป LINE ไม่สำเร็จ: "+(e.message||e)); }
+  }
+
+  async function loadWorkers(){
+    setStatus("กำลังโหลดรายชื่อน้อง…");
+    try{
+      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({ action:"workers", userId: profile.userId }) });
+      const data = await res.json();
+      if(!data.ok){ showError(data.error||"โหลดไม่สำเร็จ"); return; }
+      if(!data.workers || data.workers.length===0){ showError(data.note || "ยังไม่มีน้องในไซต์ของคุณ"); return; }
+      document.getElementById('hsite').textContent = "โรงงาน: " + data.sites.join(" · ");
+      renderWorkers(data.workers);
+    }catch(e){ showError(String(e.message||e)); }
+  }
+
+  function renderWorkers(workers){
+    hideStatus();
+    const g = document.getElementById('grid'); g.style.display='grid';
+    g.innerHTML = workers.map(function(w){
+      const ava = w.photo_url ? '<img src="'+w.photo_url+'" alt="">' : initials(w.name);
+      return '<div class="wcard" onclick=\'openOv('+JSON.stringify(w).replace(/'/g,"&#39;")+')\'>'
+           + '<div class="ava">'+ava+'</div><div class="wbody"><div class="wname">'+esc(w.name)+'</div>'
+           + '<div class="wsite">'+esc(w.site)+'</div></div></div>';
+    }).join('');
+  }
+
+  function openOv(w){
+    currentWorker = w; ratings = [0,0,0,0,0];
+    document.getElementById('ovName').textContent = w.name;
+    document.getElementById('ovSite').textContent = "โรงงาน: " + w.site;
+    document.getElementById('note').value = "";
+    renderSections(); updateTotal();
+    document.getElementById('ov').classList.add('open');
+    document.getElementById('sheet').scrollTop = 0;
+    loadReports(w.card_id);
+  }
+  function closeOv(){ document.getElementById('ov').classList.remove('open'); }
+
+  async function loadReports(cardId){
+    const box = document.getElementById('reps');
+    box.style.display='block'; box.className='reps'; box.innerHTML='กำลังโหลดประวัติรีพอต…';
+    try{
+      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({ action:"worker_reports", userId: profile.userId, card_id: cardId }) });
+      const data = await res.json();
+      if(!data.ok){ box.style.display='none'; return; }
+      if(data.count===0){ box.className='reps none'; box.innerHTML='✅ ไม่มีรีพอตเดือนนี้'; return; }
+      box.className='reps has';
+      const items = data.reports.map(function(r){
+        return '<li>'+esc(r.date)+' · '+esc(r.issue)+(r.note?' ('+esc(r.note)+')':'')+'</li>';
+      }).join('');
+      box.innerHTML = '<div class="rh">⚠️ ถูกรีพอตเดือนนี้ '+data.count+' ครั้ง</div><ul>'+items+'</ul>';
+    }catch(e){ box.style.display='none'; }
+  }
+
+  function renderSections(){
+    document.getElementById('sections').innerHTML = CRITERIA.map(function(c,i){
+      const stars = [1,2,3,4,5].map(function(v){
+        return '<span class="'+(ratings[i]>=v?'on':'')+'" onclick="setStar('+i+','+v+')">★</span>';
+      }).join('');
+      return '<div class="ksec"><div class="klabel">'+(i+1)+'. '+c+'</div><div class="stars">'+stars+'</div></div>';
+    }).join('');
+  }
+  function setStar(i,v){ ratings[i]=v; renderSections(); updateTotal(); }
+
+  function updateTotal(){
+    const total = ratings.reduce(function(a,b){return a+b;},0);
+    document.getElementById('total').textContent = "คะแนนรวม " + total + " / 25";
+    document.getElementById('sendBtn').disabled = ratings.some(function(r){return r===0;});
+  }
+
+  async function submitKpi(){
+    if(ratings.some(function(r){return r===0;})) return;
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true; btn.textContent = "กำลังบันทึก…";
+    try{
+      const payload = {
+        action:"kpi", userId: profile.userId, reporterName: profile.displayName,
+        card_id: currentWorker.card_id, worker_name: currentWorker.name, site: currentWorker.site,
+        scores: ratings, note: document.getElementById('note').value.trim()
+      };
+      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify(payload) });
+      const data = await res.json();
+      if(!data.ok){ alert("บันทึกไม่สำเร็จ: "+(data.error||"")); btn.disabled=false; btn.textContent="บันทึก KPI"; return; }
+      document.getElementById('sheet').innerHTML =
+        '<div class="ok"><div class="check">✅</div><p>บันทึก KPI เรียบร้อย<br>คะแนนรวม '+data.total+' / 25</p>'
+        + '<button class="btn btn-send" onclick="closeOv();location.reload()">เสร็จสิ้น</button></div>';
+    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="บันทึก KPI"; }
+  }
+
+  main();
+</script>
+</body>
+</html>
