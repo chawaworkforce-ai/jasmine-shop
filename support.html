@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Operations Support</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --green:#2f7d55; --green-d:#256544; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; --navy:#1f2a44; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--navy); color:#fff; padding:18px 16px; }
+  header h1{ font-size:18px; margin:0; font-weight:700; }
+  header p{ font-size:13px; margin:5px 0 0; opacity:.8; }
+  .wrap{ padding:18px 16px; max-width:560px; margin:0 auto; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:14px; }
+  label{ font-size:14px; color:var(--ink); font-weight:600; display:block; margin-bottom:8px; }
+  textarea{ width:100%; border:1.5px solid var(--line); border-radius:12px; padding:12px; font-size:15px; font-family:inherit; resize:none; }
+  .btn{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border:0; border-radius:14px;
+        padding:16px; font-size:16px; font-weight:700; cursor:pointer; text-decoration:none; margin-top:12px; }
+  .btn-notify{ background:var(--green); color:#fff; }
+  .btn-notify:disabled{ background:#b9c7c0; }
+  .btn-call{ background:#fff; color:var(--navy); border:2px solid var(--navy); }
+  .hint{ font-size:12.5px; color:var(--muted); margin:10px 2px 0; line-height:1.5; }
+  .done{ text-align:center; padding:22px 12px; }
+  .done .c{ font-size:42px; } .done p{ font-size:15px; margin:10px 0 0; }
+  #status{ padding:20px 16px; text-align:center; color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Operations Support</h1>
+    <p>ขอความช่วยเหลือ · ประสานงาน · แก้ปัญหา</p>
+  </header>
+  <div id="status">กำลังเชื่อมต่อ…</div>
+  <div class="wrap" id="app" style="display:none">
+    <div class="card" id="formCard">
+      <label>เรื่องที่ต้องการให้ช่วย (ถ้ามี)</label>
+      <textarea id="note" rows="3" placeholder="เช่น ขอคนเพิ่ม, ปัญหาหน้างาน, ขอคุยกับทีม…"></textarea>
+      <button class="btn btn-notify" id="notifyBtn" onclick="sendSupport()">📨 แจ้งทีมงานให้ติดต่อกลับ</button>
+      <a class="btn btn-call" href="tel:0970313769">📞 โทรหาแอดมินตอนนี้</a>
+      <p class="hint">กด "แจ้งทีมงาน" เพื่อให้แอดมินติดต่อกลับ หรือกด "โทรหาแอดมิน" หากต้องการคุยด่วน</p>
+    </div>
+  </div>
+
+<script>
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  let profile = null;
+
+  async function main(){
+    try{
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      profile = await liff.getProfile();
+      document.getElementById('status').style.display='none';
+      document.getElementById('app').style.display='block';
+    }catch(e){ document.getElementById('status').textContent = "เปิดผ่านแอป LINE ไม่สำเร็จ: "+(e.message||e); }
+  }
+
+  async function sendSupport(){
+    const btn = document.getElementById('notifyBtn');
+    btn.disabled = true; btn.textContent = "กำลังแจ้ง…";
+    try{
+      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({
+        action:"support", userId: profile.userId, reporterName: profile.displayName,
+        note: document.getElementById('note').value.trim()
+      })});
+      const data = await res.json();
+      if(!data.ok){ alert("แจ้งไม่สำเร็จ: "+(data.error||"")); btn.disabled=false; btn.textContent="📨 แจ้งทีมงานให้ติดต่อกลับ"; return; }
+      document.getElementById('formCard').innerHTML =
+        '<div class="done"><div class="c">✅</div><p>แจ้งทีมงานเรียบร้อย<br>แอดมินจะติดต่อกลับโดยเร็วครับ</p>'
+        + '<a class="btn btn-call" href="tel:0970313769">📞 โทรหาแอดมินตอนนี้</a></div>';
+    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="📨 แจ้งทีมงานให้ติดต่อกลับ"; }
+  }
+
+  main();
+</script>
+</body>
+</html>
