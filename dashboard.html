@@ -118,27 +118,27 @@
     if(!arr.length) return '<div class="empty">ไม่มีงานค้าง 🎉</div>';
     return arr.map((r)=>{
       const m=map(r), wip = r.status==='กำลังทำ';
-      return '<div class="card" id="card-'+sheet+'-'+r.row+'">'
+      return '<div class="card" id="card-'+sheet+'-'+r.id+'">'
         + '<div class="top"><div><div class="ttl">'+esc(m.ttl)+'</div><div class="sub">'+esc(m.sub)+'</div></div>'
         + '<span class="st '+(wip?'wip':'new')+'">'+(wip?'กำลังทำ':'ใหม่')+'</span></div>'
         + '<div class="body">'+m.body+'</div>'
         + '<div class="meta">'+esc(m.meta)+'</div>'
-        + '<input class="note" id="n-'+sheet+'-'+r.row+'" placeholder="โน้ต (ไม่บังคับ)">'
-        + '<div class="acts"><button class="b-wip" onclick="act(\''+sheet+'\','+r.row+',\'กำลังทำ\')">กำลังทำ</button>'
-        + '<button class="b-done" onclick="act(\''+sheet+'\','+r.row+',\'เสร็จ\')">เสร็จ ✓</button></div></div>';
+        + '<input class="note" id="n-'+sheet+'-'+r.id+'" placeholder="โน้ต (ไม่บังคับ)">'
+        + '<div class="acts"><button class="b-wip" onclick="act(\''+sheet+'\',\''+r.id+'\',\'กำลังทำ\')">กำลังทำ</button>'
+        + '<button class="b-done" onclick="act(\''+sheet+'\',\''+r.id+'\',\'เสร็จ\')">เสร็จ ✓</button></div></div>';
     }).join('');
   }
 
-  async function act(sheet, row, status){
-    const card=document.getElementById('card-'+sheet+'-'+row);
-    const note=(document.getElementById('n-'+sheet+'-'+row)||{}).value||'';
+  async function act(sheet, id, status){
+    const card=document.getElementById('card-'+sheet+'-'+id);
+    const note=(document.getElementById('n-'+sheet+'-'+id)||{}).value||'';
     card.style.opacity=.5;
     try{
-      const res = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"update_status",userId:userId,sheet:sheet,row:row,status:status,note:note.trim()})})).json();
+      const res = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"update_status",userId:userId,sheet:sheet,id:id,status:status,note:note.trim()})})).json();
       if(!res.ok){ alert("ไม่สำเร็จ: "+res.error); card.style.opacity=1; return; }
       const key = sheet==='Reports'?'reports':sheet==='Support'?'support':'referrals';
-      const item = D[key].find(x=>x.row===row);
-      if(status==='เสร็จ'){ D[key]=D[key].filter(x=>x.row!==row); card.remove(); }
+      const item = D[key].find(x=>x.id===id);
+      if(status==='เสร็จ'){ D[key]=D[key].filter(x=>x.id!==id); card.remove(); }
       else { if(item) item.status='กำลังทำ'; tab(cur); }
       setBadges();
     }catch(e){ alert("ผิดพลาด: "+(e.message||e)); card.style.opacity=1; }
