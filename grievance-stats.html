@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ภาพรวมร้องทุกข์</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --slate:#2b3440; --ink:#1f2630; --muted:#7a8694; --line:#e4e8ed; --bg:#f3f5f7; --pur:#7a4fd0; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--slate); color:#fff; padding:16px 18px; }
+  header h1{ font-size:18px; margin:0; font-weight:700; } header p{ font-size:12px; margin:3px 0 0; opacity:.8; }
+  #status{ padding:30px 18px; text-align:center; color:var(--muted); }
+  .wrap{ padding:16px; max-width:600px; margin:0 auto; display:none; }
+  .total{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; margin-bottom:16px; }
+  .total b{ font-size:30px; color:var(--pur); } .total span{ display:block; font-size:13px; color:var(--muted); }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; }
+  .card h3{ font-size:14px; margin:0 0 12px; }
+  .row{ margin:9px 0; }
+  .row .lbl{ display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:4px; }
+  .row .lbl b{ color:var(--slate); }
+  .bar{ height:9px; background:#eef1f5; border-radius:6px; overflow:hidden; }
+  .bar > i{ display:block; height:100%; background:var(--pur); border-radius:6px; }
+  .empty{ text-align:center; color:var(--muted); padding:24px; font-size:14px; }
+  .note{ font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5; }
+</style>
+</head>
+<body>
+  <header><h1>🤍 ภาพรวมร้องทุกข์ (ลับ)</h1><p>เฉพาะจำนวน — ไม่โชว์ชื่อ/ข้อความ</p></header>
+  <div id="status">กำลังโหลด…</div>
+  <div class="wrap" id="wrap"></div>
+
+<script>
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  function bars(arr){
+    if(!arr.length) return '<div class="empty">ยังไม่มีข้อมูล</div>';
+    const max=Math.max.apply(null,arr.map(x=>x.count))||1;
+    return arr.map(x=>'<div class="row"><div class="lbl"><span>'+esc(x.name)+'</span><b>'+x.count+'</b></div>'
+      +'<div class="bar"><i style="width:'+Math.round(x.count/max*100)+'%"></i></div></div>').join('');
+  }
+
+  async function main(){
+    try{
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      const userId=(await liff.getProfile()).userId;
+      const r=await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"grievance_stats",userId})})).json();
+      if(!r.ok){ document.getElementById('status').textContent = r.error==='NOT_ADMIN'?"หน้านี้สำหรับแอดมินเท่านั้น":("ผิดพลาด: "+r.error); return; }
+      document.getElementById('status').style.display='none';
+      const w=document.getElementById('wrap'); w.style.display='block';
+      w.innerHTML='<div class="total"><b>'+r.total+'</b><span>เรื่องทั้งหมด</span></div>'
+        +'<div class="card"><h3>ตามหมวด</h3>'+bars(r.byCategory)+'</div>'
+        +'<div class="card"><h3>ตามไซต์</h3>'+bars(r.bySite)
+        +'<div class="note">หมายเหตุ: เรื่องไม่ระบุชื่อจะไม่มีไซต์ ถ้าน้องไม่ได้เลือกใส่</div></div>';
+    }catch(e){ document.getElementById('status').textContent="เปิดในแอป LINE นะครับ ("+(e.message||e)+")"; }
+  }
+  main();
+</script>
+</body>
+</html>

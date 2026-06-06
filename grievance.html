@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Talk to P'Mai</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --green:#2f7d55; --green-d:#246343; --ink:#1f2a26; --muted:#76837d; --line:#e2e9e5; --bg:#f2f6f4; --paper:#fff; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Myanmar",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:linear-gradient(135deg,var(--green),var(--green-d)); color:#fff; padding:20px 18px; }
+  header h1{ font-size:20px; margin:0; font-weight:700; }
+  header .my{ font-size:14px; opacity:.92; margin-top:2px; }
+  header p{ font-size:12.5px; margin:10px 0 0; opacity:.9; line-height:1.5; }
+  #status{ padding:34px 18px; text-align:center; color:var(--muted); }
+  .wrap{ padding:16px; max-width:600px; margin:0 auto; display:none; }
+  h3{ font-size:14px; margin:18px 0 9px; } h3 .my{ font-weight:400; color:var(--muted); font-size:12.5px; }
+  .cats{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .cat{ background:var(--paper); border:1.5px solid var(--line); border-radius:12px; padding:12px 11px; cursor:pointer; }
+  .cat.on{ border-color:var(--green); background:#eef6f1; }
+  .cat .en{ font-size:14px; font-weight:600; } .cat .my{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  textarea{ width:100%; border:1.5px solid var(--line); border-radius:12px; padding:12px; font-size:15px; font-family:inherit; min-height:110px; resize:vertical; }
+  .modes{ display:flex; flex-direction:column; gap:9px; }
+  .mode{ background:var(--paper); border:1.5px solid var(--line); border-radius:12px; padding:13px; cursor:pointer; }
+  .mode.on{ border-color:var(--green); background:#eef6f1; }
+  .mode .en{ font-size:14.5px; font-weight:600; } .mode .my{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  select{ width:100%; margin-top:10px; border:1.5px solid var(--line); border-radius:10px; padding:11px; font-size:14px; font-family:inherit; background:#fff; }
+  .btn{ width:100%; margin-top:18px; border:0; border-radius:14px; padding:16px; font-size:16px; font-weight:700; background:var(--green); color:#fff; cursor:pointer; }
+  .btn:disabled{ background:#aebfb6; }
+  .done{ text-align:center; padding:40px 22px; }
+  .done .c{ font-size:50px; } .done h2{ font-size:20px; margin:12px 0 6px; }
+  .done p{ color:var(--muted); font-size:14.5px; line-height:1.6; }
+  .reassure{ background:#eef6f1; border:1px solid #cfe6d9; border-radius:12px; padding:12px 14px; font-size:13px; color:var(--green-d); margin-top:14px; line-height:1.55; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Talk to P'Mai 🤍</h1>
+    <div class="my">P'Mai ထံ တိုင်ပင်ပါ</div>
+    <p>This is confidential. Tell us your problem early — we're here to help.<br>လျှို့ဝှက်ထားပါမည်။ ပြဿနာကို စောစော ပြောပါ — ကူညီပါမည်။</p>
+  </header>
+  <div id="status">Loading…</div>
+  <div class="wrap" id="wrap"></div>
+
+<script>
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  let userId=null, cat=null, mode=null, sites=[];
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  const CATS = [
+    ["Bullying / harassment","အနိုင်ကျင့်ခြင်း"],
+    ["Problem with supervisor","ခေါင်းဆောင်နှင့် ပြဿနာ"],
+    ["Sick / health","ဖျားနာ / ကျန်းမာရေး"],
+    ["Dorm / housing","အိပ်ဆောင် / နေထိုင်ရေး"],
+    ["Pay / money","လစာ / ငွေကြေး"],
+    ["Personal / life","ကိုယ်ရေး / ဘဝ ပြဿနာ"],
+    ["Other","အခြား"]
+  ];
+
+  async function main(){
+    try{
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      userId=(await liff.getProfile()).userId;
+      try{ const r=await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"site_list"})})).json(); if(r.ok) sites=r.sites||[]; }catch(e){}
+      document.getElementById('status').style.display='none';
+      document.getElementById('wrap').style.display='block';
+      render();
+    }catch(e){ document.getElementById('status').textContent="Please open inside LINE app. ("+(e.message||e)+")"; }
+  }
+
+  function render(){
+    let h='<h3>What would you like to talk about? <span class="my">ဘာအကြောင်း ပြောချင်လဲ</span></h3><div class="cats">';
+    CATS.forEach((c,i)=>{ h+='<div class="cat '+(cat===i?'on':'')+'" onclick="pickCat('+i+')"><div class="en">'+esc(c[0])+'</div><div class="my">'+esc(c[1])+'</div></div>'; });
+    h+='</div>';
+    h+='<h3>Tell us more <span class="my">အသေးစိတ် ပြောပါ</span></h3>';
+    h+='<textarea id="msg" placeholder="Write here… / ဒီမှာ ရေးပါ…"></textarea>';
+    h+='<h3>How to send <span class="my">ပို့နည်း ရွေးပါ</span></h3><div class="modes">';
+    h+='<div class="mode '+(mode==="anon"?"on":"")+'" onclick="pickMode(\'anon\')"><div class="en">Send without my name</div><div class="my">အမည် မထည့်ဘဲ ပို့မည် — P\'Mai won\'t know who you are</div></div>';
+    h+='<div class="mode '+(mode==="named"?"on":"")+'" onclick="pickMode(\'named\')"><div class="en">Add my name (so P\'Mai can help me directly)</div><div class="my">အမည်ထည့်မည် — P\'Mai က တိုက်ရိုက် ကူညီနိုင်ရန်</div></div>';
+    h+='</div>';
+    if(mode==="anon" && sites.length){
+      h+='<select id="site"><option value="">(Optional) Your site / သင့်ဆိုက် — မဖြစ်မနေ မဟုတ်</option>';
+      sites.forEach(s=>{ h+='<option value="'+esc(s)+'">'+esc(s)+'</option>'; });
+      h+='</select>';
+    }
+    h+='<div class="reassure">🤍 Your message goes privately to P\'Mai. If you choose "without my name", we truly will not know who sent it.<br>သင့်စကား P\'Mai ထံ တိုက်ရိုက် ရောက်ပါမည်။ အမည်မထည့်ရင် ဘယ်သူပို့မှန်း ကျွန်ုပ်တို့ မသိပါ။</div>';
+    h+='<button class="btn" id="send" onclick="send()">Send / ပို့မည်</button>';
+    document.getElementById('wrap').innerHTML=h;
+  }
+
+  function pickCat(i){ cat=i; render(); }
+  function pickMode(m){ mode=m; render(); }
+
+  async function send(){
+    if(cat===null){ alert("Please choose a topic. / အကြောင်းအရာ ရွေးပါ"); return; }
+    if(!mode){ alert("Please choose how to send. / ပို့နည်း ရွေးပါ"); return; }
+    const msg=(document.getElementById('msg')?document.getElementById('msg').value:'').trim();
+    const payload={ action:"grievance", category:CATS[cat][0], message:msg };
+    if(mode==="named"){ payload.anonymous=false; payload.userId=userId; }
+    else { payload.anonymous=true; const se=document.getElementById('site'); if(se&&se.value) payload.site=se.value; } // ไม่ส่ง userId
+    const btn=document.getElementById('send'); btn.disabled=true; btn.textContent="Sending…";
+    try{
+      const res=await (await fetch(API_URL,{method:"POST",body:JSON.stringify(payload)})).json();
+      if(!res.ok){ alert("Failed: "+res.error); btn.disabled=false; btn.textContent="Send / ပို့မည်"; return; }
+      document.getElementById('wrap').innerHTML='<div class="done"><div class="c">🤍</div><h2>Sent to P\'Mai</h2>'
+        +'<p>Thank you for telling us. P\'Mai will take care of it.<br>ပြောပြတဲ့အတွက် ကျေးဇူးတင်ပါတယ်။ P\'Mai က ဂရုစိုက်ပါမည်။</p></div>';
+    }catch(e){ alert("Error: "+(e.message||e)); btn.disabled=false; btn.textContent="Send / ပို့မည်"; }
+  }
+
+  main();
+</script>
+</body>
+</html>
