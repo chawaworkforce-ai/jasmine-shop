@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ประกาศถึงน้อง</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --slate:#2b3440; --slate-d:#1c232c; --ink:#1f2630; --muted:#7a8694; --line:#e4e8ed; --bg:#f3f5f7; --green:#2f7d55; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans Myanmar",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--slate); color:#fff; padding:16px; }
+  header h1{ font-size:18px; margin:0; font-weight:700; } header p{ font-size:12px; margin:3px 0 0; opacity:.8; }
+  #status{ padding:30px 16px; text-align:center; color:var(--muted); }
+  .wrap{ padding:16px; max-width:600px; margin:0 auto; }
+  h3{ font-size:14px; margin:0 0 8px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px; }
+  .all{ display:flex; align-items:center; gap:10px; padding:10px; border:1.5px solid var(--green); border-radius:10px; margin-bottom:10px; cursor:pointer; font-weight:700; }
+  .all.on{ background:#eef7f1; }
+  .sites{ display:flex; flex-wrap:wrap; gap:8px; }
+  .site{ border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; font-size:13px; cursor:pointer; }
+  .site.on{ background:var(--slate); color:#fff; border-color:var(--slate); }
+  .site .c{ opacity:.6; font-size:12px; }
+  .sites.dim{ opacity:.4; pointer-events:none; }
+  .chips{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
+  .chip{ background:#eef1f4; border:0; border-radius:16px; padding:7px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  textarea{ width:100%; border:1.5px solid var(--line); border-radius:10px; padding:12px; font-size:15px; font-family:inherit; min-height:120px; resize:vertical; }
+  .reach{ text-align:center; font-size:14px; margin:14px 0; }
+  .reach b{ font-size:22px; color:var(--slate); }
+  .btn{ width:100%; border:0; border-radius:14px; padding:16px; font-size:16px; font-weight:700; background:var(--green); color:#fff; cursor:pointer; }
+  .btn:disabled{ background:#b9c6cd; }
+  .note{ font-size:12px; color:var(--muted); margin-top:8px; line-height:1.5; }
+  .done{ text-align:center; padding:36px 16px; } .done .c{ font-size:46px; } .done p{ font-size:16px; margin-top:10px; }
+</style>
+</head>
+<body>
+  <header><h1>📣 ประกาศถึงน้อง</h1><p>ส่งเฉพาะน้องที่จับคู่ LINE แล้ว</p></header>
+  <div id="status">กำลังโหลด…</div>
+  <div class="wrap" id="wrap" style="display:none"></div>
+
+<script>
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  let userId=null, T=null, all=true, picked={};
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  const PRESETS = [
+    ["เวลาเข้างาน", "Tomorrow start work at ___\nမနက်ဖြန် ___ မှာ အလုပ်စပါမည်"],
+    ["มี OT", "Overtime today ___. Tell your leader if you join.\nဒီနေ့ OT ___ ရှိသည်။ လုပ်မယ်ဆို ခေါင်းဆောင်ကို ပြောပါ"],
+    ["วันจ่ายเงิน", "Payday is ___\nလစာထုတ်ရက် — ___"],
+    ["เอาเอกสารมา", "Please bring work permit / passport copy ___\nအလုပ်လုပ်ခွင့် / ပတ်စပို့ မိတ္တူ ယူလာပါ — ___"],
+    ["ประชุม/รวมตัว", "Meeting at ___\nအစည်းအဝေး — ___"]
+  ];
+
+  async function main(){
+    try{
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      userId=(await liff.getProfile()).userId;
+      T = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"announce_targets",userId:userId})})).json();
+      if(!T.ok){ document.getElementById('status').textContent = T.error==='NOT_ADMIN'?"หน้านี้สำหรับแอดมินเท่านั้น":("ผิดพลาด: "+T.error); return; }
+      document.getElementById('status').style.display='none';
+      document.getElementById('wrap').style.display='block';
+      render();
+    }catch(e){ document.getElementById('status').textContent="เปิดในแอป LINE นะครับ ("+(e.message||e)+")"; }
+  }
+
+  function render(){
+    let h='<div class="card"><h3>ส่งถึงใคร</h3>'
+      + '<div class="all '+(all?'on':'')+'" onclick="toggleAll()"><span>'+(all?'☑':'☐')+'</span> น้องทุกคน (จับคู่แล้ว '+T.total+' คน)</div>'
+      + '<div class="sites '+(all?'dim':'')+'" id="sites">'
+      + T.sites.map(s=>'<div class="site '+(picked[s.site]?'on':'')+'" onclick="toggleSite(\''+esc(s.site).replace(/'/g,"\\'")+'\')">'+esc(s.site)+' <span class="c">'+s.count+'</span></div>').join('')
+      + '</div>'+ (T.sites.length?'':'<div class="note">ยังไม่มีน้องที่จับคู่ LINE — ต้องจับคู่ก่อนถึงส่งได้</div>') +'</div>';
+    h+='<div class="card"><h3>ข้อความ</h3>'
+      + '<div class="chips">'+PRESETS.map((p,i)=>'<button class="chip" onclick="usePreset('+i+')">'+esc(p[0])+'</button>').join('')+'</div>'
+      + '<textarea id="msg" placeholder="พิมพ์ข้อความ… (กดเทมเพลตด้านบนช่วยได้ แล้วเติมตรง ___)"></textarea>'
+      + '<div class="note">เทมเพลตเป็น อังกฤษ + พม่า น้องอ่านได้ทั้งเครื่องเก่า · ตรวจคำพม่ากับเจ้าของภาษาอีกทีได้</div></div>';
+    h+='<div class="reach">จะส่งถึง <b id="reach">'+reach()+'</b> คน</div>';
+    h+='<button class="btn" id="send" onclick="send()">ส่งประกาศ</button>';
+    document.getElementById('wrap').innerHTML=h;
+  }
+
+  function reach(){ if(all) return T.total; let n=0; T.sites.forEach(s=>{ if(picked[s.site]) n+=s.count; }); return n; }
+  function refreshReach(){ const r=document.getElementById('reach'); if(r) r.textContent=reach(); }
+  function toggleAll(){ all=!all; render(); }
+  function toggleSite(s){ if(all) return; picked[s]=!picked[s]; render(); }
+  function usePreset(i){ document.getElementById('msg').value = PRESETS[i][1]; }
+
+  async function send(){
+    const text=(document.getElementById('msg').value||'').trim();
+    if(!text){ alert("พิมพ์ข้อความก่อนครับ"); return; }
+    const n=reach();
+    if(!n){ alert("ยังไม่มีผู้รับ (เลือกไซต์ หรือยังไม่มีน้องจับคู่)"); return; }
+    if(!confirm("ส่งประกาศถึง "+n+" คน?\n\n"+text)) return;
+    const btn=document.getElementById('send'); btn.disabled=true; btn.textContent="กำลังส่ง…";
+    try{
+      const res = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({
+        action:"announce", userId:userId, sites: all?'all':Object.keys(picked).filter(k=>picked[k]), text:text
+      })})).json();
+      if(!res.ok){ alert("ไม่สำเร็จ: "+res.error); btn.disabled=false; btn.textContent="ส่งประกาศ"; return; }
+      document.getElementById('wrap').innerHTML='<div class="done"><div class="c">✅</div><p>ส่งแล้ว '+res.sent+' คน</p>'
+        + '<button class="btn" onclick="location.reload()">ส่งอีกประกาศ</button></div>';
+    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="ส่งประกาศ"; }
+  }
+
+  main();
+</script>
+</body>
+</html>
