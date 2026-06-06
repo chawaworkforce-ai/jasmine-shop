@@ -98,7 +98,8 @@
         html += '<div class="rep0">No reports ✅ / အစီရင်ခံစာ မရှိ ✅</div>';
       } else {
         html += mo.reports.map(function(r){
-          return '<div class="rep"><small>'+esc(r.date)+'</small> · '+esc(r.en)+'<br><small>'+esc(r.my)+'</small></div>';
+          var second = (r.my && r.my!==r.en) ? '<br><small>'+esc(r.my)+'</small>' : '';
+          return '<div class="rep"><small>'+esc(r.date)+'</small> · '+esc(r.en)+second+'</div>';
         }).join('');
       }
       return html + '</div>';
