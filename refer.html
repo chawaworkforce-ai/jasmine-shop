@@ -33,7 +33,7 @@
 <body>
   <header>
     <h1>👥 Refer to Work</h1>
-    <p>Help us find good people / လူကောင်းများ ရှာဖွေပေးပါ</p>
+    <p>Find good people to work with us / ကျွန်ုပ်တို့နှင့် အလုပ်လုပ်မည့် လူကောင်းများ ရှာဖွေပေးပါ</p>
   </header>
   <div id="status">Loading… / ခဏစောင့်ပါ…</div>
   <div class="wrap" id="wrap" style="display:none"></div>
@@ -69,6 +69,7 @@
     photoData=''; permit='';
     document.getElementById('wrap').innerHTML =
       '<label>Full name (English)<small>အမည် (အင်္ဂလိပ်)</small></label><input type="text" id="f_name">'
+      + '<label>Phone number<small>ဖုန်းနံပါတ်</small></label><input type="text" id="f_phone">'
       + '<label>Current location<small>လက်ရှိ နေထိုင်ရာ နေရာ</small></label><input type="text" id="f_loc">'
       + '<label>Work permit?<small>အလုပ်လုပ်ခွင့် ရှိပါသလား</small></label>'
       + '<div class="yn"><button id="p_y" onclick="setPermit(\'Yes / ရှိ\')">Yes / ရှိ</button>'
@@ -77,6 +78,8 @@
       + '<div class="upload" onclick="document.getElementById(\'f_photo\').click()" id="upbox">Tap to upload / ဓာတ်ပုံ တင်ရန် နှိပ်ပါ</div>'
       + '<input type="file" id="f_photo" accept="image/*" style="display:none" onchange="onPhoto(this)">'
       + '<label>Previous work experience<small>အလုပ်အတွေ့အကြုံ</small></label><textarea id="f_exp" rows="3"></textarea>'
+      + '<label>Your name (referrer)<small>အကြံပြုသူ အမည်</small></label><input type="text" id="f_refname">'
+      + '<label>Your phone (referrer)<small>အကြံပြုသူ ဖုန်းနံပါတ်</small></label><input type="text" id="f_refphone">'
       + '<button class="btn b-send" onclick="sendWorker()">Submit / ပို့မည်</button>'
       + '<button class="b-back" onclick="landing()">← Back / နောက်သို့</button>';
   }
@@ -84,7 +87,9 @@
   function formBroker(){
     document.getElementById('wrap').innerHTML =
       '<label>Broker name<small>ပွဲစား အမည်</small></label><input type="text" id="b_name">'
-      + '<label>Broker phone<small>ဖုန်းနံပါတ်</small></label><input type="text" id="b_phone">'
+      + '<label>Broker phone<small>ပွဲစား ဖုန်းနံပါတ်</small></label><input type="text" id="b_phone">'
+      + '<label>Your name (referrer)<small>အကြံပြုသူ အမည်</small></label><input type="text" id="b_refname">'
+      + '<label>Your phone (referrer)<small>အကြံပြုသူ ဖုန်းနံပါတ်</small></label><input type="text" id="b_refphone">'
       + '<button class="btn b-send" onclick="sendBroker()">Submit / ပို့မည်</button>'
       + '<button class="b-back" onclick="landing()">← Back / နောက်သို့</button>';
   }
@@ -111,8 +116,11 @@
     try{
       const data = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({
         action:"refer_worker", userId:userId, name:name,
+        phone:document.getElementById('f_phone').value.trim(),
         location:document.getElementById('f_loc').value.trim(), work_permit:permit,
         experience:document.getElementById('f_exp').value.trim(),
+        ref_name:document.getElementById('f_refname').value.trim(),
+        ref_phone:document.getElementById('f_refphone').value.trim(),
         photo:photoData, photo_mime:'image/jpeg'
       })})).json();
       if(!data.ok){ alert("Failed: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
@@ -127,7 +135,9 @@
     try{
       const data = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({
         action:"refer_broker", userId:userId,
-        broker_name:name, broker_phone:document.getElementById('b_phone').value.trim()
+        broker_name:name, broker_phone:document.getElementById('b_phone').value.trim(),
+        ref_name:document.getElementById('b_refname').value.trim(),
+        ref_phone:document.getElementById('b_refphone').value.trim()
       })})).json();
       if(!data.ok){ alert("Failed: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
       done();
