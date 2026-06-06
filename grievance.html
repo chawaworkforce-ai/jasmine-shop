@@ -46,7 +46,7 @@
 <script>
   const LIFF_ID = "2010242926-nreePSO4";
   const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
-  let userId=null, cat=null, mode=null, sites=[];
+  let userId=null, displayName=null, cat=null, mode=null, sites=[], msgText='', siteSel='';
   const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
   const CATS = [
@@ -63,7 +63,7 @@
     try{
       await liff.init({ liffId: LIFF_ID });
       if(!liff.isLoggedIn()){ liff.login(); return; }
-      userId=(await liff.getProfile()).userId;
+      const _pf=await liff.getProfile(); userId=_pf.userId; displayName=_pf.displayName;
       try{ const r=await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"site_list"})})).json(); if(r.ok) sites=r.sites||[]; }catch(e){}
       document.getElementById('status').style.display='none';
       document.getElementById('wrap').style.display='block';
@@ -76,14 +76,14 @@
     CATS.forEach((c,i)=>{ h+='<div class="cat '+(cat===i?'on':'')+'" onclick="pickCat('+i+')"><div class="en">'+esc(c[0])+'</div><div class="my">'+esc(c[1])+'</div></div>'; });
     h+='</div>';
     h+='<h3>Tell us more <span class="my">အသေးစိတ် ပြောပါ</span></h3>';
-    h+='<textarea id="msg" placeholder="Write here… / ဒီမှာ ရေးပါ…"></textarea>';
+    h+='<textarea id="msg" oninput="setMsg(this.value)" placeholder="Write here… / ဒီမှာ ရေးပါ…">'+esc(msgText)+'</textarea>';
     h+='<h3>How to send <span class="my">ပို့နည်း ရွေးပါ</span></h3><div class="modes">';
     h+='<div class="mode '+(mode==="anon"?"on":"")+'" onclick="pickMode(\'anon\')"><div class="en">Send without my name</div><div class="my">အမည် မထည့်ဘဲ ပို့မည် — P\'Mai won\'t know who you are</div></div>';
     h+='<div class="mode '+(mode==="named"?"on":"")+'" onclick="pickMode(\'named\')"><div class="en">Add my name (so P\'Mai can help me directly)</div><div class="my">အမည်ထည့်မည် — P\'Mai က တိုက်ရိုက် ကူညီနိုင်ရန်</div></div>';
     h+='</div>';
     if(mode==="anon" && sites.length){
-      h+='<select id="site"><option value="">(Optional) Your site / သင့်ဆိုက် — မဖြစ်မနေ မဟုတ်</option>';
-      sites.forEach(s=>{ h+='<option value="'+esc(s)+'">'+esc(s)+'</option>'; });
+      h+='<select id="site" onchange="setSite(this.value)"><option value="">(Optional) Your site / သင့်ဆိုက် — မဖြစ်မနေ မဟုတ်</option>';
+      sites.forEach(s=>{ h+='<option value="'+esc(s)+'"'+(siteSel===s?' selected':'')+'>'+esc(s)+'</option>'; });
       h+='</select>';
     }
     h+='<div class="reassure">🤍 Your message goes privately to P\'Mai. If you choose "without my name", we truly will not know who sent it.<br>သင့်စကား P\'Mai ထံ တိုက်ရိုက် ရောက်ပါမည်။ အမည်မထည့်ရင် ဘယ်သူပို့မှန်း ကျွန်ုပ်တို့ မသိပါ။</div>';
@@ -91,6 +91,8 @@
     document.getElementById('wrap').innerHTML=h;
   }
 
+  function setMsg(v){ msgText=v; }
+  function setSite(v){ siteSel=v; }
   function pickCat(i){ cat=i; render(); }
   function pickMode(m){ mode=m; render(); }
 
@@ -99,7 +101,7 @@
     if(!mode){ alert("Please choose how to send. / ပို့နည်း ရွေးပါ"); return; }
     const msg=(document.getElementById('msg')?document.getElementById('msg').value:'').trim();
     const payload={ action:"grievance", category:CATS[cat][0], message:msg };
-    if(mode==="named"){ payload.anonymous=false; payload.userId=userId; }
+    if(mode==="named"){ payload.anonymous=false; payload.userId=userId; payload.display_name=displayName; }
     else { payload.anonymous=true; const se=document.getElementById('site'); if(se&&se.value) payload.site=se.value; } // ไม่ส่ง userId
     const btn=document.getElementById('send'); btn.disabled=true; btn.textContent="Sending…";
     try{
