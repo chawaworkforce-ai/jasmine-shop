@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Refer to Work</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --green:#2f7d55; --green-d:#225c3f; --ink:#1f2b25; --muted:#7b8a82; --line:#e1e7e3; --bg:#f4f6f5; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Myanmar","Padauk",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--green); color:#fff; padding:18px 16px; }
+  header h1{ font-size:18px; margin:0; font-weight:700; }
+  header p{ font-size:12.5px; margin:4px 0 0; opacity:.9; }
+  #status{ padding:30px 16px; text-align:center; color:var(--muted); font-size:14px; }
+  .wrap{ padding:16px; max-width:560px; margin:0 auto; }
+  .pick{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px 16px; margin-bottom:14px; cursor:pointer; }
+  .pick:active{ background:#f0f5f2; }
+  .pick .ic{ font-size:30px; } .pick .t{ font-size:16px; font-weight:700; margin-top:6px; } .pick .s{ font-size:13px; color:var(--muted); margin-top:3px; }
+  label{ display:block; font-size:14px; font-weight:600; margin:14px 0 6px; } label small{ display:block; color:var(--muted); font-weight:400; font-size:12px; }
+  input[type=text], textarea{ width:100%; border:1.5px solid var(--line); border-radius:12px; padding:12px; font-size:15px; font-family:inherit; }
+  textarea{ resize:none; }
+  .yn{ display:flex; gap:10px; } .yn button{ flex:1; border:1.5px solid var(--line); background:#fff; border-radius:12px; padding:12px; font-size:14px; font-weight:600; cursor:pointer; color:var(--ink); }
+  .yn button.on{ background:var(--green); color:#fff; border-color:var(--green); }
+  .upload{ border:1.5px dashed var(--line); border-radius:12px; padding:16px; text-align:center; color:var(--muted); font-size:13px; cursor:pointer; }
+  .upload img{ max-width:100%; max-height:200px; border-radius:10px; margin-top:8px; }
+  .btn{ width:100%; border:0; border-radius:14px; padding:16px; font-size:16px; font-weight:700; cursor:pointer; margin-top:16px; }
+  .b-send{ background:var(--green); color:#fff; } .b-send:disabled{ background:#bcd0c4; }
+  .b-back{ background:none; color:var(--muted); border:0; font-size:14px; padding:10px; cursor:pointer; margin-top:6px; width:100%; }
+  .done{ text-align:center; padding:34px 16px; } .done .c{ font-size:44px; } .done p{ font-size:15px; margin-top:12px; line-height:1.6; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>👥 Refer to Work</h1>
+    <p>Help us find good people / လူကောင်းများ ရှာဖွေပေးပါ</p>
+  </header>
+  <div id="status">Loading… / ခဏစောင့်ပါ…</div>
+  <div class="wrap" id="wrap" style="display:none"></div>
+
+<script>
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  let userId = null, photoData = '', permit = '';
+
+  async function main(){
+    try{
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      const p = await liff.getProfile(); userId = p.userId;
+      document.getElementById('status').style.display='none';
+      document.getElementById('wrap').style.display='block';
+      landing();
+    }catch(e){ document.getElementById('status').textContent = "Open in LINE app please. ("+(e.message||e)+")"; }
+  }
+
+  function landing(){
+    photoData=''; permit='';
+    document.getElementById('wrap').innerHTML =
+      '<div class="pick" onclick="formWorker()"><div class="ic">👥</div>'
+      + '<div class="t">A friend / relative wants to work</div>'
+      + '<div class="s">မိတ်ဆွေ၊ ဆွေမျိုး အလုပ်လုပ်လိုသည်</div></div>'
+      + '<div class="pick" onclick="formBroker()"><div class="ic">🤝</div>'
+      + '<div class="t">Introduce a broker</div>'
+      + '<div class="s">ကျွန်ုပ်တို့ထံ အလုပ်သမားပို့ပေးမည့် ပွဲစား မိတ်ဆက်ရန်</div></div>';
+  }
+
+  function formWorker(){
+    photoData=''; permit='';
+    document.getElementById('wrap').innerHTML =
+      '<label>Full name (English)<small>အမည် (အင်္ဂလိပ်)</small></label><input type="text" id="f_name">'
+      + '<label>Current location<small>လက်ရှိ နေထိုင်ရာ နေရာ</small></label><input type="text" id="f_loc">'
+      + '<label>Work permit?<small>အလုပ်လုပ်ခွင့် ရှိပါသလား</small></label>'
+      + '<div class="yn"><button id="p_y" onclick="setPermit(\'Yes / ရှိ\')">Yes / ရှိ</button>'
+      + '<button id="p_n" onclick="setPermit(\'No / မရှိ\')">No / မရှိ</button></div>'
+      + '<label>Document photo<small>စာရွက်စာတမ်း ဓာတ်ပုံ တင်ပါ</small></label>'
+      + '<div class="upload" onclick="document.getElementById(\'f_photo\').click()" id="upbox">Tap to upload / ဓာတ်ပုံ တင်ရန် နှိပ်ပါ</div>'
+      + '<input type="file" id="f_photo" accept="image/*" style="display:none" onchange="onPhoto(this)">'
+      + '<label>Previous work experience<small>အလုပ်အတွေ့အကြုံ</small></label><textarea id="f_exp" rows="3"></textarea>'
+      + '<button class="btn b-send" onclick="sendWorker()">Submit / ပို့မည်</button>'
+      + '<button class="b-back" onclick="landing()">← Back / နောက်သို့</button>';
+  }
+
+  function formBroker(){
+    document.getElementById('wrap').innerHTML =
+      '<label>Broker name<small>ပွဲစား အမည်</small></label><input type="text" id="b_name">'
+      + '<label>Broker phone<small>ဖုန်းနံပါတ်</small></label><input type="text" id="b_phone">'
+      + '<button class="btn b-send" onclick="sendBroker()">Submit / ပို့မည်</button>'
+      + '<button class="b-back" onclick="landing()">← Back / နောက်သို့</button>';
+  }
+
+  function setPermit(v){ permit=v; document.getElementById('p_y').classList.toggle('on', v.indexOf('Yes')===0); document.getElementById('p_n').classList.toggle('on', v.indexOf('No')===0); }
+
+  function onPhoto(inp){
+    const file = inp.files[0]; if(!file) return;
+    const img=new Image(), r=new FileReader();
+    r.onload=function(){ img.onload=function(){
+      let max=1280, w=img.width, h=img.height;
+      if(w>max||h>max){ if(w>h){ h=Math.round(h*max/w); w=max; } else { w=Math.round(w*max/h); h=max; } }
+      const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+      photoData = c.toDataURL('image/jpeg', 0.7);
+      document.getElementById('upbox').innerHTML = 'Uploaded ✅<br><img src="'+photoData+'">';
+    }; img.src=r.result; };
+    r.readAsDataURL(file);
+  }
+
+  async function sendWorker(){
+    const name=document.getElementById('f_name').value.trim();
+    if(!name){ alert("Please enter name / အမည် ထည့်ပါ"); return; }
+    const btn=document.querySelector('.b-send'); btn.disabled=true; btn.textContent="Sending… / ပို့နေသည်…";
+    try{
+      const data = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({
+        action:"refer_worker", userId:userId, name:name,
+        location:document.getElementById('f_loc').value.trim(), work_permit:permit,
+        experience:document.getElementById('f_exp').value.trim(),
+        photo:photoData, photo_mime:'image/jpeg'
+      })})).json();
+      if(!data.ok){ alert("Failed: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      done();
+    }catch(e){ alert("Error: "+(e.message||e)); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
+  }
+
+  async function sendBroker(){
+    const name=document.getElementById('b_name').value.trim();
+    if(!name){ alert("Please enter broker name / ပွဲစား အမည် ထည့်ပါ"); return; }
+    const btn=document.querySelector('.b-send'); btn.disabled=true; btn.textContent="Sending… / ပို့နေသည်…";
+    try{
+      const data = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({
+        action:"refer_broker", userId:userId,
+        broker_name:name, broker_phone:document.getElementById('b_phone').value.trim()
+      })})).json();
+      if(!data.ok){ alert("Failed: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      done();
+    }catch(e){ alert("Error: "+(e.message||e)); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
+  }
+
+  function done(){
+    document.getElementById('wrap').innerHTML =
+      '<div class="done"><div class="c">✅</div><p>Thank you! We received it.<br>ကျေးဇူးတင်ပါသည်။ လက်ခံရရှိပါပြီ။</p>'
+      + '<button class="btn b-send" onclick="landing()">Refer another / နောက်တစ်ယောက် ထပ်ပို့ရန်</button></div>';
+  }
+
+  main();
+</script>
+</body>
+</html>
