@@ -21,7 +21,7 @@
   .site{ border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; font-size:13px; cursor:pointer; }
   .site.on{ background:var(--slate); color:#fff; border-color:var(--slate); }
   .site .c{ opacity:.6; font-size:12px; }
-  .sites.dim{ opacity:.4; pointer-events:none; }
+  .sites.dim{ opacity:.55; }
   .chips{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
   .chip{ background:#eef1f4; border:0; border-radius:16px; padding:7px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
   textarea{ width:100%; border:1.5px solid var(--line); border-radius:10px; padding:12px; font-size:15px; font-family:inherit; min-height:120px; resize:vertical; }
@@ -49,7 +49,14 @@
     ["มี OT", "Overtime today ___. Tell your leader if you join.\nဒီနေ့ OT ___ ရှိသည်။ လုပ်မယ်ဆို ခေါင်းဆောင်ကို ပြောပါ"],
     ["วันจ่ายเงิน", "Payday is ___\nလစာထုတ်ရက် — ___"],
     ["เอาเอกสารมา", "Please bring work permit / passport copy ___\nအလုပ်လုပ်ခွင့် / ပတ်စပို့ မိတ္တူ ယူလာပါ — ___"],
-    ["ประชุม/รวมตัว", "Meeting at ___\nအစည်းအဝေး — ___"]
+    ["ประชุม/รวมตัว", "Meeting at ___\nအစည်းအဝေး — ___"],
+    ["ตั้งใจทำงาน", "Thank you everyone for working hard! Keep it up 💪\nအားလုံး ကြိုးစားလုပ်ဆောင်တဲ့အတွက် ကျေးဇူးတင်ပါတယ်! ဆက်ကြိုးစားကြပါ 💪"],
+    ["เข้างานตรงเวลา", "Please come to work on time. Thank you.\nအလုပ်ကို အချိန်မီ လာပါ။ ကျေးဇူးတင်ပါတယ်။"],
+    ["วันหยุด", "Holiday on ___. No work that day.\n___ ရက်နေ့ ပိတ်ရက်ဖြစ်သည်။ ထိုနေ့ အလုပ်မရှိပါ။"],
+    ["ลา/มาไม่ได้", "If you cannot come to work, tell your leader in advance.\nအလုပ်မလာနိုင်ရင် ခေါင်းဆောင်ကို ကြိုတင်အကြောင်းကြားပါ။"],
+    ["ความปลอดภัย/แต่งกาย", "Dress properly: company shirt, long pants, sneakers, hair tidy. And follow factory safety rules.\nသေသပ်စွာ ဝတ်ဆင်ပါ — ကုမ္ပဏီအင်္ကျီ၊ ဘောင်းဘီရှည်၊ စနီကာဖိနပ်၊ ဆံပင်သပ်ရပ်။ စက်ရုံ ဘေးကင်းရေးစည်းကမ်းများ လိုက်နာပါ။"],
+    ["ข้อห้ามเวลางาน", "During work hours: no thanaka/powder, no smoking, no betel chewing.\nအလုပ်ချိန်အတွင်း — သနပ်ခါးမလိမ်းရ၊ ဆေးလိပ်မသောက်ရ၊ ကွမ်းမစားရ။"],
+    ["ชวนเพื่อนมาทำงาน", "We need more workers! Refer friends or relatives and get a reward.\nအလုပ်သမား ထပ်လိုပါသည်! မိတ်ဆွေ၊ ဆွေမျိုး မိတ်ဆက်ပေးပြီး ဆုကြေးရယူပါ။"]
   ];
 
   async function main(){
@@ -83,7 +90,7 @@
   function reach(){ if(all) return T.total; let n=0; T.sites.forEach(s=>{ if(picked[s.site]) n+=s.count; }); return n; }
   function refreshReach(){ const r=document.getElementById('reach'); if(r) r.textContent=reach(); }
   function toggleAll(){ all=!all; render(); }
-  function toggleSite(s){ if(all) return; picked[s]=!picked[s]; render(); }
+  function toggleSite(s){ if(all){ all=false; picked={}; } picked[s]=!picked[s]; render(); }
   function usePreset(i){ document.getElementById('msg').value = PRESETS[i][1]; }
 
   async function send(){
