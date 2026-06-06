@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Admin Dashboard</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --slate:#2b3440; --slate-d:#1c232c; --ink:#1f2630; --muted:#7a8694; --line:#e4e8ed; --bg:#f3f5f7; --gold:#c79100; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans Myanmar",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--slate); color:#fff; padding:16px; }
+  header h1{ font-size:18px; margin:0; font-weight:700; } header p{ font-size:12px; margin:3px 0 0; opacity:.8; }
+  #status{ padding:30px 16px; text-align:center; color:var(--muted); }
+  .tabs{ display:flex; background:var(--slate-d); }
+  .tabs button{ flex:1; background:none; border:0; color:#aeb8c4; font-size:13px; font-weight:600; padding:12px 4px; cursor:pointer; border-bottom:3px solid transparent; font-family:inherit; }
+  .tabs button.on{ color:#fff; border-bottom-color:var(--gold); }
+  .tabs .badge{ display:inline-block; min-width:18px; background:#d65; color:#fff; border-radius:9px; font-size:11px; padding:0 5px; margin-left:3px; }
+  .wrap{ padding:14px; max-width:620px; margin:0 auto; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .chip{ flex:1 1 45%; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .chip .n{ font-size:24px; font-weight:700; } .chip .l{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .chip.r .n{ color:#d65; } .chip.s .n{ color:#2f7d7d; } .chip.f .n{ color:#2f7d55; } .chip.k .n{ color:var(--gold); }
+  h3{ font-size:14px; margin:18px 0 8px; color:var(--ink); }
+  .row{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; font-size:14px; }
+  .row .c{ color:var(--muted); font-weight:700; }
+  .pill{ display:inline-block; background:#fdeede; color:#9a6b00; border-radius:8px; padding:3px 9px; font-size:12px; margin:3px 6px 3px 0; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
+  .card .top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .card .ttl{ font-size:15px; font-weight:700; } .card .sub{ font-size:13px; color:var(--muted); margin-top:2px; }
+  .card .body{ font-size:14px; margin-top:8px; line-height:1.5; }
+  .card .meta{ font-size:12px; color:var(--muted); margin-top:6px; }
+  .st{ font-size:11px; font-weight:700; padding:3px 8px; border-radius:8px; white-space:nowrap; }
+  .st.new{ background:#fdecec; color:#c0392b; } .st.wip{ background:#fff3d6; color:#9a6b00; }
+  .card a{ color:#2f6fd0; font-size:13px; }
+  .note{ width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; font-size:13px; margin-top:8px; font-family:inherit; }
+  .acts{ display:flex; gap:8px; margin-top:8px; }
+  .acts button{ flex:1; border:0; border-radius:10px; padding:11px; font-size:14px; font-weight:700; cursor:pointer; }
+  .b-wip{ background:#fff3d6; color:#9a6b00; } .b-done{ background:#2f7d55; color:#fff; }
+  .empty{ text-align:center; color:var(--muted); padding:30px 12px; font-size:14px; }
+</style>
+</head>
+<body>
+  <header><h1>🛠️ Admin Dashboard</h1><p id="hsub">คอกพิทแอดมิน</p></header>
+  <div id="status">กำลังโหลด…</div>
+  <div class="tabs" id="tabs" style="display:none">
+    <button data-t="ov" class="on" onclick="tab('ov')">ภาพรวม</button>
+    <button data-t="rp" onclick="tab('rp')">รีพอต<span class="badge" id="bg-rp">0</span></button>
+    <button data-t="sp" onclick="tab('sp')">ซัพพอต<span class="badge" id="bg-sp">0</span></button>
+    <button data-t="rf" onclick="tab('rf')">แนะนำคน<span class="badge" id="bg-rf">0</span></button>
+  </div>
+  <div class="wrap" id="wrap" style="display:none"></div>
+
+<script>
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  let userId = null, D = null, cur = 'ov';
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  async function main(){
+    try{
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      userId = (await liff.getProfile()).userId;
+      await load();
+    }catch(e){ document.getElementById('status').textContent = "เปิดในแอป LINE นะครับ ("+(e.message||e)+")"; }
+  }
+
+  async function load(){
+    try{
+      D = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"dashboard",userId:userId})})).json();
+      if(!D.ok){ document.getElementById('status').textContent = D.error==='NOT_ADMIN' ? "หน้านี้สำหรับแอดมินเท่านั้น" : ("ผิดพลาด: "+D.error); return; }
+      document.getElementById('status').style.display='none';
+      document.getElementById('tabs').style.display='flex';
+      document.getElementById('wrap').style.display='block';
+      document.getElementById('hsub').textContent = "เดือน "+D.month;
+      setBadges(); tab(cur);
+    }catch(e){ document.getElementById('status').textContent = "โหลดไม่สำเร็จ: "+(e.message||e); }
+  }
+
+  function setBadges(){
+    [['rp','reports'],['sp','support'],['rf','referrals']].forEach(([t,k])=>{
+      const b=document.getElementById('bg-'+t), n=D[k].length; b.textContent=n; b.style.display = n? 'inline-block':'none';
+    });
+  }
+
+  function tab(t){
+    cur=t;
+    document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
+    const w=document.getElementById('wrap');
+    if(t==='ov') w.innerHTML = ovHTML();
+    else if(t==='rp') w.innerHTML = listHTML(D.reports,'Reports', r=>({ttl:r.worker_name||'-', sub:r.site, body:r.issue+(r.note?'<br>📝 '+esc(r.note):''), meta:r.timestamp+' · โดย '+r.reporter_name}));
+    else if(t==='sp') w.innerHTML = listHTML(D.support,'Support', r=>({ttl:r.name||'-', sub:r.sites, body:r.note||'-', meta:r.timestamp}));
+    else if(t==='rf') w.innerHTML = listHTML(D.referrals,'Referrals', r=>{
+        const isW = r.type==='worker';
+        return { ttl:(isW? (r.cand_name||'-') : (r.broker_name||'-')), sub:(isW?'👤 เพื่อน/ญาติ':'🤝 นายหน้า'),
+          body:'เบอร์: '+esc(isW?r.cand_phone:r.broker_phone||'-')+'<br>ผู้แนะนำ: '+esc(r.ref_name||'-')+' '+esc(r.ref_phone||'')+(r.doc_url?'<br><a href="'+esc(r.doc_url)+'" target="_blank">📄 ดูเอกสาร</a>':''),
+          meta:r.timestamp };
+      });
+  }
+
+  function ovHTML(){
+    const c=D.counts;
+    let h='<div class="chips">'
+      + chip('r',c.reports,'รีพอตค้าง') + chip('s',c.support,'ซัพพอตค้าง')
+      + chip('f',c.referrals,'แนะนำคนใหม่') + chip('k',c.kpiPending,'KPI ยังขาด (ไซต์)') + '</div>';
+    h+='<h3>น้องต่อไซต์</h3>';
+    if(!D.workersBySite.length) h+='<div class="empty">ยังไม่มีข้อมูล</div>';
+    else D.workersBySite.forEach(s=> h+='<div class="row"><span>'+esc(s.site)+'</span><span class="c">'+s.count+'</span></div>');
+    h+='<h3>KPI ยังไม่ส่งเดือนนี้</h3>';
+    if(!D.kpiPending.length) h+='<div class="empty">ส่งครบทุกไซต์แล้ว 🎉</div>';
+    else h+='<div>'+D.kpiPending.map(s=>'<span class="pill">'+esc(s)+'</span>').join('')+'</div>';
+    return h;
+  }
+  function chip(k,n,l){ return '<div class="chip '+k+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+
+  function listHTML(arr, sheet, map){
+    if(!arr.length) return '<div class="empty">ไม่มีงานค้าง 🎉</div>';
+    return arr.map((r)=>{
+      const m=map(r), wip = r.status==='กำลังทำ';
+      return '<div class="card" id="card-'+sheet+'-'+r.row+'">'
+        + '<div class="top"><div><div class="ttl">'+esc(m.ttl)+'</div><div class="sub">'+esc(m.sub)+'</div></div>'
+        + '<span class="st '+(wip?'wip':'new')+'">'+(wip?'กำลังทำ':'ใหม่')+'</span></div>'
+        + '<div class="body">'+m.body+'</div>'
+        + '<div class="meta">'+esc(m.meta)+'</div>'
+        + '<input class="note" id="n-'+sheet+'-'+r.row+'" placeholder="โน้ต (ไม่บังคับ)">'
+        + '<div class="acts"><button class="b-wip" onclick="act(\''+sheet+'\','+r.row+',\'กำลังทำ\')">กำลังทำ</button>'
+        + '<button class="b-done" onclick="act(\''+sheet+'\','+r.row+',\'เสร็จ\')">เสร็จ ✓</button></div></div>';
+    }).join('');
+  }
+
+  async function act(sheet, row, status){
+    const card=document.getElementById('card-'+sheet+'-'+row);
+    const note=(document.getElementById('n-'+sheet+'-'+row)||{}).value||'';
+    card.style.opacity=.5;
+    try{
+      const res = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"update_status",userId:userId,sheet:sheet,row:row,status:status,note:note.trim()})})).json();
+      if(!res.ok){ alert("ไม่สำเร็จ: "+res.error); card.style.opacity=1; return; }
+      const key = sheet==='Reports'?'reports':sheet==='Support'?'support':'referrals';
+      const item = D[key].find(x=>x.row===row);
+      if(status==='เสร็จ'){ D[key]=D[key].filter(x=>x.row!==row); card.remove(); }
+      else { if(item) item.status='กำลังทำ'; tab(cur); }
+      setBadges();
+    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); card.style.opacity=1; }
+  }
+
+  main();
+</script>
+</body>
+</html>
