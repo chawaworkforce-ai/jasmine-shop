@@ -6,22 +6,28 @@
 <title>จับคู่ไลน์น้อง</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
-  :root{ --slate:#33415c; --slate-d:#26324a; --green:#2f7d55; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; }
+  :root{ --slate:#33415c; --slate-d:#26324a; --green:#2f7d55; --red:#b3453b; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
   header{ background:var(--slate); color:#fff; padding:16px; position:sticky; top:0; z-index:5; }
   header h1{ font-size:16px; margin:0; font-weight:600; }
   header p{ font-size:13px; margin:4px 0 0; opacity:.85; }
+  .tabs{ display:flex; background:#fff; border-bottom:1px solid var(--line); position:sticky; top:64px; z-index:4; }
+  .tab{ flex:1; text-align:center; padding:12px; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2.5px solid transparent; }
+  .tab.on{ color:var(--slate); border-bottom-color:var(--slate); }
   #status{ padding:24px 16px; text-align:center; color:var(--muted); font-size:14px; }
   .note{ padding:10px 16px; font-size:12.5px; color:var(--muted); }
   .list{ padding:10px 12px; }
   .mcard{ display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin-bottom:10px; }
   .mava{ width:48px; height:48px; border-radius:50%; background:#dde3ec; color:var(--slate-d); display:flex; align-items:center; justify-content:center; font-weight:600; overflow:hidden; flex:0 0 48px; }
   .mava img{ width:100%; height:100%; object-fit:cover; }
+  .mava.sq{ border-radius:9px; width:44px; height:54px; flex:0 0 44px; background:#e6f0ea; color:var(--green); }
+  .mava.sq img{ object-position:center top; }
   .minfo{ flex:1; min-width:0; }
   .mname{ font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .msub{ font-size:11px; color:var(--muted); margin-top:2px; }
-  .mbtn{ border:0; border-radius:10px; background:var(--green); color:#fff; font-weight:600; font-size:13px; padding:9px 14px; cursor:pointer; flex:0 0 auto; }
+  .mbtn{ border:0; border-radius:10px; color:#fff; font-weight:600; font-size:13px; padding:9px 14px; cursor:pointer; flex:0 0 auto; }
+  .b-link{ background:var(--green); } .b-unlink{ background:var(--red); }
 
   .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; z-index:20; }
   .overlay.open{ display:flex; }
@@ -40,8 +46,12 @@
 <body>
   <header>
     <h1>จับคู่ไลน์น้อง ↔ การ์ด</h1>
-    <p>เลือกไลน์ทางซ้าย → จับคู่กับน้องในทะเบียน</p>
+    <p>เลือกไลน์ → จับคู่กับน้องในทะเบียน · หรือเลิกจับคู่</p>
   </header>
+  <div class="tabs">
+    <div class="tab on" id="tab-un" onclick="switchTab('un')">ยังไม่จับคู่</div>
+    <div class="tab" id="tab-ma" onclick="switchTab('ma')">จับคู่แล้ว</div>
+  </div>
   <div id="status">กำลังเชื่อมต่อ…</div>
   <div class="note" id="note" style="display:none"></div>
   <div class="list" id="list" style="display:none"></div>
@@ -58,33 +68,47 @@
 <script>
   const LIFF_ID = "2010242926-nreePSO4";
   const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
-  let admin = null, members = [], workers = [], currentMember = null;
+  let admin = null, members = [], workers = [], matched = [], currentMember = null, view = 'un', loadedMatched = false;
 
   function setStatus(t){ const s=document.getElementById('status'); s.style.display='block'; s.textContent=t; }
   function hideStatus(){ document.getElementById('status').style.display='none'; }
   function esc(s){ return String(s||'').replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
   function ini(n){ const p=String(n||'').trim().split(/\s+/); return ((p[0]||'')[0]||'')+((p[1]||'')[0]||''); }
 
+  async function api(body){ const r=await fetch(API_URL,{method:"POST",body:JSON.stringify(body)}); return r.json(); }
+
   async function main(){
     try{
       await liff.init({ liffId: LIFF_ID });
       if(!liff.isLoggedIn()){ liff.login(); return; }
       admin = await liff.getProfile();
-      load();
+      loadUnmatched();
     }catch(e){ setStatus("เปิดผ่านแอป LINE ไม่สำเร็จ: "+(e.message||e)); }
   }
 
-  async function load(){
+  function switchTab(v){
+    view = v;
+    document.getElementById('tab-un').classList.toggle('on', v==='un');
+    document.getElementById('tab-ma').classList.toggle('on', v==='ma');
+    if(v==='ma'){ loadMatched(); } else { render(); document.getElementById('note').style.display='block'; }
+  }
+
+  async function loadUnmatched(){
     setStatus("กำลังโหลดข้อมูล…");
     try{
-      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({ action:"matching_data", userId: admin.userId }) });
-      const data = await res.json();
+      const data = await api({ action:"matching_data", userId: admin.userId });
       if(!data.ok){ setStatus(data.error==='NOT_ADMIN' ? "⚠️ หน้านี้สำหรับแอดมินเท่านั้น" : ("⚠️ "+(data.error||""))); return; }
       members = data.members || []; workers = data.workers || [];
-      const note = document.getElementById('note');
-      note.style.display='block';
-      note.textContent = "ไลน์ที่ยังไม่จับคู่ " + members.length + " · น้องที่ยังไม่ผูก " + workers.length
-        + (data.capped ? " (แสดง 60 รายแรก จับคู่แล้วรีเฟรชดูต่อ)" : "");
+      render();
+    }catch(e){ setStatus(String(e.message||e)); }
+  }
+
+  async function loadMatched(){
+    setStatus("กำลังโหลดรายชื่อที่จับคู่…"); document.getElementById('list').style.display='none'; document.getElementById('note').style.display='none';
+    try{
+      const data = await api({ action:"matched_list", userId: admin.userId });
+      if(!data.ok){ setStatus("⚠️ "+(data.error||"")); return; }
+      matched = data.matched || []; loadedMatched = true;
       render();
     }catch(e){ setStatus(String(e.message||e)); }
   }
@@ -92,13 +116,27 @@
   function render(){
     hideStatus();
     const L = document.getElementById('list'); L.style.display='block';
-    if(members.length===0){ L.innerHTML = '<div style="text-align:center;padding:30px;color:#2f7d55">✅ ไม่มีไลน์ค้างจับคู่</div>'; return; }
-    L.innerHTML = members.map(function(m,i){
-      const ava = m.picture ? '<img src="'+esc(m.picture)+'">' : esc(ini(m.name));
-      return '<div class="mcard"><div class="mava">'+ava+'</div>'
-           + '<div class="minfo"><div class="mname">'+esc(m.name)+'</div><div class="msub">ชื่อ/รูปที่น้องตั้งเอง</div></div>'
-           + '<button class="mbtn" onclick="openOv('+i+')">จับคู่</button></div>';
-    }).join('');
+    const note = document.getElementById('note');
+    if(view==='un'){
+      note.style.display='block';
+      note.textContent = "ไลน์ที่ยังไม่จับคู่ " + members.length + " · น้องที่ยังไม่ผูก " + workers.length;
+      if(members.length===0){ L.innerHTML = '<div style="text-align:center;padding:30px;color:#2f7d55">✅ ไม่มีไลน์ค้างจับคู่</div>'; return; }
+      L.innerHTML = members.map(function(m,i){
+        const ava = m.picture ? '<img src="'+esc(m.picture)+'">' : esc(ini(m.name));
+        return '<div class="mcard"><div class="mava">'+ava+'</div>'
+             + '<div class="minfo"><div class="mname">'+esc(m.name)+'</div><div class="msub">ชื่อ/รูปที่น้องตั้งเอง</div></div>'
+             + '<button class="mbtn b-link" onclick="openOv('+i+')">จับคู่</button></div>';
+      }).join('');
+    } else {
+      note.style.display='none';
+      if(matched.length===0){ L.innerHTML = '<div style="text-align:center;padding:30px;color:#7b8a82">ยังไม่มีน้องที่จับคู่</div>'; return; }
+      L.innerHTML = matched.map(function(m){
+        const ava = m.photo_url ? '<img src="'+esc(m.photo_url)+'">' : esc(ini(m.name));
+        return '<div class="mcard"><div class="mava sq">'+ava+'</div>'
+             + '<div class="minfo"><div class="mname">'+esc(m.name)+'</div><div class="msub">'+esc(m.site)+' · LINE: '+esc(m.line_name||'-')+'</div></div>'
+             + '<button class="mbtn b-unlink" onclick=\'unlink('+JSON.stringify(m).replace(/'/g,"&#39;")+')\'>เลิกจับคู่</button></div>';
+      }).join('');
+    }
   }
 
   function openOv(i){
@@ -125,16 +163,24 @@
   async function pickWorker(w){
     if(!confirm('ยืนยันผูก\n\nไลน์: '+currentMember.name+'\n= น้อง: '+w.name+' ('+w.site+')')) return;
     try{
-      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({
-        action:"link_member", userId: admin.userId, target_user_id: currentMember.user_id, card_id: w.card_id }) });
-      const data = await res.json();
+      const data = await api({ action:"link_member", userId: admin.userId, target_user_id: currentMember.user_id, card_id: w.card_id });
       if(!data.ok){ alert("ผูกไม่สำเร็จ: "+(data.error||"")); return; }
       members = members.filter(function(m){ return m.user_id !== currentMember.user_id; });
       workers = workers.filter(function(x){ return x.card_id !== w.card_id; });
-      closeOv();
-      document.getElementById('note').textContent = "ไลน์ที่ยังไม่จับคู่ " + members.length + " · น้องที่ยังไม่ผูก " + workers.length;
-      render();
+      loadedMatched = false;
+      closeOv(); render();
       alert("✅ ผูกแล้ว: "+w.name);
+    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); }
+  }
+
+  async function unlink(m){
+    if(!confirm('เลิกจับคู่น้อง "'+m.name+'" ('+m.site+') ?\nLINE: '+(m.line_name||'-'))) return;
+    try{
+      const data = await api({ action:"unlink_member", userId: admin.userId, card_id: m.card_id });
+      if(!data.ok){ alert("เลิกจับคู่ไม่สำเร็จ: "+(data.error||"")); return; }
+      matched = matched.filter(function(x){ return x.card_id !== m.card_id; });
+      render();
+      alert("✅ เลิกจับคู่แล้ว: "+m.name+"\n(สลับไปแท็บ 'ยังไม่จับคู่' เพื่อจับใหม่ได้)");
     }catch(e){ alert("ผิดพลาด: "+(e.message||e)); }
   }
 

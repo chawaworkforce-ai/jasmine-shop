@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>My Score</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --star:#f5b50a; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; --red:#a3322b; --green:#256544; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Myanmar","Padauk",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--blue); color:#fff; padding:18px 16px; position:sticky; top:0; z-index:5; }
+  header h1{ font-size:18px; margin:0; font-weight:700; }
+  header p{ font-size:13px; margin:5px 0 0; opacity:.9; }
+  #status{ padding:30px 16px; text-align:center; color:var(--muted); font-size:14px; line-height:1.6; }
+  .wrap{ padding:14px 14px 28px; max-width:560px; margin:0 auto; }
+  .mon{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 14px 16px; margin-bottom:14px; }
+  .mhead{ font-size:16px; font-weight:700; color:var(--blue-d); margin-bottom:10px; }
+  .total{ display:inline-block; background:#eaf3f7; color:var(--blue-d); font-weight:700; border-radius:10px; padding:5px 12px; font-size:15px; margin-bottom:10px; }
+  .crit{ display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #f1f4f2; }
+  .crit:last-child{ border-bottom:0; }
+  .clabel{ font-size:13px; line-height:1.3; } .clabel small{ color:var(--muted); display:block; font-size:11px; }
+  .cstars{ color:#dcdcdc; font-size:17px; letter-spacing:1px; white-space:nowrap; }
+  .cstars b{ color:var(--star); font-weight:normal; }
+  .none{ font-size:13px; color:var(--muted); padding:4px 0; }
+  .rep-h{ font-size:13px; font-weight:700; margin:12px 0 6px; }
+  .rep{ background:#fdeceb; color:var(--red); border-radius:10px; padding:8px 10px; font-size:13px; margin-bottom:6px; line-height:1.4; }
+  .rep small{ color:#9a6b67; }
+  .rep0{ background:#eef6f1; color:var(--green); border-radius:10px; padding:8px 10px; font-size:13px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>⭐ My Score / မိမိအမှတ်</h1>
+    <p id="hsub">Connecting…</p>
+  </header>
+  <div id="status">Loading… / ခဏစောင့်ပါ…</div>
+  <div class="wrap" id="wrap" style="display:none"></div>
+
+<script>
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  const CRIT = [
+    { en:'Diligence', my:'ကြိုးစားမှု' },
+    { en:'Work understanding', my:'အလုပ်နားလည်မှု' },
+    { en:'Teamwork', my:'အသင်းအဖွဲ့လိုက်' },
+    { en:'Dress & factory rules', my:'ဝတ်စုံ/စည်းကမ်း' },
+    { en:'No product damage', my:'ပစ္စည်းမပျက်စီး' }
+  ];
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function esc(s){ return String(s||'').replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
+  function stars(n){ n=Number(n)||0; var s=''; for(var i=1;i<=5;i++) s+= i<=n ? '<b>★</b>' : '★'; return s; }
+  function monthLabel(m){ var p=String(m).split('-'); return (MON[(+p[1])-1]||p[1])+' '+p[0]; }
+
+  async function main(){
+    try{
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      const profile = await liff.getProfile();
+      load(profile.userId);
+    }catch(e){ document.getElementById('status').textContent = "Open in LINE app please. ("+(e.message||e)+")"; }
+  }
+
+  async function load(userId){
+    try{
+      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({ action:"my_score", userId: userId }) });
+      const data = await res.json();
+      if(!data.ok){ document.getElementById('status').textContent = "Error: "+(data.error||""); return; }
+      if(!data.linked){
+        document.getElementById('status').innerHTML =
+          "Your account is not linked yet.<br>Please contact your admin.<br><br>"
+          + "သင့်အကောင့် မချိတ်ဆက်ရသေးပါ။<br>အက်ဒမင်ကို ဆက်သွယ်ပါ။";
+        return;
+      }
+      document.getElementById('hsub').textContent = data.name + " · " + data.site;
+      render(data.months || []);
+    }catch(e){ document.getElementById('status').textContent = String(e.message||e); }
+  }
+
+  function render(months){
+    document.getElementById('status').style.display='none';
+    const W = document.getElementById('wrap'); W.style.display='block';
+    if(months.length===0){ W.innerHTML = '<div class="none" style="text-align:center;padding:24px">No records yet / မှတ်တမ်း မရှိသေးပါ</div>'; return; }
+    W.innerHTML = months.map(function(mo){
+      var html = '<div class="mon"><div class="mhead">'+monthLabel(mo.month)+'</div>';
+      if(mo.kpi){
+        html += '<div class="total">KPI '+mo.kpi.total+' / 25</div>';
+        html += CRIT.map(function(c,i){
+          return '<div class="crit"><div class="clabel">'+c.en+'<small>'+c.my+'</small></div>'
+               + '<div class="cstars">'+stars(mo.kpi.scores[i])+'</div></div>';
+        }).join('');
+      } else {
+        html += '<div class="none">No KPI this month / ဤလတွင် KPI မရှိသေး</div>';
+      }
+      html += '<div class="rep-h">Reports / အစီရင်ခံစာ ('+mo.reports.length+')</div>';
+      if(mo.reports.length===0){
+        html += '<div class="rep0">No reports ✅ / အစီရင်ခံစာ မရှိ ✅</div>';
+      } else {
+        html += mo.reports.map(function(r){
+          return '<div class="rep"><small>'+esc(r.date)+'</small> · '+esc(r.en)+'<br><small>'+esc(r.my)+'</small></div>';
+        }).join('');
+      }
+      return html + '</div>';
+    }).join('');
+  }
+
+  main();
+</script>
+</body>
+</html>
