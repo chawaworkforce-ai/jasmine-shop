@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CHAWA GROUP — ศูนย์บัญชาการธุรกิจ</title>
+<style>
+ :root{--bg1:#0a0e1a;--glass:rgba(255,255,255,.035);--glass2:rgba(255,255,255,.06);--bd:rgba(255,255,255,.08);--tx:#e7edf6;--tx2:#8a97ab;--tx3:#5c6a80}
+ *{margin:0;padding:0;box-sizing:border-box}
+ body{font-family:"Segoe UI",system-ui,-apple-system,"Sarabun",sans-serif;background:var(--bg1);color:var(--tx);-webkit-font-smoothing:antialiased}
+ a{text-decoration:none}
+ .layout{display:flex;min-height:100vh}
+ .side{width:228px;flex-shrink:0;background:linear-gradient(180deg,#0b1020,#0a0e1a);border-right:1px solid var(--bd);padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+ .logo{display:flex;align-items:center;gap:11px;padding:4px 6px 20px;font-weight:800;font-size:17px}
+ .logo .dot{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#2563eb);display:grid;place-items:center;box-shadow:0 0 18px rgba(124,58,237,.5);font-size:16px}
+ .nav{display:flex;flex-direction:column;gap:3px}
+ .nav .lbl{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:1.2px;padding:14px 8px 5px}
+ .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:10px;color:var(--tx2);font-size:13.5px;cursor:pointer;transition:.15s}
+ .nav a:hover{background:var(--glass);color:var(--tx)}
+ .nav a.active{background:linear-gradient(90deg,rgba(124,58,237,.20),rgba(37,99,235,.05));color:#fff;box-shadow:inset 2px 0 0 #7c3aed}
+ .main{flex:1;min-width:0;background:radial-gradient(1100px 380px at 72% -8%,rgba(37,99,235,.10),transparent),radial-gradient(800px 460px at 105% 108%,rgba(20,184,166,.07),transparent)}
+ .top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 26px;border-bottom:1px solid var(--bd);position:sticky;top:0;backdrop-filter:blur(12px);background:rgba(10,14,26,.72);z-index:5}
+ .top h1{font-size:19px}.top .sub{font-size:12px;color:var(--tx2);margin-top:1px}
+ .search{flex:1;max-width:280px;background:var(--glass);border:1px solid var(--bd);border-radius:10px;padding:9px 14px;color:var(--tx2);font-size:12.5px}
+ .prof{display:flex;align-items:center;gap:9px;font-size:12.5px}
+ .prof .av{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#ec4899,#7c3aed);display:grid;place-items:center;font-weight:700}
+ .content{padding:22px 26px 60px}
+ .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:28px}
+ .stat{background:var(--glass);border:1px solid var(--bd);border-radius:16px;padding:16px 18px;display:flex;gap:14px;align-items:center}
+ .stat .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:21px;flex-shrink:0}
+ .stat .num{font-size:27px;font-weight:800;line-height:1}
+ .stat .cap{font-size:12px;color:var(--tx2);margin-top:5px}
+ .sec{margin-bottom:30px}
+ .sec h2{font-size:15px;margin-bottom:15px;display:flex;align-items:center;gap:11px}
+ .sec h2 .bar{width:4px;height:19px;border-radius:3px}
+ .sec h2 .cnt{font-size:12px;color:var(--tx2);font-weight:400}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(256px,1fr));gap:14px}
+ .card{background:var(--glass);border:1px solid var(--bd);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;transition:.18s}
+ .card:hover{transform:translateY(-3px);border-color:rgba(124,58,237,.5);box-shadow:0 14px 32px rgba(0,0,0,.45)}
+ .card .hd{display:flex;gap:12px;align-items:flex-start}
+ .card .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+ .card .tp{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+ .card h3{font-size:14.5px;margin-top:2px;line-height:1.25}
+ .card p{font-size:12px;color:var(--tx2);flex:1;line-height:1.5}
+ .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+ .pill{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap}
+ .p-live{background:rgba(16,185,129,.15);color:#34d399;box-shadow:0 0 12px rgba(16,185,129,.22)}
+ .p-wait{background:rgba(245,158,11,.15);color:#fbbf24}
+ .p-prog{background:rgba(59,130,246,.16);color:#60a5fa}
+ .p-soon{background:rgba(148,163,184,.14);color:#94a3b8}
+ .open{display:block;text-align:center;background:var(--glass2);border:1px solid var(--bd);color:var(--tx);font-size:12.5px;font-weight:600;padding:9px;border-radius:10px;transition:.15s}
+ .open:hover{background:linear-gradient(90deg,#7c3aed,#2563eb);border-color:transparent;box-shadow:0 0 16px rgba(124,58,237,.45)}
+ .open.dim{opacity:.4;pointer-events:none}
+ .g-chawa{background:linear-gradient(135deg,#ef4444,#f59e0b);box-shadow:0 0 16px rgba(239,68,68,.28)}
+ .g-jasmine{background:linear-gradient(135deg,#8b5cf6,#ec4899);box-shadow:0 0 16px rgba(139,92,246,.28)}
+ .g-wealth{background:linear-gradient(135deg,#14b8a6,#22c55e);box-shadow:0 0 16px rgba(20,184,166,.28)}
+ @media(max-width:720px){.side{display:none}.content{padding:18px 14px 50px}.top{padding:14px 16px}.search{display:none}}
+</style>
+</head>
+<body>
+<div class="layout">
+ <aside class="side">
+   <div class="logo"><span class="dot">🗂️</span> CHAWA GROUP</div>
+   <nav class="nav" id="nav">
+     <div class="lbl">ศูนย์บัญชาการ</div>
+     <a data-f="all" class="active">🧭 ภาพรวมทั้งหมด</a>
+     <div class="lbl">ธุรกิจ</div>
+     <a data-f="chawa">🏢 Chawa — เอกสาร/การเงิน</a>
+     <a data-f="jasmine">🌸 Jasmine — LINE บอท</a>
+     <a data-f="wealth">🏡 Wealthland — อสังหา</a>
+   </nav>
+ </aside>
+ <main class="main">
+   <div class="top">
+     <div><h1>ศูนย์บัญชาการธุรกิจ</h1><div class="sub">Master Hub · เปิด/ตรวจทุกระบบจากที่เดียว · เรียลไทม์</div></div>
+     <div class="search">🔎 ค้นหาระบบ, เมนู, ลิงก์…</div>
+     <div class="prof"><div class="av">พ</div><div>คุณชวนนท์<div style="font-size:11px;color:var(--tx2)">ผู้บริหาร</div></div></div>
+   </div>
+   <div class="content">
+     <div class="stats" id="stats"></div>
+     <div id="sections"></div>
+   </div>
+ </main>
+</div>
+
+<script>
+const GH="https://chawaworkforce-ai.github.io/jasmine-shop/",COLAB="https://colab.research.google.com/drive/",
+ F="https://drive.google.com/drive/folders/",FILE="https://drive.google.com/file/d/",
+ SS="https://docs.google.com/spreadsheets/d/",SGHOME="https://script.google.com/home";
+const SGsheet=SS+"1EQCX4G_diTAyG_hzLogZpzSInxNlEf9q-q7MzT2oJjM/edit";
+const SYS=[
+ // ===== CHAWA =====
+ {biz:"chawa",ic:"🗂️",tp:"ฐานข้อมูล",name:"Trello — ทะเบียนน้อง",st:"ใช้งาน",desc:"source of truth คนงานทุกไซต์",link:"https://trello.com/b/Wuxp5loO/tubtim-sg"},
+ {biz:"chawa",ic:"📄",tp:"เอกสาร",name:"เอกสาร SG",st:"ใช้งาน",desc:"ติดตาม passport/visa/90วัน/smartcard",link:SGsheet},
+ {biz:"chawa",ic:"📁",tp:"โฟลเดอร์",name:"โฟลเดอร์ เด็กSG",st:"ใช้งาน",desc:"ไฟล์เอกสารน้องรายคน แยกตามไซต์",link:F+"1zkXdULnpCKnObt5TW5Ffyf8B4817aQKe"},
+ {biz:"chawa",ic:"👥",tp:"CRM",name:"CRM แรงงาน (SG)",st:"กำลังทำ",desc:"⚠️ ยังบัค — เปิดจาก Drive ไม่รัน ต้อง host (GitHub) ก่อน",link:FILE+"1KH-hSc565Vy_2tmuvU95NR509nZEFR0f/view"},
+ {biz:"chawa",ic:"📥",tp:"ฟอร์ม",name:"ฝากเอกสารน้อง",st:"กำลังทำ",desc:"⚠️ เปิดจาก Drive ไม่รัน ต้อง host ก่อน",link:FILE+"1ZFEN2FuI4EgsB0OaJSdEm6r1muQemzWg/view"},
+ {biz:"chawa",ic:"📋",tp:"เคส",name:"Case record",st:"ใช้งาน",desc:"บันทึกเคสน้อง (ตัวใหม่สุดที่เจอ 18 มิ.ย. · ถ้ามีล่าสุดกว่าส่งลิงก์)",link:FILE+"1oW0RBGh4sYQXt43FxNdeFaPyf3C_Nccu/view"},
+ {biz:"chawa",ic:"🧾",tp:"การเงิน",name:"ใบวางบิล / ใบเสร็จ",st:"ใช้งาน",desc:"โฟลเดอร์บิล+ใบเสร็จ (รวมล่าสุด มิ.ย.)",link:F+"1rWtwAEuNjDUhcW18I-ok7BuqR1RffnQQ"},
+ {biz:"chawa",ic:"📑",tp:"เอกสาร",name:"เอกสารลูกค้านอก",st:"ใช้งาน",desc:"ทะเบียนเอกสารลูกค้านอก",link:SS+"1YDaRud44jUC8UxX47ts4EZg4ps1ecWdOUVg_4EyxVpQ/edit"},
+ {biz:"chawa",ic:"⏰",tp:"อัตโนมัติ",name:"แจ้งเตือนเอกสารหมดอายุ",st:"ใช้งาน",desc:"อัตโนมัติ เตือนเดดไลน์เข้า LINE · กดดูชีต SG ที่มันอ่าน",link:SGsheet},
+ {biz:"chawa",ic:"🌳",tp:"ลิงก์รวม",name:"Linktree Chawa",st:"coming soon",desc:"หน้ารวมลิงก์สาธารณะของ Chawa · ใส่ลิงก์ Linktree ให้ผมด้วย",link:""},
+ // ===== JASMINE =====
+ {biz:"jasmine",ic:"🆘",tp:"เมนูลูกค้า",name:"C1 Operation Support",st:"ใช้งาน",desc:"รับแจ้งปัญหา/ขอความช่วยเหลือ",link:GH+"support.html"},
+ {biz:"jasmine",ic:"📊",tp:"เมนูลูกค้า",name:"C2 Report Worker",st:"รอจับคู่ไลน์",desc:"ลูกค้าดูทีมน้องเฉพาะไซต์ตัวเอง",link:GH+"report.html"},
+ {biz:"jasmine",ic:"🗣️",tp:"เมนูลูกค้า",name:"C3 Realtime Translator",st:"ใช้งาน",desc:"แปลไทย↔พม่าสด (โทรล่าม)",link:"tel:0849842516"},
+ {biz:"jasmine",ic:"📈",tp:"เมนูลูกค้า",name:"KPI ทีม",st:"ใช้งาน",desc:"รายงานผลงานน้องให้ลูกค้า",link:GH+"kpi.html"},
+ {biz:"jasmine",ic:"🔍",tp:"เมนูลูกค้า",name:"ระบบเอกสารโปร่งใส",st:"coming soon",desc:"ให้ลูกค้าเห็นเอกสาร/สถานะน้อง",link:""},
+ {biz:"jasmine",ic:"🖥️",tp:"เมนูแอดมิน",name:"A2 Admin Dashboard",st:"รอจับคู่ไลน์",desc:"ภาพรวมน้อง/ไซต์/สถานะจอเดียว",link:GH+"dashboard.html"},
+ {biz:"jasmine",ic:"📢",tp:"เมนูแอดมิน",name:"A3 Announce to Worker",st:"รอจับคู่ไลน์",desc:"ประกาศถึงน้อง 2 ภาษา เจาะกลุ่มไซต์",link:GH+"announce.html"},
+ {biz:"jasmine",ic:"💸",tp:"เมนูแอดมิน",name:"A4 Payroll / กู้ยืม-หักเงิน",st:"กำลังต่อ",desc:"สำรองจ่าย→ทยอยหัก + ใบเสร็จ (chawa-loan-v2 · รอทนายตรวจ · เปิดจาก Drive ยังไม่รัน)",link:FILE+"1yad4evYOwDPjCzYpNv1od0-5TNjFyaK7/view"},
+ {biz:"jasmine",ic:"🛍️",tp:"เมนูคนงาน",name:"W1 Shop",st:"รอจับคู่ไลน์",desc:"น้องสะสม/แลกของรางวัล",link:"https://liff.line.me/2010242926-nreePSO4"},
+ {biz:"jasmine",ic:"🤝",tp:"เมนูคนงาน",name:"W2 ปรึกษาพี่มาย / Grievance",st:"ใช้งาน",desc:"ร้องทุกข์ 7 หมวด แปลอัตโนมัติ (ลับ)",link:GH+"grievance.html"},
+ {biz:"jasmine",ic:"👯",tp:"เมนูคนงาน",name:"W3 แนะนำเพื่อน / Refer",st:"ใช้งาน",desc:"น้องชวนเพื่อนมาทำงาน ได้รางวัล",link:GH+"refer.html"},
+ {biz:"jasmine",ic:"🔗",tp:"เครื่องมือ",name:"จับคู่ไลน์ ↔ น้อง",st:"ใช้งาน",desc:"ผูก LINE ↔ การ์ด Trello (ตัวปลดบล็อกหลัก)",link:GH+"match.html"},
+ {biz:"jasmine",ic:"📉",tp:"เครื่องมือ",name:"สถิติร้องทุกข์",st:"ใช้งาน",desc:"ภาพรวม grievance (วงลับ)",link:GH+"grievance-stats.html"},
+ {biz:"jasmine",ic:"🗄️",tp:"ข้อมูล",name:"ชีตกลาง Workers",st:"ใช้งาน",desc:"ฐานข้อมูลกลางที่บอทอ่าน/เขียน",link:SS+"11Ei69KhMCuYkr5PDxSEzpKpldzs216YZJNn9W2UHyHQ/edit"},
+ {biz:"jasmine",ic:"⚙️",tp:"โค้ดระบบ",name:"Apps Script — โครงการทั้งหมด",st:"ใช้งาน",desc:"หน้ารวมทุกโปรเจกต์ (Ops/Admin/Sync/Guardian/Payroll)",link:SGHOME},
+ {biz:"jasmine",ic:"📱",tp:"เครื่องมือ",name:"LINE OA Manager",st:"ใช้งาน",desc:"จัดการ LINE Official Account (บอท/เมนู/ประกาศ)",link:"https://manager.line.biz"},
+ // ===== WEALTHLAND (จัดทีหลัง) =====
+ {biz:"wealth",ic:"🏡",tp:"โฟลเดอร์",name:"Wealthland Properties",st:"ใช้งาน",desc:"โฟลเดอร์รวมงานอสังหา",link:F+"1-HVa4k9sqlVGDtbNyT5d3owP8m0A_Tio"},
+ {biz:"wealth",ic:"🔎",tp:"ระบบหลัก",name:"Wealthland Finder",st:"กำลังทำ",desc:"ค้นหาบ้าน/ที่ดินออโต้ (Colab) · จัดรายละเอียดทีหลัง",link:F+"1e3obuyIo1GT6AxPqSGlhbbMLgJzWe-hg"},
+];
+const PILL={"ใช้งาน":"p-live","รอจับคู่ไลน์":"p-wait","กำลังต่อ":"p-prog","กำลังทำ":"p-prog","coming soon":"p-soon"};
+const BIZ={chawa:["🏢 CHAWA — เอกสาร · การเงิน · เคส","#ef4444"],jasmine:["🌸 JASMINE — ระบบ LINE บอท","#8b5cf6"],wealth:["🏡 WEALTHLAND — อสังหา (จัดทีหลัง)","#14b8a6"]};
+const secEl=document.getElementById('sections'),statEl=document.getElementById('stats');
+function stats(){
+  const t=SYS.length,live=SYS.filter(s=>s.st==="ใช้งาน").length,
+   prog=SYS.filter(s=>s.st==="กำลังต่อ"||s.st==="กำลังทำ").length,
+   other=SYS.filter(s=>s.st==="รอจับคู่ไลน์"||s.st==="coming soon").length;
+  const S=[["🧩","g-jasmine",t,"ระบบทั้งหมด"],["✅","g-wealth",live,"ใช้งานได้"],["🔧","g-jasmine",prog,"กำลังทำ/ต่อ"],["⏳","g-chawa",other,"รอ/เร็วๆนี้"]];
+  statEl.innerHTML=S.map(([i,g,n,c])=>`<div class="stat"><div class="ic ${g}">${i}</div><div><div class="num">${n}</div><div class="cap">${c}</div></div></div>`).join('');
+}
+function render(filter){
+  secEl.innerHTML='';
+  Object.keys(BIZ).forEach(key=>{
+    if(filter!=='all'&&filter!==key)return;
+    const items=SYS.filter(s=>s.biz===key);if(!items.length)return;
+    const [title,color]=BIZ[key];
+    const cards=items.map(s=>{
+      const pill=PILL[s.st]||'p-soon';
+      const btn=s.link?`<a class="open" href="${s.link}" target="_blank" rel="noopener">เปิด →</a>`:`<span class="open dim">ยังไม่พร้อม</span>`;
+      return `<div class="card"><div class="hd"><div class="ic g-${key}">${s.ic}</div><div><div class="tp">${s.tp}</div><h3>${s.name}</h3></div></div>
+        <p>${s.desc}</p><div class="row"><span class="pill ${pill}">${s.st}</span></div>${btn}</div>`;
+    }).join('');
+    secEl.insertAdjacentHTML('beforeend',
+      `<div class="sec"><h2><span class="bar" style="background:${color}"></span>${title} <span class="cnt">· ${items.length} รายการ</span></h2><div class="grid">${cards}</div></div>`);
+  });
+}
+document.getElementById('nav').addEventListener('click',e=>{
+  const a=e.target.closest('a[data-f]');if(!a)return;
+  document.querySelectorAll('#nav a').forEach(x=>x.classList.remove('active'));
+  a.classList.add('active');render(a.dataset.f);
+});
+stats();render('all');
+</script>
+</body>
+</html>
