@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZZ D1 ticket test</title>
+<!-- ═══════════════════════════════════════════════════════════════
+     ZZ-D1 — หน้าทดสอบตั๋วจริง (ฉบับโฮสต์ข้างนอก Apps Script) v2
+     2 ก.ย. 2026 — v2 เพิ่มกล่องกรอกรหัส LIFF/ที่อยู่บานเว็บ กันกรณีที่อยู่หน้าเว็บพิมพ์ผิด
+
+     ทำไมต้องมีไฟล์นี้: Apps Script เสิร์ฟหน้าเว็บใน "กรอบซ้อน" (iframe)
+     ซึ่ง liff.init() ทำงานไม่ได้ (พิสูจน์แล้ว 2 ก.ย. 15:25 — init ไม่ตอบใน 8 วินาที
+     ทั้งที่ LIFF SDK 2.31.0 โหลดสำเร็จ) ⇒ หน้า LIFF ต้องเป็นเอกสารระดับบนสุด
+
+     วิธีใช้: วางไฟล์นี้ในที่เก็บโค้ดหน้าเว็บ แล้วตั้ง Endpoint ของ LIFF app เป็น
+              https://<ที่อยู่หน้าเว็บ>/zz-d1-ticket-test.html?liff=<รหัส LIFF>&u=<ที่อยู่บานเว็บ>
+     ⇒ ไม่ต้องแก้ไฟล์นี้เลยแม้แต่ตัวอักษรเดียว และไม่มีที่อยู่บานเว็บฝังอยู่ในไฟล์
+
+     🧹 ใช้เสร็จแล้วลบไฟล์นี้ออกจากที่เก็บโค้ด
+     ═══════════════════════════════════════════════════════════════ -->
+<style>
+  body{font-family:-apple-system,"Segoe UI","Sarabun",sans-serif;margin:0;padding:14px;
+       background:#f6f7f9;color:#1a1a1a;font-size:15px;line-height:1.55}
+  h1{font-size:17px;margin:0 0 2px}
+  .sub{color:#666;font-size:12px;margin-bottom:12px}
+  .box{background:#fff;border:1px solid #dfe3e8;border-radius:10px;padding:11px;margin-bottom:10px}
+  button{width:100%;padding:12px;margin:5px 0;border:0;border-radius:8px;
+         background:#06c755;color:#fff;font-size:15px;font-weight:600}
+  button.g{background:#5b6b7c}
+  button:disabled{background:#c6ccd2}
+  input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cfd6dd;border-radius:8px;font-size:13px}
+  .lg{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.7;
+      white-space:pre-wrap;word-break:break-all}
+  .ok{color:#0a7d32}.bad{color:#c62828}.dim{color:#777}
+  .row{display:flex;gap:7px;padding:7px 0;border-bottom:1px solid #eee}
+  .row:last-child{border-bottom:0}
+  .ic{width:20px;flex:none}
+  .nm{font-weight:600;font-size:14px}
+  .dt{color:#666;font-size:12px;word-break:break-all}
+  code{background:#eef1f4;padding:1px 4px;border-radius:4px;font-size:12px}
+  .warn{background:#fff8e1;border-color:#ffe082}
+</style>
+</head>
+<body>
+
+<h1>🎫 D1 — ทดสอบตั๋วจริง</h1>
+<div class="sub">โปรเจกต์ทิ้ง · ต่อกับชีตปลอม · ไม่มีโทเคนไลน์ · ใช้เสร็จลบไฟล์นี้ทิ้ง</div>
+
+<div class="box"><div class="lg" id="บันทึก">เริ่ม…</div></div>
+
+<div class="box" id="กล่องที่อยู่" style="display:none">
+  <div class="dt" style="margin-bottom:6px">วางที่อยู่บานเว็บ (ลงท้าย /exec) แล้วกดจำไว้ — ทำครั้งเดียว</div>
+  <input id="ช่องที่อยู่" placeholder="https://script.google.com/macros/s/..../exec">
+  <button class="g" onclick="จำที่อยู่()">💾 จำไว้ในเครื่องนี้</button>
+</div>
+
+<div class="box" id="กล่องรหัส" style="display:none">
+  <div class="dt" style="margin-bottom:6px">วางรหัส LIFF (เลข-ตัวอักษร เช่น 1234567890-AbCdEfGh) แล้วกดจำไว้ — หน้าจะโหลดใหม่เอง</div>
+  <input id="ช่องรหัส" placeholder="1234567890-AbCdEfGh">
+  <button class="g" onclick="จำรหัสLIFF()">💾 จำรหัส LIFF ไว้ในเครื่องนี้</button>
+</div>
+
+<div class="box">
+  <button id="ปุ่มเชื่อม" onclick="ทดสอบเชื่อมต่อ()">🔌 1. ทดสอบการเชื่อมต่อ (ไม่ต้องใช้ตั๋ว)</button>
+  <button id="ปุ่มล็อกอิน" style="display:none" class="g" onclick="ล็อกอิน()">🔑 เข้าสู่ระบบ LINE</button>
+  <button id="ปุ่มยิง" disabled onclick="ยิงทั้งชุด()">▶ 2. ยิงชุดทดสอบ 4 ข้อ</button>
+  <button class="g" id="ปุ่มซ้ำ" disabled onclick="ยิงตั๋วใบเดิม()">⏱ 3. ยิงซ้ำด้วยตั๋วใบเดิม (ตอนครบ 1 ชม.)</button>
+</div>
+
+<div class="box" id="ผล"><span class="dt">ยังไม่ได้ยิง</span></div>
+
+<div class="box warn">
+  <b>อ่านผลยังไง</b><br>
+  · <code>AUTH_REQUIRED</code> = ตกที่ <b>ด่านชั้น 1 (ตัวตน)</b><br>
+  · <code>NO_ROLE</code> / <code>UNKNOWN_ACTION</code> = <b>ตั๋วผ่านชั้น 1 แล้ว</b><br>
+  🎯 ความต่างนี้คือหลักฐานว่าตั๋วจริงถูกยืนยันสำเร็จ
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+(function(){
+  var พ = new URLSearchParams(location.search);
+  window.รหัสLIFF  = พ.get('liff') || '';
+  window.ที่อยู่บาน = พ.get('u') || '';
+  try { if (!window.ที่อยู่บาน) window.ที่อยู่บาน = localStorage.getItem('zzD1Exec') || ''; } catch(e){}
+  try { if (!window.รหัสLIFF)  window.รหัสLIFF  = localStorage.getItem('zzD1Liff') || ''; } catch(e){}
+})();
+var ตั๋วแรก = null, บรรทัด = [];
+
+function จด(s, cls){
+  บรรทัด.push('<span class="' + (cls || 'dim') + '">' + s + '</span>');
+  document.getElementById('บันทึก').innerHTML = บรรทัด.join('<br>');
+}
+function จำที่อยู่(){
+  var v = document.getElementById('ช่องที่อยู่').value.trim();
+  if (v.indexOf('/exec') < 0) { จด('❌ ที่อยู่ต้องลงท้ายด้วย /exec', 'bad'); return; }
+  ที่อยู่บาน = v;
+  try { localStorage.setItem('zzD1Exec', v); } catch(e){}
+  document.getElementById('กล่องที่อยู่').style.display = 'none';
+  จด('✅ จำที่อยู่บานเว็บแล้ว (…' + v.slice(-12) + ')', 'ok');
+}
+function จำรหัสLIFF(){
+  var v = document.getElementById('ช่องรหัส').value.trim();
+  if (v.length < 5 || v.indexOf('-') < 0) { จด('❌ รหัส LIFF ต้องมีขีดกลาง เช่น 1234567890-AbCdEfGh', 'bad'); return; }
+  try { localStorage.setItem('zzD1Liff', v); } catch(e){ จด('❌ จำไม่ได้: '+e,'bad'); return; }
+  จด('✅ จำรหัส LIFF แล้ว — กำลังโหลดหน้าใหม่…', 'ok');
+  setTimeout(function(){ location.reload(); }, 600);
+}
+function ยิง(ก้อน){
+  if (!ที่อยู่บาน) return Promise.resolve({ ok:false, error:'ยังไม่ได้ตั้งที่อยู่บานเว็บ' });
+  return fetch(ที่อยู่บาน, {
+    method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body:JSON.stringify(ก้อน)
+  }).then(function(r){ return r.text(); })
+    .then(function(t){ try { return JSON.parse(t); } catch(e){ return { ok:false, error:'ไม่ใช่ JSON', ดิบ:String(t).slice(0,150) }; } })
+    .catch(function(e){ return { ok:false, error:'ยิงไม่ออก', ดิบ:String(e) }; });
+}
+function แถว(ผ่าน, ชื่อ, ราย){
+  return '<div class="row"><div class="ic">' + (ผ่าน?'✅':'❌') + '</div><div>' +
+         '<div class="nm ' + (ผ่าน?'ok':'bad') + '">' + ชื่อ + '</div><div class="dt">' + ราย + '</div></div></div>';
+}
+function ทดสอบเชื่อมต่อ(){
+  document.getElementById('ผล').innerHTML = '<span class="dt">กำลังยิงแบบไม่มีตั๋ว…</span>';
+  ยิง({ action:'my_score' }).then(function(r){
+    var ได้ = (r && r.error) ? r.error : JSON.stringify(r).slice(0,80);
+    var ผ่าน = (ได้ === 'AUTH_REQUIRED');
+    document.getElementById('ผล').innerHTML = แถว(ผ่าน, 'ยิงแบบไม่มีตั๋ว',
+      'ได้จริง: <code>' + ได้ + '</code>' + (r && r.ดิบ ? '<br>' + r.ดิบ : '') + '<br>' +
+      (ผ่าน ? '⇒ <b class="ok">เชื่อมต่อบานเว็บได้ และด่านชั้น 1 ทำงาน</b>' : '⇒ ยังไม่ถึงด่าน'));
+  });
+}
+function ล็อกอิน(){ try { จด('กำลังเรียก liff.login() …'); liff.login(); } catch(e){ จด('❌ liff.login ล้มเหลว: '+e,'bad'); } }
+function ยิงทั้งชุด(){
+  var ตั๋ว = null; try { ตั๋ว = liff.getIDToken(); } catch(e){}
+  if (!ตั๋ว) { จด('❌ ยังไม่มีตั๋ว','bad'); return; }
+  ตั๋วแรก = ตั๋ว;
+  document.getElementById('ปุ่มยิง').disabled = true;
+  document.getElementById('ผล').innerHTML = '<span class="dt">กำลังยิง 4 ข้อ…</span>';
+  var งาน = [
+    { ชื่อ:'1. ไม่มีตั๋ว', ก้อน:{ action:'my_score' }, คาด:'AUTH_REQUIRED' },
+    { ชื่อ:'2. ตั๋วมั่ว', ก้อน:{ action:'my_score', idToken:'abc.def.ghi' }, คาด:'AUTH_REQUIRED' },
+    { ชื่อ:'3. 🔴 ตั๋วจริง → ควรได้ NO_ROLE', ก้อน:{ action:'my_score', idToken:ตั๋ว }, คาด:'NO_ROLE' },
+    { ชื่อ:'4. 🔴 ตั๋วจริง + คำสั่งไม่มีจริง → ควรได้ UNKNOWN_ACTION', ก้อน:{ action:'ไม่มีคำสั่งนี้', idToken:ตั๋ว }, คาด:'UNKNOWN_ACTION' }
+  ];
+  var html = '', i = 0;
+  (function ต่อไป(){
+    if (i >= งาน.length) {
+      html += '<div class="row"><div class="ic">📌</div><div class="dt">ข้อ 3 และ 4 ขึ้น ✅ = <b>ตั๋วจริงเดินผ่านด่านชั้น 1 สำเร็จ</b></div></div>';
+      document.getElementById('ผล').innerHTML = html;
+      document.getElementById('ปุ่มยิง').disabled = false;
+      document.getElementById('ปุ่มซ้ำ').disabled = false;
+      return;
+    }
+    var ง = งาน[i++];
+    ยิง(ง.ก้อน).then(function(r){
+      var ได้ = (r && r.error) ? r.error : (r && r.ok ? 'ok:true' : JSON.stringify(r).slice(0,60));
+      html += แถว(ได้ === ง.คาด, ง.ชื่อ, 'ได้จริง: <code>' + ได้ + '</code>' + (r && r.ดิบ ? ' · ' + r.ดิบ : ''));
+      document.getElementById('ผล').innerHTML = html;
+      ต่อไป();
+    });
+  })();
+}
+function ยิงตั๋วใบเดิม(){
+  if (!ตั๋วแรก) return;
+  document.getElementById('ผล').innerHTML = '<span class="dt">กำลังยิงด้วยตั๋วใบเดิม…</span>';
+  ยิง({ action:'my_score', idToken: ตั๋วแรก }).then(function(r){
+    var ได้ = (r && r.error) ? r.error : 'ok:true';
+    var หมด = (ได้ === 'AUTH_REQUIRED');
+    document.getElementById('ผล').innerHTML = แถว(หมด, '5. ยิงซ้ำด้วยตั๋วใบเดิม',
+      'ได้จริง: <code>' + ได้ + '</code><br>' +
+      (หมด ? '<b class="ok">ตั๋วใบเดิมถูกปฏิเสธ = ตั๋วหมดอายุ และด่านจับได้</b> (เคสของ iPad ที่เปิดค้าง)'
+           : 'ตั๋วยังไม่หมดอายุ — รอครบ ~1 ชม. แล้วกดใหม่ <b>โดยไม่รีเฟรชหน้า</b>'));
+  });
+}
+
+/* ═══════ เริ่มทำงาน ═══════ */
+จด('▶ สคริปต์เริ่มทำงานแล้ว', 'ok');
+จด('อยู่ในกรอบซ้อน (iframe): ' + (window.top !== window.self ? '⚠️ ใช่' : 'ไม่ — ดี'));
+จด('ที่อยู่บานเว็บ: ' + (ที่อยู่บาน ? '…' + String(ที่อยู่บาน).slice(-12) : '❌ ยังไม่ได้ตั้ง'));
+จด('รหัส LIFF: ' + (รหัสLIFF ? String(รหัสLIFF).split('-')[0] + '-…' : '❌ ไม่มีในที่อยู่หน้าเว็บ'));
+if (!ที่อยู่บาน) document.getElementById('กล่องที่อยู่').style.display = 'block';
+if (!รหัสLIFF)  document.getElementById('กล่องรหัส').style.display  = 'block';
+
+if (typeof liff === 'undefined') {
+  จด('❌ โหลด LIFF SDK ไม่ได้', 'bad');
+} else if (!รหัสLIFF) {
+  จด('❌ ไม่มีรหัส LIFF — ต่อท้ายที่อยู่หน้าเว็บด้วย ?liff=<รหัส LIFF> หรือกรอกในกล่องข้างล่าง', 'bad');
+  document.getElementById('กล่องรหัส').style.display = 'block';
+} else {
+  จด('✅ โหลด LIFF SDK ได้ (เวอร์ชัน ' + (liff.getVersion ? liff.getVersion() : '?') + ')', 'ok');
+  var จบแล้ว = false;
+  setTimeout(function(){ if (!จบแล้ว) จด('⏱ liff.init ไม่ตอบภายใน 8 วินาที — ส่งภาพนี้ให้ผม', 'bad'); }, 8000);
+  try {
+    liff.init({ liffId: รหัสLIFF }).then(function(){
+      จบแล้ว = true;
+      จด('✅ liff.init สำเร็จ', 'ok');
+      var ในแอป = false, ล็อกแล้ว = false;
+      try { ในแอป = liff.isInClient(); } catch(e){}
+      try { ล็อกแล้ว = liff.isLoggedIn(); } catch(e){}
+      จด('เปิดในแอป LINE: ' + (ในแอป?'ใช่':'ไม่') + ' · ล็อกอินแล้ว: ' + (ล็อกแล้ว?'ใช่':'ไม่'));
+      var t = null; try { t = liff.getIDToken(); } catch(e){ จด('getIDToken โยน error: '+e,'bad'); }
+      if (t) { จด('✅ ได้ตั๋วแล้ว (ยาว ' + t.length + ' ตัวอักษร) — กดปุ่ม 2 ได้เลย','ok');
+               document.getElementById('ปุ่มยิง').disabled = false; }
+      else { จด('❌ ยังไม่ได้ตั๋ว','bad');
+             จด(ล็อกแล้ว ? '⇒ ล็อกอินแล้วแต่ไม่ได้ตั๋ว = แอป LIFF นี้ไม่ได้เปิดสโคป openid'
+                         : '⇒ ยังไม่ได้ล็อกอิน — กดปุ่มเข้าสู่ระบบ','bad');
+             if (!ล็อกแล้ว) document.getElementById('ปุ่มล็อกอิน').style.display = 'block'; }
+    }).catch(function(e){
+      จบแล้ว = true;
+      จด('❌ liff.init ล้มเหลว: ' + ((e&&e.message)?e.message:e) + (e&&e.code?' ['+e.code+']':''), 'bad');
+    });
+  } catch (e) { จบแล้ว = true; จด('❌ เรียก liff.init ไม่ได้เลย: '+e, 'bad'); }
+}
+</script>
+</body>
+</html>
