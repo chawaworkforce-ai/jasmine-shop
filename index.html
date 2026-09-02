@@ -73,9 +73,21 @@
   .note{font-size:12px;color:var(--muted);margin-top:8px}
   #debug{margin:16px;padding:10px;border-radius:10px;background:#1f241b;color:#9fe39f;
     font:12px/1.5 monospace;white-space:pre-wrap;display:none}
+
+  /* ── D1-ความเร็ว 2 ก.ย. 2026 · โหมด "ทางผ่าน" ──
+     เปิดผ่านลิงก์ LIFF ที่มีชื่อหน้าต่อท้าย → LINE พามาหน้านี้ก่อนเสมอ แล้ว liff.init() จะพาไปหน้าจริง
+     ระหว่างนั้นซ่อนทุกอย่างที่เป็น "ร้านค้า" ไว้ เหลือแต่วงหมุน จะได้ไม่เห็นข้อความพม่าแวบมา
+     ใช้ visibility ไม่ใช่ display เพื่อไม่ให้หน้ากระตุกตอนปลดโหมด */
+  html.liff-pass header,
+  html.liff-pass .userbar,
+  html.liff-pass #loadingText,
+  html.liff-pass .errbox { visibility:hidden !important; }
 </style>
 </head>
 <body>
+<script>/* D1-ความเร็ว: ต้องรันก่อนหน้าถูกวาด ไม่งั้นข้อความพม่าจะแวบให้เห็น */
+if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className += ' liff-pass';
+</script>
 
   <header>
     <div class="brand"><span class="dot">🌼</span><span>Jasmine Shop</span></div>
@@ -167,27 +179,65 @@
       return p.desc_my || p.desc_en || '';
     }
 
-    function start(){
+    /* ══ D1-ความเร็ว · 2 ก.ย. 2026 ═══════════════════════════════════════════════
+       ปัญหา: กดเมนู Ops อะไรก็ตาม จะเห็นจอร้านค้า + ข้อความพม่าแวบก่อนเสมอ
+       สาเหตุ: LIFF app ตัวเดียวใช้ทุกหน้า · LINE โหลด "Endpoint URL" (= หน้านี้) ก่อนเสมอ
+               แล้วส่ง liff.state มา จากนั้น liff.init() ถึงพาไปหน้าจริง — เป็นกลไกปกติของ LIFF ไม่ใช่บั๊ก
+       วิธีแก้: หน้านี้ยอมเป็น "ทางผ่าน" — ไม่โชว์ร้าน ไม่โหลดโปรไฟล์ ไม่โหลดสินค้า แล้วปล่อยให้ SDK พาไป
+       🔴 ห้ามเปลี่ยน URL เอง · ห้ามแตะ liff.state · ห้าม redirect ก่อน liff.init() เสร็จ (เอกสาร LINE)
+       ตัวกันสำรอง: ถ้า 5 วินาทีแล้วยังอยู่หน้านี้ = SDK ไม่ได้พาไปไหน → เปิดร้านตามปกติ
+                     (ถ้า SDK พาไปแล้ว หน้านี้จะถูกทิ้ง ตัวจับเวลาไม่มีวันทำงาน)
+       ══════════════════════════════════════════════════════════════════════════ */
+    var เป็นทางผ่าน_ = /[?&]liff\.state=/.test(location.search);
+    var ร้านเปิดแล้ว_ = false;
+
+    function ปลดโหมดทางผ่าน_(){
+      document.documentElement.className =
+        document.documentElement.className.replace(/\s*liff-pass/g, '');
+    }
+
+    /** ใส่โปรไฟล์ลงแถบบน แล้วโหลดสินค้า (ของเดิม แยกออกมาให้เรียกได้ 2 ทาง) */
+    function ใส่โปรไฟล์แล้วโหลดสินค้า_(p){
+      if(!p){ loadProducts(); return; }
+      profile = { userId:p.userId, displayName:p.displayName, pictureUrl:p.pictureUrl };
+      dbg('profile='+profile.displayName);
+      $('uName').textContent = profile.displayName || '';
+      if(profile.pictureUrl) $('uPic').src = profile.pictureUrl;
+      $('userbar').style.display='flex';
+      loadProducts();
+    }
+
+    /** เปิดร้านตามปกติ — เรียกได้ทั้งจากทางปกติ และจากตัวกันสำรอง 5 วิ
+     *  เขียนให้ทนทาง: ถ้า liff.init() ยังไม่เสร็จตอนตัวกันสำรองทำงาน ก็ยังเปิดร้านได้ (แค่ไม่มีชื่อบนแถบ) */
+    function เปิดร้านตามปกติ_(){
+      if(ร้านเปิดแล้ว_) return; ร้านเปิดแล้ว_ = true;
+      ปลดโหมดทางผ่าน_();
       $('loadingText').textContent = t('open');
-      if(typeof liff === 'undefined'){ showError('LIFF SDK load failed'); return; }
+      try {
+        if(!liff.isLoggedIn() && !liff.isInClient()){
+          $('loadingText').textContent = t('loginNeed'); liff.login(); return;
+        }
+        liff.getProfile()
+          .then(ใส่โปรไฟล์แล้วโหลดสินค้า_)
+          .catch(function(){ loadProducts(); });      // โปรไฟล์ล้ม ก็ยังต้องเปิดร้านได้
+      } catch(e){ loadProducts(); }                    // init ยังไม่เสร็จ → ข้ามโปรไฟล์ เปิดร้านเลย
+    }
+
+    function start(){
+      if(!เป็นทางผ่าน_) $('loadingText').textContent = t('open');
+      if(typeof liff === 'undefined'){ ปลดโหมดทางผ่าน_(); showError('LIFF SDK load failed'); return; }
+      if(เป็นทางผ่าน_) setTimeout(เปิดร้านตามปกติ_, 5000);   // ตัวกันสำรอง
       liff.init({ liffId: LIFF_ID })
         .then(function(){
-          dbg('liff.init OK isInClient='+liff.isInClient()+' isLoggedIn='+liff.isLoggedIn());
-          if(!liff.isLoggedIn() && !liff.isInClient()){
-            $('loadingText').textContent = t('loginNeed'); liff.login(); return null;
-          }
-          return liff.getProfile();
+          dbg('liff.init OK isInClient='+liff.isInClient()+' isLoggedIn='+liff.isLoggedIn()+' ทางผ่าน='+เป็นทางผ่าน_);
+          if(เป็นทางผ่าน_) return null;                 // 🔴 SDK กำลังพาไปหน้าจริง — จบแค่นี้ ห้ามทำอะไรต่อ
+          เปิดร้านตามปกติ_();
+          return null;
         })
-        .then(function(p){
-          if(!p) return;
-          profile = { userId:p.userId, displayName:p.displayName, pictureUrl:p.pictureUrl };
-          dbg('profile='+profile.displayName);
-          $('uName').textContent = profile.displayName || '';
-          if(profile.pictureUrl) $('uPic').src = profile.pictureUrl;
-          $('userbar').style.display='flex';
-          loadProducts();
-        })
-        .catch(function(err){ showError('LIFF init failed: '+(err && err.message ? err.message : err)); });
+        .catch(function(err){
+          ปลดโหมดทางผ่าน_();
+          showError('LIFF init failed: '+(err && err.message ? err.message : err));
+        });
     }
 
     function loadProducts(){

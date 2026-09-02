@@ -55,6 +55,23 @@
   const LIFF_ID = "2010242926-nreePSO4";
   const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
 
+/* ── D1-ความเร็ว · 2 ก.ย. 2026 ─────────────────────────────────────────────
+   เลิกยิงเน็ตขอโปรไฟล์ทุกครั้งที่เปิดหน้า
+   ทำไม: liff.getProfile() คุยกับเซิร์ฟเวอร์ LINE 1 รอบ (ราว 0.3-0.8 วิ) ทุกครั้ง
+         ทั้งที่ตั๋วที่อยู่ในมือเราอยู่แล้วมีทั้งรหัสไลน์และชื่ออยู่ข้างใน
+         และตั้งแต่มีด่าน D1 หลังบ้านก็ไม่เชื่อ userId ที่หน้าเว็บส่งไปแล้วด้วย
+   ปลอดภัย: ถ้าอ่านจากตั๋วไม่ได้ (เช่น LIFF app ไม่ได้ติ๊ก openid) จะถอยไปใช้วิธีเดิมเอง
+            ⇒ แย่ที่สุดคือ "เท่าเดิม" เป็นไปไม่ได้ที่จะพังเพราะก้อนนี้
+   รูปร่างที่คืนออกมาเหมือน getProfile() เป๊ะ ⇒ โค้ดส่วนอื่นไม่ต้องแก้เลย */
+function โปรไฟล์เร็ว_() {
+  try {
+    var d = liff.getDecodedIDToken();
+    if (d && d.sub) return { userId: d.sub, displayName: d.name || '', pictureUrl: d.picture || '' };
+  } catch (e) {}
+  return null;                       // อ่านไม่ได้ = คืน null ให้ผู้เรียกถอยไปใช้ getProfile() เดิม
+}
+
+
 /* ═══════════════════════════════════════════════════════════════════
    D1 — เติม "ตั๋วยืนยันตัวตน" ให้ทุกคำขอที่ยิงไปหลังบ้าน   (2 ก.ย. 2026)
    แทรกที่เดียว ครอบทุกจุดที่หน้านี้ยิง API_URL — ไม่ต้องแก้ทีละจุด
@@ -128,7 +145,7 @@
     try{
       await liff.init({ liffId: LIFF_ID });
       if(!liff.isLoggedIn()){ liff.login(); return; }
-      userId = (await liff.getProfile()).userId;
+      userId = ((โปรไฟล์เร็ว_() || await liff.getProfile())).userId;
       await load();
     }catch(e){ document.getElementById('status').textContent = "เปิดในแอป LINE นะครับ ("+(e.message||e)+")"; }
   }
