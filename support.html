@@ -46,6 +46,73 @@
 <script>
   const LIFF_ID = "2010242926-nreePSO4";
   const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+
+/* ═══════════════════════════════════════════════════════════════════
+   D1 — เติม "ตั๋วยืนยันตัวตน" ให้ทุกคำขอที่ยิงไปหลังบ้าน   (2 ก.ย. 2026)
+   แทรกที่เดียว ครอบทุกจุดที่หน้านี้ยิง API_URL — ไม่ต้องแก้ทีละจุด
+   · เติม idToken อัตโนมัติทุกคำขอ
+   · คำสั่ง "อ่าน" ยิงไม่ออก → ลองใหม่อัตโนมัติ 1 ครั้ง (สคริปต์หลังบ้านเย็นตอนคำขอแรกของวัน)
+   · คำสั่ง "เขียน" ห้ามลองใหม่เด็ดขาด — จะได้ข้อมูลซ้ำ
+   · ตั๋วหมดอายุ (~1 ชม.) → ขึ้นหน้าจอ "เข้าใหม่" ให้กดปุ่มเดียว
+   ═══════════════════════════════════════════════════════════════════ */
+(function () {
+  var _ยิงเดิม = window.fetch;
+  var คำสั่งเขียน_ = { report:1, kpi:1, support:1, grievance:1, refer_worker:1, refer_broker:1,
+                       update_status:1, announce:1, link_member:1, unlink_member:1 };
+  var เตือนแล้ว_ = false;
+
+  function หน้าเข้าใหม่_(ไม่มีตั๋วเลย) {
+    if (เตือนแล้ว_) return; เตือนแล้ว_ = true;
+    var d = document.createElement('div');
+    d.setAttribute('style', 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;' +
+      'flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;' +
+      'font-family:-apple-system,"Segoe UI","Sarabun",sans-serif');
+    if (ไม่มีตั๋วเลย) {
+      d.innerHTML = '<div style="font-size:56px">🔧</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
+        'App setup incomplete — please tell the admin</div>' +
+        '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>';
+    } else {
+      d.innerHTML = '<div style="font-size:56px">⏱️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
+        '<button id="_d1เข้าใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>';
+    }
+    document.body.appendChild(d);
+    var b = document.getElementById('_d1เข้าใหม่');
+    if (b) b.onclick = function () { location.reload(); };
+  }
+
+  window.fetch = function (u, o) {
+    if (String(u) !== API_URL) return _ยิงเดิม.apply(this, arguments);
+
+    var ก้อน = {};
+    try { ก้อน = JSON.parse((o && o.body) || '{}'); } catch (e) { ก้อน = {}; }
+    var ตั๋ว = null;
+    try { ตั๋ว = liff.getIDToken(); } catch (e) {}
+    if (ตั๋ว) ก้อน.idToken = ตั๋ว;
+
+    var opt = { method: 'POST', body: JSON.stringify(ก้อน) };
+    if (o) { for (var k in o) if (k !== 'method' && k !== 'body') opt[k] = o[k]; }
+
+    var ลองใหม่ได้ = !คำสั่งเขียน_[ก้อน.action];
+    function ยิง() { return _ยิงเดิม(u, opt); }
+
+    return ยิง()['catch'](function (e) {
+      if (!ลองใหม่ได้) throw e;                      // คำสั่งเขียน: ห้ามลองใหม่ จะได้ข้อมูลซ้ำ
+      return new Promise(function (r) { setTimeout(r, 1500); }).then(ยิง);
+    }).then(function (res) {
+      try {
+        res.clone().json().then(function (j) {
+          if (j && j.ok === false && j.error === 'AUTH_REQUIRED') หน้าเข้าใหม่_(!ตั๋ว);
+        })['catch'](function () {});
+      } catch (e) {}
+      return res;
+    });
+  };
+})();
   let profile = null;
 
   async function main(){
