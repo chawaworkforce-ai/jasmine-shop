@@ -81,28 +81,122 @@ function โปรไฟล์เร็ว_() {
                        update_status:1, announce:1, link_member:1, unlink_member:1 };
   var เตือนแล้ว_ = false;
 
-  function หน้าเข้าใหม่_(ไม่มีตั๋วเลย) {
-    if (เตือนแล้ว_) return; เตือนแล้ว_ = true;
+  function หนี_(s) {
+    return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c];
+    });
+  }
+
+  /* จอเต็มหน้าที่ใช้ร่วมกันทุกกรณี — ทับหน้าเดิมไว้ ไม่ให้น้องเห็นข้อความดิบ */
+  function จอ_(html, ปิดได้) {
+    if (เตือนแล้ว_) return;
+    เตือนแล้ว_ = true;
     var d = document.createElement('div');
+    d.id = '_d1จอ';
     d.setAttribute('style', 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;' +
-      'flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;' +
-      'font-family:-apple-system,"Segoe UI","Sarabun",sans-serif');
+      'flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;' +
+      'text-align:center;overflow:auto;-webkit-overflow-scrolling:touch;' +
+      'font-family:-apple-system,"Segoe UI","Sarabun","Noto Sans Myanmar","Padauk",sans-serif');
+    d.innerHTML = html;
+    document.body.appendChild(d);
+
+    var โหลด = document.getElementById('_d1โหลดใหม่');
+    if (โหลด) โหลด.onclick = function () { location.reload(); };
+
+    var ปิด = document.getElementById('_d1ปิด');
+    if (ปิด) ปิด.onclick = function () {
+      var x = document.getElementById('_d1จอ');
+      if (x && x.parentNode) x.parentNode.removeChild(x);
+      เตือนแล้ว_ = false;
+    };
+
+    var สลับ = document.getElementById('_d1สลับ');
+    if (สลับ) สลับ.onclick = function () {
+      var x = document.getElementById('_d1รายละเอียด');
+      if (x) x.style.display = (x.style.display === 'none' ? 'block' : 'none');
+    };
+  }
+
+  function หน้าเข้าใหม่_(ไม่มีตั๋วเลย) {
     if (ไม่มีตั๋วเลย) {
-      d.innerHTML = '<div style="font-size:56px">🔧</div>' +
+      จอ_('<div style="font-size:56px">🔧</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
         '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
         'App setup incomplete — please tell the admin</div>' +
-        '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>';
+        '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>');
     } else {
-      d.innerHTML = '<div style="font-size:56px">⏱️</div>' +
+      จอ_('<div style="font-size:56px">⏱️</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
         '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
-        '<button id="_d1เข้าใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>';
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>');
     }
-    document.body.appendChild(d);
-    var b = document.getElementById('_d1เข้าใหม่');
-    if (b) b.onclick = function () { location.reload(); };
+  }
+
+  /* ── ของใหม่ 3 ก.ย. 2026 ──────────────────────────────────────────
+     คำตอบกลับมาไม่ใช่ JSON (เช่นได้หน้าเว็บ HTML แทน)
+     เดิม: `await res.json()` พัง → เอาข้อความดิบภาษาอังกฤษไปแปะบนจอน้อง
+     ใหม่: ขึ้นจอ 2 ภาษา + ปุ่มลองใหม่ + รายละเอียดสำหรับผู้ดูแลให้ถ่ายรูปส่งมา
+     · คำสั่งอ่าน  → ลองใหม่อัตโนมัติ 1 ครั้งก่อน แล้วค่อยขึ้นจอ
+     · คำสั่งเขียน → ห้ามลองใหม่เด็ดขาด (จะได้ข้อมูลซ้ำ) ขึ้นจอ "อย่าส่งซ้ำ"
+     ──────────────────────────────────────────────────────────────── */
+  function กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ) {
+    var เวลา = '';
+    try { เวลา = new Date().toLocaleString(); } catch (e) {}
+    return '<div id="_d1สลับ" style="margin-top:20px;font-size:12px;color:#9a9a9a;' +
+      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details</div>' +
+      '<div id="_d1รายละเอียด" style="display:none;margin-top:10px;max-width:100%;' +
+      'background:#f4f4f4;border-radius:10px;padding:10px 12px;font-size:11px;color:#444;' +
+      'text-align:left;word-break:break-all;line-height:1.5;-webkit-user-select:text;user-select:text">' +
+      '<b>D1-ERR</b> · not-json<br>' +
+      'code: ' + หนี_(รหัส) + '<br>' +
+      'action: ' + หนี_(คำสั่ง) + '<br>' +
+      'time: ' + หนี_(เวลา) + '<br>' +
+      'body: ' + หนี_(String(ต้นข้อความ || '').replace(/\s+/g, ' ').slice(0, 300)) +
+      '</div>';
+  }
+
+  function หน้าคำตอบเพี้ยน_(เขียน, รหัส, คำสั่ง, ต้นข้อความ) {
+    if (เขียน) {
+      จอ_('<div style="font-size:56px">⚠️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ส่งแล้ว แต่ยังไม่รู้ผล</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
+        'Sent, but result unknown. Do NOT send again.<br>' +
+        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
+        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    } else {
+      จอ_('<div style="font-size:56px">📡</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">โหลดข้อมูลไม่สำเร็จ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
+        'Could not load. Please try again.<br>' +
+        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    }
+  }
+
+  /* คืนวัตถุที่หน้าเว็บเรียก .json() / .text() / .clone() ได้เหมือน Response เดิม
+     (จำเป็นเพราะเราอ่าน body ไปแล้ว 1 ครั้ง อ่านซ้ำจาก Response จริงไม่ได้) */
+  function ห่อ_(r) {
+    var เนื้อ = r.txt;
+    var วัตถุ = {
+      ok: r.res ? !!r.res.ok : false,
+      status: r.res ? r.res.status : 0,
+      statusText: r.res ? r.res.statusText : '',
+      headers: r.res ? r.res.headers : null,
+      text: function () { return Promise.resolve(เนื้อ); },
+      json: function () {
+        return r.ดี ? Promise.resolve(r.j)
+                    : Promise.reject(new SyntaxError('D1: server did not return JSON'));
+      }
+    };
+    วัตถุ.clone = function () { return วัตถุ; };
+    return วัตถุ;
   }
 
   window.fetch = function (u, o) {
@@ -117,19 +211,42 @@ function โปรไฟล์เร็ว_() {
     var opt = { method: 'POST', body: JSON.stringify(ก้อน) };
     if (o) { for (var k in o) if (k !== 'method' && k !== 'body') opt[k] = o[k]; }
 
-    var ลองใหม่ได้ = !คำสั่งเขียน_[ก้อน.action];
-    function ยิง() { return _ยิงเดิม(u, opt); }
+    var เขียน = !!คำสั่งเขียน_[ก้อน.action];
+    var ลองใหม่ได้ = !เขียน;
 
-    return ยิง()['catch'](function (e) {
-      if (!ลองใหม่ได้) throw e;                      // คำสั่งเขียน: ห้ามลองใหม่ จะได้ข้อมูลซ้ำ
-      return new Promise(function (r) { setTimeout(r, 1500); }).then(ยิง);
-    }).then(function (res) {
-      try {
-        res.clone().json().then(function (j) {
-          if (j && j.ok === false && j.error === 'AUTH_REQUIRED') หน้าเข้าใหม่_(!ตั๋ว);
-        })['catch'](function () {});
-      } catch (e) {}
-      return res;
+    function รอ_(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    function ยิงแล้วอ่าน_() {
+      return _ยิงเดิม(u, opt).then(function (res) {
+        return res.text().then(function (txt) {
+          var j = null, ดี = false;
+          try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          return { res: res, txt: txt, j: j, ดี: ดี };
+        }, function () {
+          return { res: res, txt: '', j: null, ดี: false };
+        });
+      });
+    }
+
+    /* ชั้น 1 — ยิงไม่ออกเลย (เน็ตหลุด): ลองใหม่ 1 ครั้งเฉพาะคำสั่งอ่าน (ของเดิม) */
+    var งาน = ยิงแล้วอ่าน_()['catch'](function (e) {
+      if (!ลองใหม่ได้) throw e;
+      return รอ_(1500).then(ยิงแล้วอ่าน_);
+    });
+
+    /* ชั้น 2 — ยิงออกแต่คำตอบไม่ใช่ JSON: ลองใหม่ 1 ครั้งเฉพาะคำสั่งอ่าน (ของใหม่) */
+    งาน = งาน.then(function (r) {
+      if (r.ดี || !ลองใหม่ได้) return r;
+      return รอ_(1200).then(ยิงแล้วอ่าน_)['catch'](function () { return r; });
+    });
+
+    return งาน.then(function (r) {
+      if (!r.ดี) {
+        หน้าคำตอบเพี้ยน_(เขียน, r.res ? r.res.status : 0, ก้อน.action, r.txt);
+      } else if (r.j && r.j.ok === false && r.j.error === 'AUTH_REQUIRED') {
+        หน้าเข้าใหม่_(!ตั๋ว);
+      }
+      return ห่อ_(r);
     });
   };
 })();
