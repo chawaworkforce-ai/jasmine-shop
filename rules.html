@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Company Rules</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; --red:#a3322b; --green:#256544; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Myanmar","Padauk",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--blue); color:#fff; padding:18px 16px; position:sticky; top:0; z-index:5; }
+  header h1{ font-size:18px; margin:0; font-weight:700; }
+  header p{ font-size:13px; margin:5px 0 0; opacity:.9; }
+  #status{ padding:30px 16px; text-align:center; color:var(--muted); font-size:14px; line-height:1.6; }
+  #status button{ margin-top:14px; background:var(--blue); color:#fff; border:0; border-radius:10px; padding:10px 18px; font-size:14px; font-family:inherit; }
+  .wrap{ padding:14px 14px 40px; max-width:560px; margin:0 auto; }
+
+  /* แถบสลับภาษา */
+  .langbar{ display:flex; gap:8px; padding:10px 14px 0; max-width:560px; margin:0 auto; }
+  .langbar button{ flex:1; background:#fff; color:var(--blue-d); border:1px solid var(--line); border-radius:12px;
+                   padding:9px 0; font-size:14px; font-weight:700; font-family:inherit; }
+  .langbar button[aria-pressed="true"]{ background:var(--blue); color:#fff; border-color:var(--blue); }
+
+  /* หมวด — กดพับ/กางได้ */
+  .cat{ background:#fff; border:1px solid var(--line); border-radius:16px; margin-bottom:12px; overflow:hidden; }
+  .cat > summary{ list-style:none; cursor:pointer; padding:14px 16px; font-size:16px; font-weight:700;
+                  color:var(--blue-d); display:flex; justify-content:space-between; align-items:center; }
+  .cat > summary::-webkit-details-marker{ display:none; }
+  .cat > summary .arw{ font-size:12px; color:var(--muted); transition:transform .15s; }
+  .cat[open] > summary .arw{ transform:rotate(90deg); }
+  .item{ padding:10px 16px 14px; border-top:1px solid #f1f4f2; }
+  .item h3{ margin:0 0 4px; font-size:14px; font-weight:700; line-height:1.4; }
+  .item p{ margin:0; font-size:14px; line-height:1.65; color:#3d4b44; white-space:pre-wrap; }
+  .num{ color:var(--muted); font-weight:400; font-size:12px; margin-right:6px; }
+  .foot{ text-align:center; color:var(--muted); font-size:12px; padding:6px 0 0; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>📋 Company Rules / ကုမ္ပဏီစည်းမျဉ်း</h1>
+    <p id="hsub">Connecting…</p>
+  </header>
+
+  <div class="langbar" id="langbar" style="display:none">
+    <button id="btn-en" type="button" aria-pressed="true">English</button>
+    <button id="btn-mm" type="button" aria-pressed="false">မြန်မာ</button>
+  </div>
+
+  <div id="status">Loading… / ခဏစောင့်ပါ…</div>
+  <div class="wrap" id="wrap" style="display:none"></div>
+
+<script>
+  /* 🔴 2 บรรทัดข้างล่างนี้ ต้องก๊อปมาจากหน้าเว็บที่ใช้อยู่จริง — ห้ามพิมพ์เอง
+     LIFF_ID  : ต้องสร้าง LIFF app ใหม่สำหรับหน้านี้ในคอนโซล LINE แล้วเอารหัสมาใส่
+     API_URL  : ก๊อปจากหน้าใดก็ได้ใน 10 หน้าเดิม (ทุกหน้าใช้บานเดียวกัน) */
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+
+/* ── D1-ความเร็ว · 2 ก.ย. 2026 ─────────────────────────────────────────────
+   เลิกยิงเน็ตขอโปรไฟล์ทุกครั้งที่เปิดหน้า
+   ทำไม: liff.getProfile() คุยกับเซิร์ฟเวอร์ LINE 1 รอบ (ราว 0.3-0.8 วิ) ทุกครั้ง
+         ทั้งที่ตั๋วที่อยู่ในมือเราอยู่แล้วมีทั้งรหัสไลน์และชื่ออยู่ข้างใน
+         และตั้งแต่มีด่าน D1 หลังบ้านก็ไม่เชื่อ userId ที่หน้าเว็บส่งไปแล้วด้วย
+   ปลอดภัย: ถ้าอ่านจากตั๋วไม่ได้ (เช่น LIFF app ไม่ได้ติ๊ก openid) จะถอยไปใช้วิธีเดิมเอง
+            ⇒ แย่ที่สุดคือ "เท่าเดิม" เป็นไปไม่ได้ที่จะพังเพราะก้อนนี้
+   รูปร่างที่คืนออกมาเหมือน getProfile() เป๊ะ ⇒ โค้ดส่วนอื่นไม่ต้องแก้เลย */
+function โปรไฟล์เร็ว_() {
+  try {
+    var d = liff.getDecodedIDToken();
+    if (d && d.sub) return { userId: d.sub, displayName: d.name || '', pictureUrl: d.picture || '' };
+  } catch (e) {}
+  return null;                       // อ่านไม่ได้ = คืน null ให้ผู้เรียกถอยไปใช้ getProfile() เดิม
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   D1 — เติม "ตั๋วยืนยันตัวตน" ให้ทุกคำขอที่ยิงไปหลังบ้าน   (2 ก.ย. 2026)
+   แทรกที่เดียว ครอบทุกจุดที่หน้านี้ยิง API_URL — ไม่ต้องแก้ทีละจุด
+   · เติม idToken อัตโนมัติทุกคำขอ
+   · คำสั่ง "อ่าน" ยิงไม่ออก → ลองใหม่อัตโนมัติ 1 ครั้ง (สคริปต์หลังบ้านเย็นตอนคำขอแรกของวัน)
+   · คำสั่ง "เขียน" ห้ามลองใหม่เด็ดขาด — จะได้ข้อมูลซ้ำ
+   · ตั๋วหมดอายุ (~1 ชม.) → ขึ้นหน้าจอ "เข้าใหม่" ให้กดปุ่มเดียว
+   ═══════════════════════════════════════════════════════════════════ */
+(function () {
+  var _ยิงเดิม = window.fetch;
+  var คำสั่งเขียน_ = { report:1, kpi:1, support:1, grievance:1, refer_worker:1, refer_broker:1,
+                       update_status:1, announce:1, link_member:1, unlink_member:1 };
+  var เตือนแล้ว_ = false;
+
+  function หนี_(s) {
+    return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c];
+    });
+  }
+
+  /* จอเต็มหน้าที่ใช้ร่วมกันทุกกรณี — ทับหน้าเดิมไว้ ไม่ให้น้องเห็นข้อความดิบ */
+  function จอ_(html, ปิดได้) {
+    if (เตือนแล้ว_) return;
+    เตือนแล้ว_ = true;
+    var d = document.createElement('div');
+    d.id = '_d1จอ';
+    d.setAttribute('style', 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;' +
+      'flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;' +
+      'text-align:center;overflow:auto;-webkit-overflow-scrolling:touch;' +
+      'font-family:-apple-system,"Segoe UI","Sarabun","Noto Sans Myanmar","Padauk",sans-serif');
+    d.innerHTML = html;
+    document.body.appendChild(d);
+
+    var โหลด = document.getElementById('_d1โหลดใหม่');
+    if (โหลด) โหลด.onclick = function () { location.reload(); };
+
+    var ปิด = document.getElementById('_d1ปิด');
+    if (ปิด) ปิด.onclick = function () {
+      var x = document.getElementById('_d1จอ');
+      if (x && x.parentNode) x.parentNode.removeChild(x);
+      เตือนแล้ว_ = false;
+    };
+
+    var สลับ = document.getElementById('_d1สลับ');
+    if (สลับ) สลับ.onclick = function () {
+      var x = document.getElementById('_d1รายละเอียด');
+      if (x) x.style.display = (x.style.display === 'none' ? 'block' : 'none');
+    };
+  }
+
+  function หน้าเข้าใหม่_(ไม่มีตั๋วเลย) {
+    if (ไม่มีตั๋วเลย) {
+      จอ_('<div style="font-size:56px">🔧</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
+        'App setup incomplete — please tell the admin</div>' +
+        '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>');
+    } else {
+      จอ_('<div style="font-size:56px">⏱️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>');
+    }
+  }
+
+  /* ── ของใหม่ 3 ก.ย. 2026 ──────────────────────────────────────────
+     คำตอบกลับมาไม่ใช่ JSON (เช่นได้หน้าเว็บ HTML แทน)
+     เดิม: `await res.json()` พัง → เอาข้อความดิบภาษาอังกฤษไปแปะบนจอน้อง
+     ใหม่: ขึ้นจอ 2 ภาษา + ปุ่มลองใหม่ + รายละเอียดสำหรับผู้ดูแลให้ถ่ายรูปส่งมา
+     · คำสั่งอ่าน  → ลองใหม่อัตโนมัติ 1 ครั้งก่อน แล้วค่อยขึ้นจอ
+     · คำสั่งเขียน → ห้ามลองใหม่เด็ดขาด (จะได้ข้อมูลซ้ำ) ขึ้นจอ "อย่าส่งซ้ำ"
+     ──────────────────────────────────────────────────────────────── */
+  function กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ) {
+    var เวลา = '';
+    try { เวลา = new Date().toLocaleString(); } catch (e) {}
+    return '<div id="_d1สลับ" style="margin-top:20px;font-size:12px;color:#9a9a9a;' +
+      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details</div>' +
+      '<div id="_d1รายละเอียด" style="display:none;margin-top:10px;max-width:100%;' +
+      'background:#f4f4f4;border-radius:10px;padding:10px 12px;font-size:11px;color:#444;' +
+      'text-align:left;word-break:break-all;line-height:1.5;-webkit-user-select:text;user-select:text">' +
+      '<b>D1-ERR</b> · not-json<br>' +
+      'code: ' + หนี_(รหัส) + '<br>' +
+      'action: ' + หนี_(คำสั่ง) + '<br>' +
+      'time: ' + หนี_(เวลา) + '<br>' +
+      'body: ' + หนี_(String(ต้นข้อความ || '').replace(/\s+/g, ' ').slice(0, 300)) +
+      '</div>';
+  }
+
+  function หน้าคำตอบเพี้ยน_(เขียน, รหัส, คำสั่ง, ต้นข้อความ) {
+    if (เขียน) {
+      จอ_('<div style="font-size:56px">⚠️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ส่งแล้ว แต่ยังไม่รู้ผล</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
+        'Sent, but result unknown. Do NOT send again.<br>' +
+        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
+        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    } else {
+      จอ_('<div style="font-size:56px">📡</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">โหลดข้อมูลไม่สำเร็จ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
+        'Could not load. Please try again.<br>' +
+        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    }
+  }
+
+  /* คืนวัตถุที่หน้าเว็บเรียก .json() / .text() / .clone() ได้เหมือน Response เดิม
+     (จำเป็นเพราะเราอ่าน body ไปแล้ว 1 ครั้ง อ่านซ้ำจาก Response จริงไม่ได้) */
+  function ห่อ_(r) {
+    var เนื้อ = r.txt;
+    var วัตถุ = {
+      ok: r.res ? !!r.res.ok : false,
+      status: r.res ? r.res.status : 0,
+      statusText: r.res ? r.res.statusText : '',
+      headers: r.res ? r.res.headers : null,
+      text: function () { return Promise.resolve(เนื้อ); },
+      json: function () {
+        return r.ดี ? Promise.resolve(r.j)
+                    : Promise.reject(new SyntaxError('D1: server did not return JSON'));
+      }
+    };
+    วัตถุ.clone = function () { return วัตถุ; };
+    return วัตถุ;
+  }
+
+  window.fetch = function (u, o) {
+    if (String(u) !== API_URL) return _ยิงเดิม.apply(this, arguments);
+
+    var ก้อน = {};
+    try { ก้อน = JSON.parse((o && o.body) || '{}'); } catch (e) { ก้อน = {}; }
+    var ตั๋ว = null;
+    try { ตั๋ว = liff.getIDToken(); } catch (e) {}
+    if (ตั๋ว) ก้อน.idToken = ตั๋ว;
+
+    var opt = { method: 'POST', body: JSON.stringify(ก้อน) };
+    if (o) { for (var k in o) if (k !== 'method' && k !== 'body') opt[k] = o[k]; }
+
+    var เขียน = !!คำสั่งเขียน_[ก้อน.action];
+    var ลองใหม่ได้ = !เขียน;
+
+    function รอ_(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    function ยิงแล้วอ่าน_() {
+      return _ยิงเดิม(u, opt).then(function (res) {
+        return res.text().then(function (txt) {
+          var j = null, ดี = false;
+          try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          return { res: res, txt: txt, j: j, ดี: ดี };
+        }, function () {
+          return { res: res, txt: '', j: null, ดี: false };
+        });
+      });
+    }
+
+    /* ชั้น 1 — ยิงไม่ออกเลย (เน็ตหลุด): ลองใหม่ 1 ครั้งเฉพาะคำสั่งอ่าน (ของเดิม) */
+    var งาน = ยิงแล้วอ่าน_()['catch'](function (e) {
+      if (!ลองใหม่ได้) throw e;
+      return รอ_(1500).then(ยิงแล้วอ่าน_);
+    });
+
+    /* ชั้น 2 — ยิงออกแต่คำตอบไม่ใช่ JSON: ลองใหม่ 1 ครั้งเฉพาะคำสั่งอ่าน (ของใหม่) */
+    งาน = งาน.then(function (r) {
+      if (r.ดี || !ลองใหม่ได้) return r;
+      return รอ_(1200).then(ยิงแล้วอ่าน_)['catch'](function () { return r; });
+    });
+
+    return งาน.then(function (r) {
+      if (!r.ดี) {
+        หน้าคำตอบเพี้ยน_(เขียน, r.res ? r.res.status : 0, ก้อน.action, r.txt);
+      } else if (r.j && r.j.ok === false && r.j.error === 'AUTH_REQUIRED') {
+        หน้าเข้าใหม่_(!ตั๋ว);
+      }
+      return ห่อ_(r);
+    });
+  };
+})();
+
+  /* ── เนื้อหาหน้ากฎบริษัท ─────────────────────────────────────────────
+     หน้านี้ "อ่านอย่างเดียว" ไม่มีคำสั่งเขียนสักตัว ⇒ ไม่ต้องมี req_id
+     ข้อความ 2 ภาษา: อังกฤษ / พม่า  (ไทยอยู่ในชีตต้นทางไว้เทียบ ไม่ส่งมาถึงหน้านี้)
+     ------------------------------------------------------------------ */
+  var ข้อความ = {
+    en: {
+      pill:   'English',
+      sub:    'Read only',
+      empty:  'No rules have been added yet.',
+      failed: 'Cannot load right now.\nPlease try again.',
+      retry:  'Try again',
+      updated:'Updated'
+    },
+    mm: {
+      pill:   '\u1019\u103C\u1014\u103A\u1019\u102C',
+      sub:    '\u1016\u1010\u103A\u101B\u1014\u103A\u101E\u102C',
+      empty:  '\u1005\u100A\u103A\u1038\u1019\u103B\u1009\u103A\u1038 \u1019\u1011\u100A\u1037\u103A\u101B\u101E\u1031\u1038\u1015\u102B\u104B',
+      failed: '\u1001\u102F\u1001\u100F \u1019\u1016\u1010\u103A\u1014\u102D\u102F\u1004\u103A\u1015\u102B\u104B\n\u1011\u1015\u103A\u1000\u103C\u102D\u102F\u1038\u1005\u102C\u1038\u1015\u102B\u104B',
+      retry:  '\u1011\u1015\u103A\u1000\u103C\u102D\u102F\u1038\u1005\u102C\u1038\u1015\u102B',
+      updated:'\u1014\u1031\u102C\u1000\u103A\u1006\u102F\u1036\u1038\u1015\u103C\u1004\u103A\u1006\u1004\u103A'
+    }
+  };
+  /* \U0001F7E1 ข้อความพม่าข้างบนเป็นร่าง — ให้เจ้าของหรือพี่มายตรวจก่อนใช้จริง
+     (ใช้กติกาเดียวกับระบบกู้ยืมที่เขียนไว้ว่า "ภาษาพม่าเป็นอนุมัติร่าง ให้เจ้าของตรวจ") */
+
+  var ภาษา = 'en';
+  var โปรไฟล์ = null;
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"]/g, function(c){
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c];
+    });
+  }
+
+  function จำภาษา_(v){ try { localStorage.setItem('jm_rules_lang', v); } catch(e){} }
+  function ภาษาที่จำไว้_(){
+    try { var v = localStorage.getItem('jm_rules_lang'); return (v === 'mm') ? 'mm' : 'en'; }
+    catch(e){ return 'en'; }
+  }
+
+  function จอสถานะ_(html){
+    var s = document.getElementById('status');
+    s.style.display = 'block';
+    s.innerHTML = html;
+    document.getElementById('wrap').style.display = 'none';
+  }
+
+  /* \U0001F534 รุ่น 2: ถ้าเข้า LIFF ไม่สำเร็จตั้งแต่แรก ปุ่ม "ลองใหม่" ต้องเริ่มเข้าใหม่ทั้งหน้า
+     ของเดิมเรียก โหลด_() ซึ่งยิงคำขอโดยไม่มีตั๋ว ⇒ ด่านคืน AUTH_REQUIRED
+     ⇒ น้องเห็นจอ "ตั้งค่าแอปยังไม่ครบ แจ้งผู้ดูแล" ทั้งที่แค่เน็ตกะพริบ */
+  var เข้าระบบไม่สำเร็จ = false;
+
+  /* \U0001F534 รุ่น 3.1: LANG_MISMATCH = หน้าเว็บกับเซิร์ฟเวอร์คนละรุ่น
+     กด "ลองใหม่" แบบเดิมเรียก โหลด_() = ยิงคำขอด้วยหน้าเดิม เจอปัญหาเดิม วนไม่จบ
+     ทางเดียวที่แก้ได้จริงคือดึงหน้าเว็บรุ่นใหม่ลงมา = location.reload()
+     แต่ต้องมีตัวกันวน ไม่งั้นรีโหลดไม่รู้จบ ⇒ ใช้ธงใน sessionStorage
+     \U0001F7E1 ถ้าเขียน sessionStorage ไม่ได้ (โหมดส่วนตัว/เบราว์เซอร์ปิดไว้) = พิสูจน์ไม่ได้ว่ากันวนได้
+        ⇒ ไม่รีโหลดอัตโนมัติเลย แสดงรหัส + ปุ่มแทน (ปลอดภัยกว่าเสี่ยงวน) */
+  var กุญแจกันวน = 'jm_rules_reloaded';
+  function ธงรีโหลด_(อ่านอย่างเดียว){
+    try {
+      if (อ่านอย่างเดียว) return sessionStorage.getItem(กุญแจกันวน) === '1';
+      sessionStorage.setItem(กุญแจกันวน, '1');
+      return sessionStorage.getItem(กุญแจกันวน) === '1';   // ยืนยันว่าเขียนติดจริง
+    } catch (e) { return null; }                            // null = ใช้ sessionStorage ไม่ได้
+  }
+  function ล้างธงรีโหลด_(){ try { sessionStorage.removeItem(กุญแจกันวน); } catch (e) {} }
+
+  /* \U0001F7E1 รุ่น 3: โชว์ "รหัสสั้น ๆ" ต่อท้ายจอโหลดไม่ได้
+     เหตุผล: แอดมินเปิดหน้าเดียวกันได้ (สิทธิ์ admin เรียก company_rules ได้)
+     เห็นรหัสแล้วรู้ทันทีว่าต้องไปดูอะไร โดยไม่ต้องเปิดบันทึกฝั่งเซิร์ฟเวอร์
+     ปลอดภัย: รหัสมีไม่กี่ค่า (SOURCE_MISSING / SCHEMA_INVALID / UPSTREAM_UNAVAILABLE / LANG_MISMATCH)
+     ไม่มีรายละเอียดภายใน ไม่มีรหัสชีต ไม่มีชื่อคอลัมน์ */
+  function จอโหลดไม่ได้_(รหัส){
+    var t = ข้อความ[ภาษา];
+    var ท้าย = รหัส ? ' <span style="opacity:.65">(' + esc(String(รหัส).slice(0, 40)) + ')</span>' : '';
+    จอสถานะ_(esc(t.failed).replace(/\n/g, '<br>') + ท้าย +
+      '<br><button type="button" id="btn-retry">' + esc(t.retry) + '</button>');
+    var b = document.getElementById('btn-retry');
+    if (b) b.onclick = function(){
+      if (เข้าระบบไม่สำเร็จ) { location.reload(); return; }
+      โหลด_();
+    };
+  }
+
+  function วาด_(ผล){
+    var t = ข้อความ[ภาษา];
+    var W = document.getElementById('wrap');
+
+    /* \U0001F534 "อ่านสำเร็จแต่ยังไม่มีรายการ" ต้องไม่พูดว่าโหลดไม่ได้ */
+    if (!ผล.items || ผล.items.length === 0){
+      จอสถานะ_(esc(t.empty));
+      return;
+    }
+
+    /* จัดกลุ่มตามหมวด โดยรักษาลำดับที่เซิร์ฟเวอร์เรียงมาให้แล้ว */
+    /* \U0001F7E1 รุ่น 2: ใช้แมปเปล่าจริง ๆ + hasOwnProperty
+       ของเดิมใช้ {} กับ in ⇒ หมวดที่ทีมพิมพ์ว่า __proto__ หรือ constructor ทำหน้าพังทั้งหน้า
+       (บทเรียนเดียวกับที่ด่าน v3.2 เคยเจอเรื่อง action ชื่อ toString) */
+    var หมวด = [], ดัชนี = Object.create(null);
+    for (var i = 0; i < ผล.items.length; i++){
+      var it = ผล.items[i];
+      var ชื่อหมวด = String(it.cat == null ? '' : it.cat);
+      if (!Object.prototype.hasOwnProperty.call(ดัชนี, ชื่อหมวด)){
+        ดัชนี[ชื่อหมวด] = หมวด.length; หมวด.push({ ชื่อ: ชื่อหมวด, รายการ: [] });
+      }
+      หมวด[ดัชนี[ชื่อหมวด]].รายการ.push(it);
+    }
+
+    var html = หมวด.map(function(g, gi){
+      var ใน = g.รายการ.map(function(it){
+        return '<div class="item">'
+             + (it.title ? '<h3><span class="num">' + esc(it.no) + '</span>' + esc(it.title) + '</h3>' : '')
+             + (it.body  ? '<p>' + esc(it.body) + '</p>' : '')
+             + '</div>';
+      }).join('');
+      return '<details class="cat"' + (gi === 0 ? ' open' : '') + '>'
+           + '<summary>' + esc(g.ชื่อ || '\u2014') + '<span class="arw">\u25B6</span></summary>'
+           + ใน + '</details>';
+    }).join('');
+
+    if (ผล.updatedAt) html += '<div class="foot">' + esc(ข้อความ[ภาษา].updated) + ' ' + esc(ผล.updatedAt) + '</div>';
+
+    W.innerHTML = html;
+    W.style.display = 'block';
+    document.getElementById('status').style.display = 'none';
+  }
+
+  /* \U0001F7E1 รุ่น 2: เลขลำดับคำขอ
+     สลับ EN -> MM เร็ว ๆ แล้วคำตอบ EN กลับมาช้ากว่า ของเดิมจะเขียนทับหน้าพม่า
+     (จอเป็นพม่า แต่เนื้อหาเป็นอังกฤษ โดยไม่มีอะไรผิดพลาดให้เห็น) */
+  var เลขคำขอ = 0;
+
+  function โหลด_(){
+    var t = ข้อความ[ภาษา];
+    var ของฉัน = ++เลขคำขอ;
+    จอสถานะ_('Loading\u2026 / \u1001\u100F\u1005\u1031\u102C\u1004\u1037\u103A\u1015\u102B\u2026');
+    document.getElementById('hsub').textContent = t.sub;
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'company_rules',
+        userId: โปรไฟล์ ? โปรไฟล์.userId : '',
+        lang: ภาษา
+      })
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (ของฉัน !== เลขคำขอ) return;   /* มีคำขอใหม่กว่าแล้ว — ใบเก่าทิ้งเงียบได้ ไม่ต้องขึ้นจออะไร */
+      /* ok:false = โหลดไม่ได้จริง ๆ (SOURCE_MISSING / SCHEMA_INVALID / UPSTREAM_UNAVAILABLE)
+         ok:true + items ว่าง = อ่านสำเร็จแต่ยังไม่มีรายการ ⇒ คนละข้อความ */
+      if (!data || data.ok === false){ จอโหลดไม่ได้_(data && data.error); return; }
+      /* \U0001F534 รุ่น 3: คำตอบ "ใบล่าสุด" แต่ภาษาไม่ตรงกับปุ่มที่ค้างอยู่
+         = เซิร์ฟเวอร์กับหน้าเว็บคนละรุ่น · รุ่น 2 ทิ้งเงียบ ⇒ หน้าค้าง Loading ไม่มีปุ่มให้กดเลย
+         ⇒ ต้องขึ้นจอโหลดไม่ได้ + ปุ่มลองใหม่ (ทิ้งเงียบใช้ได้เฉพาะกับใบที่เก่ากว่าเท่านั้น) */
+      if (data.lang && data.lang !== ภาษา){
+        /* รีโหลดอัตโนมัติได้ครั้งเดียว และเฉพาะเมื่อพิสูจน์ได้ว่าธงกันวนเขียนติด */
+        if (ธงรีโหลด_(true) === false && ธงรีโหลด_(false) === true){ location.reload(); return; }
+        จอโหลดไม่ได้_('LANG_MISMATCH'); return;   // รีโหลดแล้วยังเจออีก หรือกันวนไม่ได้ ⇒ หยุด
+      }
+      ล้างธงรีโหลด_();   // สำเร็จแล้ว ล้างธง ครั้งหน้ารีโหลดได้อีก 1 ครั้ง
+      วาด_(data);
+    })
+    .catch(function(){ if (ของฉัน === เลขคำขอ) จอโหลดไม่ได้_(); });
+  }
+
+  function ตั้งปุ่มภาษา_(){
+    var en = document.getElementById('btn-en'), mm = document.getElementById('btn-mm');
+    function ใช้_(v){
+      if (ภาษา === v) return;
+      ภาษา = v; จำภาษา_(v);
+      en.setAttribute('aria-pressed', v === 'en' ? 'true' : 'false');
+      mm.setAttribute('aria-pressed', v === 'mm' ? 'true' : 'false');
+      โหลด_();
+    }
+    en.onclick = function(){ ใช้_('en'); };
+    mm.onclick = function(){ ใช้_('mm'); };
+    en.setAttribute('aria-pressed', ภาษา === 'en' ? 'true' : 'false');
+    mm.setAttribute('aria-pressed', ภาษา === 'mm' ? 'true' : 'false');
+    document.getElementById('langbar').style.display = 'flex';
+  }
+
+  async function main(){
+    ภาษา = ภาษาที่จำไว้_();
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()){ liff.login(); return; }
+      โปรไฟล์ = (โปรไฟล์เร็ว_() || await liff.getProfile());
+    } catch (e) {
+      /* เข้า LIFF ไม่ได้ = จอ error ของก้อนกลางจะขึ้นเอง ไม่ต้องเขียนซ้ำ
+         \U0001F534 รุ่น 2: ตั้งธงไว้ ให้ปุ่มลองใหม่เริ่มเข้าใหม่ทั้งหน้า ไม่ใช่ยิงคำขอเปล่า */
+      เข้าระบบไม่สำเร็จ = true;
+      จอโหลดไม่ได้_();
+      return;
+    }
+    ตั้งปุ่มภาษา_();
+    โหลด_();
+  }
+
+  main();
+</script>
+</body>
+</html>
