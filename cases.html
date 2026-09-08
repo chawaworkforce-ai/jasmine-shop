@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>เปิดเคส</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; --red:#a3322b; --green:#256544; --amber:#8a5a00; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Sarabun",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--blue); color:#fff; padding:14px 16px; position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px; }
+  header h1{ font-size:17px; margin:0; font-weight:700; flex:1; }
+  header p{ font-size:12px; margin:3px 0 0; opacity:.9; }
+  header button{ background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.5); border-radius:10px; padding:7px 12px; font-size:13px; font-family:inherit; }
+  #status{ padding:30px 16px; text-align:center; color:var(--muted); font-size:14px; line-height:1.6; }
+  #status button, .btn{ margin-top:14px; background:var(--blue); color:#fff; border:0; border-radius:10px; padding:10px 18px; font-size:14px; font-family:inherit; }
+  .btn.sec{ background:#fff; color:var(--blue-d); border:1px solid var(--line); }
+  .btn.warn{ background:var(--red); }
+  .btn[disabled]{ opacity:.5; }
+  .wrap{ padding:12px 12px 60px; max-width:560px; margin:0 auto; }
+  .bar{ display:flex; gap:8px; margin-bottom:10px; }
+  .bar select{ flex:1; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:14px; font-family:inherit; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:10px; }
+  .card.tap{ cursor:pointer; }
+  .row{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .id{ font-size:12px; color:var(--muted); font-family:ui-monospace,Menlo,monospace; }
+  .name{ font-weight:700; font-size:15px; }
+  .meta{ font-size:12px; color:var(--muted); margin-top:4px; }
+  .pill{ font-size:11px; padding:3px 8px; border-radius:999px; background:#eef3f1; color:var(--blue-d); font-weight:700; white-space:nowrap; }
+  .pill.open{ background:#e7f0f4; color:var(--blue-d); }
+  .pill.doing{ background:#fff3d6; color:var(--amber); }
+  .pill.closed{ background:#e6efe9; color:var(--green); }
+  .pill.gone{ background:#f7e6e4; color:var(--red); }
+  .txt{ font-size:14px; line-height:1.55; margin-top:6px; white-space:pre-wrap; }
+  .warn-box{ background:#fff3d6; border:1px solid #f0d28c; color:#5a3d00; border-radius:12px; padding:10px 12px; font-size:13px; font-weight:700; line-height:1.5; margin-bottom:10px; }
+  label{ display:block; font-size:13px; color:var(--muted); margin:10px 0 4px; }
+  select, textarea{ width:100%; padding:10px; border:1px solid var(--line); border-radius:10px; font-size:14px; font-family:inherit; background:#fff; }
+  textarea{ min-height:88px; resize:vertical; }
+  .cnt{ text-align:right; font-size:11px; color:var(--muted); }
+  .cnt.over{ color:var(--red); font-weight:700; }
+  .ppl{ display:flex; flex-direction:column; gap:6px; max-height:280px; overflow:auto; border:1px solid var(--line); border-radius:12px; padding:6px; background:#fff; }
+  .p{ display:flex; align-items:center; gap:10px; padding:8px; border-radius:10px; cursor:pointer; }
+  .p[aria-pressed="true"]{ background:#e7f0f4; outline:2px solid var(--blue); }
+  .av{ width:36px; height:36px; border-radius:50%; background:var(--blue-d); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex:none; }
+  .tl{ border-left:2px solid var(--line); margin:8px 0 0 8px; padding-left:12px; }
+  .ev{ margin-bottom:12px; }
+  .ev .who{ font-size:12px; color:var(--muted); }
+  .ev.bad{ border-left:3px solid var(--red); padding-left:8px; margin-left:-12px; }
+  .ev.bad .who{ color:var(--red); font-weight:700; }
+  .ev.warn{ border-left:3px solid var(--amber); padding-left:8px; margin-left:-12px; }
+  .ev.warn .who{ color:var(--amber); font-weight:700; }
+  .ev .what{ font-size:14px; line-height:1.5; white-space:pre-wrap; }
+  .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .actions .btn{ margin-top:0; }
+  .toast{ position:fixed; left:12px; right:12px; bottom:14px; background:#1f2b25; color:#fff; padding:12px 14px; border-radius:12px; font-size:14px; line-height:1.5; z-index:9; display:none; pointer-events:none; }   /* pointer-events:none — เครื่องทดสอบจับได้ว่า toast บังปุ่มล่างจอมือถือ 4.5 วิ */
+  .toast.bad{ background:var(--red); }
+  .empty{ text-align:center; color:var(--muted); padding:24px 10px; font-size:14px; }
+</style>
+</head>
+<body>
+  <header>
+    <div style="flex:1">
+      <h1>🗂 เปิดเคส</h1>
+      <p id="hsub">กำลังเชื่อมต่อ…</p>
+    </div>
+    <button id="btn-new" type="button" style="display:none">+ เปิดเคสใหม่</button>
+  </header>
+
+  <div id="status">กำลังโหลด…</div>
+  <div class="wrap" id="wrap" style="display:none"></div>
+  <div class="toast" id="toast"></div>
+
+<script>
+  /* 🔴 2 บรรทัดข้างล่างนี้ ต้องก๊อปมาจากหน้าเว็บที่ใช้อยู่จริง — ห้ามพิมพ์เอง
+     LIFF_ID  : ต้องสร้าง LIFF app ใหม่สำหรับหน้านี้ในคอนโซล LINE แล้วเอารหัสมาใส่
+     API_URL  : ก๊อปจากหน้าใดก็ได้ใน 10 หน้าเดิม (ทุกหน้าใช้บานเดียวกัน) */
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+
+/* ── D1-ความเร็ว · 2 ก.ย. 2026 ─────────────────────────────────────────────
+   เลิกยิงเน็ตขอโปรไฟล์ทุกครั้งที่เปิดหน้า
+   ทำไม: liff.getProfile() คุยกับเซิร์ฟเวอร์ LINE 1 รอบ (ราว 0.3-0.8 วิ) ทุกครั้ง
+         ทั้งที่ตั๋วที่อยู่ในมือเราอยู่แล้วมีทั้งรหัสไลน์และชื่ออยู่ข้างใน
+         และตั้งแต่มีด่าน D1 หลังบ้านก็ไม่เชื่อ userId ที่หน้าเว็บส่งไปแล้วด้วย
+   ปลอดภัย: ถ้าอ่านจากตั๋วไม่ได้ (เช่น LIFF app ไม่ได้ติ๊ก openid) จะถอยไปใช้วิธีเดิมเอง
+            ⇒ แย่ที่สุดคือ "เท่าเดิม" เป็นไปไม่ได้ที่จะพังเพราะก้อนนี้
+   รูปร่างที่คืนออกมาเหมือน getProfile() เป๊ะ ⇒ โค้ดส่วนอื่นไม่ต้องแก้เลย */
+function โปรไฟล์เร็ว_() {
+  try {
+    var d = liff.getDecodedIDToken();
+    if (d && d.sub) return { userId: d.sub, displayName: d.name || '', pictureUrl: d.picture || '' };
+  } catch (e) {}
+  return null;                       // อ่านไม่ได้ = คืน null ให้ผู้เรียกถอยไปใช้ getProfile() เดิม
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   D1 — เติม "ตั๋วยืนยันตัวตน" ให้ทุกคำขอที่ยิงไปหลังบ้าน   (2 ก.ย. 2026)
+   แทรกที่เดียว ครอบทุกจุดที่หน้านี้ยิง API_URL — ไม่ต้องแก้ทีละจุด
+   · เติม idToken อัตโนมัติทุกคำขอ
+   · คำสั่ง "อ่าน" ยิงไม่ออก → ลองใหม่อัตโนมัติ 1 ครั้ง (สคริปต์หลังบ้านเย็นตอนคำขอแรกของวัน)
+   · คำสั่ง "เขียน" ห้ามลองใหม่เด็ดขาด — จะได้ข้อมูลซ้ำ
+   · ตั๋วหมดอายุ (~1 ชม.) → ขึ้นหน้าจอ "เข้าใหม่" ให้กดปุ่มเดียว
+   ═══════════════════════════════════════════════════════════════════ */
+(function () {
+  var _ยิงเดิม = window.fetch;
+  var คำสั่งเขียน_ = { report:1, kpi:1, support:1, grievance:1, refer_worker:1, refer_broker:1,
+                       update_status:1, announce:1, link_member:1, unlink_member:1,
+                       case_open:1, case_update:1 };   /* 🆕 ชุดที่ 2 — คำสั่งเขียน ห้ามลองใหม่ */
+  var เตือนแล้ว_ = false;
+
+  function หนี_(s) {
+    return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c];
+    });
+  }
+
+  /* จอเต็มหน้าที่ใช้ร่วมกันทุกกรณี — ทับหน้าเดิมไว้ ไม่ให้น้องเห็นข้อความดิบ */
+  function จอ_(html, ปิดได้) {
+    if (เตือนแล้ว_) return;
+    เตือนแล้ว_ = true;
+    var d = document.createElement('div');
+    d.id = '_d1จอ';
+    d.setAttribute('style', 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;' +
+      'flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;' +
+      'text-align:center;overflow:auto;-webkit-overflow-scrolling:touch;' +
+      'font-family:-apple-system,"Segoe UI","Sarabun","Noto Sans Myanmar","Padauk",sans-serif');
+    d.innerHTML = html;
+    document.body.appendChild(d);
+
+    var โหลด = document.getElementById('_d1โหลดใหม่');
+    if (โหลด) โหลด.onclick = function () { location.reload(); };
+
+    var ปิด = document.getElementById('_d1ปิด');
+    if (ปิด) ปิด.onclick = function () {
+      var x = document.getElementById('_d1จอ');
+      if (x && x.parentNode) x.parentNode.removeChild(x);
+      เตือนแล้ว_ = false;
+    };
+
+    var สลับ = document.getElementById('_d1สลับ');
+    if (สลับ) สลับ.onclick = function () {
+      var x = document.getElementById('_d1รายละเอียด');
+      if (x) x.style.display = (x.style.display === 'none' ? 'block' : 'none');
+    };
+  }
+
+  function หน้าเข้าใหม่_(ไม่มีตั๋วเลย) {
+    if (ไม่มีตั๋วเลย) {
+      จอ_('<div style="font-size:56px">🔧</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
+        'App setup incomplete — please tell the admin</div>' +
+        '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>');
+    } else {
+      จอ_('<div style="font-size:56px">⏱️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>');
+    }
+  }
+
+  /* ── ของใหม่ 3 ก.ย. 2026 ──────────────────────────────────────────
+     คำตอบกลับมาไม่ใช่ JSON (เช่นได้หน้าเว็บ HTML แทน)
+     เดิม: `await res.json()` พัง → เอาข้อความดิบภาษาอังกฤษไปแปะบนจอน้อง
+     ใหม่: ขึ้นจอ 2 ภาษา + ปุ่มลองใหม่ + รายละเอียดสำหรับผู้ดูแลให้ถ่ายรูปส่งมา
+     · คำสั่งอ่าน  → ลองใหม่อัตโนมัติ 1 ครั้งก่อน แล้วค่อยขึ้นจอ
+     · คำสั่งเขียน → ห้ามลองใหม่เด็ดขาด (จะได้ข้อมูลซ้ำ) ขึ้นจอ "อย่าส่งซ้ำ"
+     ──────────────────────────────────────────────────────────────── */
+  function กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ) {
+    var เวลา = '';
+    try { เวลา = new Date().toLocaleString(); } catch (e) {}
+    return '<div id="_d1สลับ" style="margin-top:20px;font-size:12px;color:#9a9a9a;' +
+      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details</div>' +
+      '<div id="_d1รายละเอียด" style="display:none;margin-top:10px;max-width:100%;' +
+      'background:#f4f4f4;border-radius:10px;padding:10px 12px;font-size:11px;color:#444;' +
+      'text-align:left;word-break:break-all;line-height:1.5;-webkit-user-select:text;user-select:text">' +
+      '<b>D1-ERR</b> · not-json<br>' +
+      'code: ' + หนี_(รหัส) + '<br>' +
+      'action: ' + หนี_(คำสั่ง) + '<br>' +
+      'time: ' + หนี_(เวลา) + '<br>' +
+      'body: ' + หนี_(String(ต้นข้อความ || '').replace(/\s+/g, ' ').slice(0, 300)) +
+      '</div>';
+  }
+
+  function หน้าคำตอบเพี้ยน_(เขียน, รหัส, คำสั่ง, ต้นข้อความ) {
+    if (เขียน) {
+      จอ_('<div style="font-size:56px">⚠️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ส่งแล้ว แต่ยังไม่รู้ผล</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
+        'Sent, but result unknown. Do NOT send again.<br>' +
+        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
+        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    } else {
+      จอ_('<div style="font-size:56px">📡</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">โหลดข้อมูลไม่สำเร็จ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
+        'Could not load. Please try again.<br>' +
+        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    }
+  }
+
+  /* คืนวัตถุที่หน้าเว็บเรียก .json() / .text() / .clone() ได้เหมือน Response เดิม
+     (จำเป็นเพราะเราอ่าน body ไปแล้ว 1 ครั้ง อ่านซ้ำจาก Response จริงไม่ได้) */
+  function ห่อ_(r) {
+    var เนื้อ = r.txt;
+    var วัตถุ = {
+      ok: r.res ? !!r.res.ok : false,
+      status: r.res ? r.res.status : 0,
+      statusText: r.res ? r.res.statusText : '',
+      headers: r.res ? r.res.headers : null,
+      text: function () { return Promise.resolve(เนื้อ); },
+      json: function () {
+        return r.ดี ? Promise.resolve(r.j)
+                    : Promise.reject(new SyntaxError('D1: server did not return JSON'));
+      }
+    };
+    วัตถุ.clone = function () { return วัตถุ; };
+    return วัตถุ;
+  }
+
+  window.fetch = function (u, o) {
+    if (String(u) !== API_URL) return _ยิงเดิม.apply(this, arguments);
+
+    var ก้อน = {};
+    try { ก้อน = JSON.parse((o && o.body) || '{}'); } catch (e) { ก้อน = {}; }
+    var ตั๋ว = null;
+    try { ตั๋ว = liff.getIDToken(); } catch (e) {}
+    if (ตั๋ว) ก้อน.idToken = ตั๋ว;
+
+    var opt = { method: 'POST', body: JSON.stringify(ก้อน) };
+    if (o) { for (var k in o) if (k !== 'method' && k !== 'body') opt[k] = o[k]; }
+
+    var เขียน = !!คำสั่งเขียน_[ก้อน.action];
+    var ลองใหม่ได้ = !เขียน;
+
+    function รอ_(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    function ยิงแล้วอ่าน_() {
+      return _ยิงเดิม(u, opt).then(function (res) {
+        return res.text().then(function (txt) {
+          var j = null, ดี = false;
+          try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          return { res: res, txt: txt, j: j, ดี: ดี };
+        }, function () {
+          return { res: res, txt: '', j: null, ดี: false };
+        });
+      });
+    }
+
+    /* ชั้น 1 — ยิงไม่ออกเลย (เน็ตหลุด): ลองใหม่ 1 ครั้งเฉพาะคำสั่งอ่าน (ของเดิม) */
+    var งาน = ยิงแล้วอ่าน_()['catch'](function (e) {
+      if (!ลองใหม่ได้) throw e;
+      return รอ_(1500).then(ยิงแล้วอ่าน_);
+    });
+
+    /* ชั้น 2 — ยิงออกแต่คำตอบไม่ใช่ JSON: ลองใหม่ 1 ครั้งเฉพาะคำสั่งอ่าน (ของใหม่) */
+    งาน = งาน.then(function (r) {
+      if (r.ดี || !ลองใหม่ได้) return r;
+      return รอ_(1200).then(ยิงแล้วอ่าน_)['catch'](function () { return r; });
+    });
+
+    return งาน.then(function (r) {
+      if (!r.ดี) {
+        หน้าคำตอบเพี้ยน_(เขียน, r.res ? r.res.status : 0, ก้อน.action, r.txt);
+      } else if (r.j && r.j.ok === false && r.j.error === 'AUTH_REQUIRED') {
+        หน้าเข้าใหม่_(!ตั๋ว);
+      }
+      return ห่อ_(r);
+    });
+  };
+})();
+
+  /* ── หน้าเปิดเคส (ชุดที่ 2) — admin เท่านั้น ────────────────────────────
+     3 คำสั่ง: case_page (อ่าน) · case_open (เขียน+ส่งไลน์) · case_update (เขียน)
+     กติกา req_id (คู่มือ 4.2): สร้างตอน "เริ่มกรอก" · BUSY → กดใหม่ใช้กุญแจเดิม · FAIL แล้วกดใหม่ → กุญแจใหม่
+     · uuid มีขีด 36 ตัว (เซิร์ฟเวอร์ใช้เป็น X-Line-Retry-Key ตรง ๆ)
+     ─────────────────────────────────────────────────────────────────── */
+  var โปรไฟล์ = null, ข้อมูล = null, มุมมอง = { ชื่อ: 'รายการ', case_id: '' };
+  var ตัวกรอง = { site: '', status: '' };
+  var เลขคำขอ = 0;
+  var กุญแจส่ง = { case_open: '', case_update: '' };   // req_id ที่ค้างอยู่ต่อคำสั่ง
+  /* 🆕 รุ่น 1.1 (ทีมตรวจ 6 ก.ย. ข้อ 3): กุญแจของ case_update ต้องผูกกับ "เคสที่กำลังทำอยู่"
+     เดิมเก็บกุญแจค้างไว้ต่อคำสั่งเฉย ๆ ⇒ ส่งไม่สำเร็จที่เคส A แล้วผู้ใช้กลับรายการไปเคส B
+     กุญแจเดิมตามไปด้วย ⇒ เซิร์ฟเวอร์เห็นเป็น "ซ้ำ" แล้วทิ้งงานของเคส B เงียบ ๆ */
+  var เคสของกุญแจอัปเดต = '';
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) { return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c]; }); }
+  /* 🆕 รุ่น 1.1 (ทีมตรวจ 6 ก.ย. 5ข): randomUUID ไม่มีใน WebView เก่า (Chrome < 92 · iOS < 15.4)
+     เดิมจะขึ้น "เปิดใน LINE บนมือถือแทน" ทั้งที่อยู่ใน LINE อยู่แล้ว ⇒ กดเปิดเคสไม่ได้เลย
+     ทางถอย: ประกอบ uuid v4 เองจาก getRandomValues (มีมาตั้งแต่ยุคก่อนหน้ามาก) */
+  function สุ่มกุญแจ_(){
+    try { if (crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+    try {
+      var b = new Uint8Array(16); crypto.getRandomValues(b);
+      b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+      var h = []; for (var i = 0; i < 16; i++) h.push(('0' + b[i].toString(16)).slice(-2));
+      return h.slice(0,4).join('') + '-' + h.slice(4,6).join('') + '-' + h.slice(6,8).join('') + '-' + h.slice(8,10).join('') + '-' + h.slice(10,16).join('');
+    } catch (e2) {}
+    return null;
+  }
+  function กุญแจสำหรับ_(คำสั่ง, ใหม่){ if (ใหม่ || !กุญแจส่ง[คำสั่ง]) กุญแจส่ง[คำสั่ง] = สุ่มกุญแจ_(); return กุญแจส่ง[คำสั่ง]; }
+  function ล้างกุญแจ_(คำสั่ง){ กุญแจส่ง[คำสั่ง] = ''; }
+  function toast(ข้อความ, แย่){ var t = document.getElementById('toast'); t.textContent = ข้อความ; t.className = 'toast' + (แย่ ? ' bad' : ''); t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display = 'none'; }, 4500); }
+  function เวลาไทย_(iso){ if (!iso) return ''; var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(iso)); return m ? (m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5]) : String(iso); }
+  function ตัวย่อ_(ชื่อ){ var s = String(ชื่อ || '').trim(); return s ? s.charAt(0) : '?'; }
+  function พิลสถานะ_(st){ var c = st === 'ปิด' ? 'closed' : (st === 'กำลังแก้' ? 'doing' : 'open'); return '<span class="pill ' + c + '">' + esc(st || 'เปิด') + '</span>'; }
+
+  function จอสถานะ_(html){ var s = document.getElementById('status'); s.innerHTML = html; s.style.display = 'block'; document.getElementById('wrap').style.display = 'none'; }
+  /* 🔴 อ่านไม่ได้ ≠ ไม่มีเคส — ห้ามขึ้น "ไม่มีเคสค้าง" ตรงนี้เด็ดขาด (คู่มือ 3.2 "อันตรายที่สุด") */
+  function จอโหลดไม่ได้_(รหัส){
+    จอสถานะ_('ยังโหลดรายการเคสไม่ได้ ลองใหม่' + (รหัส ? '<br><span style="font-size:12px">(' + esc(รหัส) + ')</span>' : '') + '<br><button type="button" onclick="โหลด_()">ลองใหม่</button>');
+  }
+
+  /* ── โหลดหน้า (1 คำขอ) ── */
+  function โหลด_(){
+    var ของฉัน = ++เลขคำขอ;
+    จอสถานะ_('กำลังโหลด…');
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'case_page', userId: โปรไฟล์ ? โปรไฟล์.userId : '', site: ตัวกรอง.site, status: ตัวกรอง.status }) })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (ของฉัน !== เลขคำขอ) return;                      /* ใบเก่ากลับมาช้ากว่าใบใหม่ — ทิ้ง */
+      if (!data || data.ok === false){ จอโหลดไม่ได้_(data && data.error); return; }
+      ข้อมูล = data;
+      document.getElementById('btn-new').style.display = 'inline-block';
+      วาด_();
+    })
+    .catch(function(){ if (ของฉัน === เลขคำขอ) จอโหลดไม่ได้_(); });
+  }
+
+  function วาด_(){
+    var W = document.getElementById('wrap');
+    if (มุมมอง.ชื่อ === 'เคส' && !หาเคส_(มุมมอง.case_id)) มุมมอง = { ชื่อ: 'รายการ', case_id: '' };   /* เคสหลุดจากตัวกรองหลังโหลดใหม่ → กลับรายการ ไม่ค้างหน้าว่าง */
+    if (มุมมอง.ชื่อ === 'ใหม่') W.innerHTML = วาดฟอร์มใหม่_();
+    else if (มุมมอง.ชื่อ === 'เคส') W.innerHTML = วาดเคส_(มุมมอง.case_id);
+    else W.innerHTML = วาดรายการ_();
+    W.style.display = 'block';
+    document.getElementById('status').style.display = 'none';
+    ผูกปุ่ม_();
+  }
+
+  /* ── รายการเคส (หน้าแรก) ── */
+  function วาดรายการ_(){
+    var d = ข้อมูล, h = '';
+    h += '<div class="bar"><select id="f-site"><option value="">ทุกไซต์</option>' + d.sites.map(function(s){ return '<option value="' + esc(s) + '"' + (s === ตัวกรอง.site ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select>';
+    h += '<select id="f-status"><option value="">ยังไม่ปิด</option><option value="เปิด"' + (ตัวกรอง.status === 'เปิด' ? ' selected' : '') + '>เปิด</option><option value="กำลังแก้"' + (ตัวกรอง.status === 'กำลังแก้' ? ' selected' : '') + '>กำลังแก้</option><option value="ปิด"' + (ตัวกรอง.status === 'ปิด' ? ' selected' : '') + '>ปิดแล้ว</option><option value="ทั้งหมด"' + (ตัวกรอง.status === 'ทั้งหมด' ? ' selected' : '') + '>ทั้งหมด</option></select></div>';
+    if (!d.cases.length){ h += '<div class="empty">' + (ตัวกรอง.status === '' ? 'ไม่มีเคสค้าง 🎉' : 'ไม่มีเคสตามตัวกรองนี้') + '</div>'; return h; }
+    d.cases.forEach(function(c){
+      h += '<div class="card tap" data-open="' + esc(c.case_id) + '">'
+         + '<div class="row"><span class="id">' + esc(c.case_id) + '</span>' + พิลสถานะ_(c.status) + '</div>'
+         + '<div class="row" style="margin-top:4px"><span class="name">' + esc(c.worker_name || '(ไม่พบชื่อใน Workers)') + '</span>' + (c.worker_gone ? '<span class="pill gone">ออกแล้ว</span>' : '') + '</div>'
+         + '<div class="meta">' + esc(c.site) + ' · ' + esc(c.category) + ' · ' + esc(c.source) + '<br>เปิดโดย ' + esc(c.opened_by) + ' · ' + esc(เวลาไทย_(c.opened_at)) + '</div>'
+         + '<div class="txt">' + esc(c.text) + '</div>'
+         + (c.status === 'ปิด' && c.close_reason === 'น้องออก' ? '<div class="meta" style="color:var(--amber);font-weight:700">🤖 ปิดอัตโนมัติเพราะน้องออก — ถ้าเรื่องยังไม่จบ เปิดเคสใหม่กับทีม</div>' : '')
+         + (c.line && c.line !== 'OK' ? '<div class="meta" style="color:var(--red)">⚠️ ส่งไลน์แจ้งทีม: ' + esc(c.line) + '</div>' : '')
+         + '</div>';
+    });
+    return h;
+  }
+
+  /* ── รายละเอียดเคส + ไทม์ไลน์ + กล่องตอบ ── */
+  function หาเคส_(id){ for (var i = 0; i < ข้อมูล.cases.length; i++) if (ข้อมูล.cases[i].case_id === id) return ข้อมูล.cases[i]; return null; }
+  function วาดเคส_(id){
+    var c = หาเคส_(id);
+    if (!c) return '<div class="empty">ไม่พบเคสนี้ในรายการที่โหลดมา<br><button class="btn sec" type="button" data-back="1">← กลับ</button></div>';
+    var h = '<button class="btn sec" type="button" data-back="1" style="margin:0 0 10px">← กลับรายการ</button>';
+    h += '<div class="card"><div class="row"><span class="id">' + esc(c.case_id) + '</span>' + พิลสถานะ_(c.status) + '</div>'
+       + '<div class="row" style="margin-top:4px"><span class="name">' + esc(c.worker_name || '(ไม่พบชื่อ)') + '</span>' + (c.worker_gone ? '<span class="pill gone">ออกแล้ว</span>' : '') + '</div>'
+       + '<div class="meta">' + esc(c.site) + ' · ' + esc(c.category) + ' · ' + esc(c.source) + '</div>';
+    h += '<div class="tl"><div class="ev"><div class="who">' + esc(เวลาไทย_(c.opened_at)) + ' · ' + esc(c.opened_by) + ' · เปิดเคส</div><div class="what">' + esc(c.text) + '</div></div>';
+    ข้อมูล.logs.filter(function(l){ return l.case_id === id; }).forEach(function(l){
+      /* 🔴 1.2 (GPT ข้อ 3): แยก 3 อย่าง ห้ามยุบรวม
+           OK              = เหตุการณ์ที่สำเร็จ (วาดปกติ)
+           FAIL            = รู้แน่ว่าไม่สำเร็จ (แดง ❌)
+           UNKNOWN/PENDING = ยังยืนยันไม่ได้ (เหลือง ⚠️) — ห้ามบอกว่า "ไม่สำเร็จ" */
+      var ผลแถว = l.result || '';
+      var ล้ม = ผลแถว === 'FAIL';
+      var ไม่ชัวร์ = !!ผลแถว && ผลแถว !== 'OK' && !ล้ม;
+      var หมายเหตุ = '';
+      if (l.status_to) หมายเหตุ = ล้ม ? (' · ❌ พยายามเปลี่ยนเป็น ' + esc(l.status_to) + ' แต่ไม่สำเร็จ')
+                                    : (ไม่ชัวร์ ? (' · ⚠️ ยังยืนยันไม่ได้ว่าเปลี่ยนเป็น ' + esc(l.status_to) + ' หรือยัง (' + esc(ผลแถว) + ')')
+                                                : (' · เปลี่ยนเป็น ' + esc(l.status_to)));
+      else if (ล้ม) หมายเหตุ = ' · ❌ บันทึกไม่สำเร็จ';
+      else if (ไม่ชัวร์) หมายเหตุ = ' · ⚠️ ยังยืนยันไม่ได้ (' + esc(ผลแถว) + ')';
+      h += '<div class="ev' + (ล้ม ? ' bad' : (ไม่ชัวร์ ? ' warn' : '')) + '"><div class="who">' + esc(เวลาไทย_(l.at)) + ' · ' + esc(l.by)
+         + หมายเหตุ + '</div>' + (l.text ? '<div class="what">' + esc(l.text) + '</div>' : '') + '</div>';
+    });
+    h += '</div>';
+    if (c.status === 'ปิด'){
+      h += '<div class="meta" style="margin-top:8px">ปิดโดย ' + esc(c.closed_by) + ' · ' + esc(เวลาไทย_(c.closed_at)) + ' · ' + esc(c.close_reason) + '</div></div>';
+      return h;
+    }
+    h += '<label>ตอบ / บันทึกความคืบหน้า (ไม่เกิน 300 ตัวอักษร)</label><textarea id="u-text" maxlength="300"></textarea><div class="cnt" id="u-cnt">0/300</div>'
+       + '<div class="actions"><button class="btn" type="button" data-upd="">💬 ตอบ</button>'
+       + (c.status !== 'กำลังแก้' ? '<button class="btn sec" type="button" data-upd="กำลังแก้">🔧 กำลังแก้</button>' : '')
+       + '<button class="btn warn" type="button" data-upd="ปิด">✅ ปิดเคส (ต้องเขียนสรุป)</button></div></div>';
+    return h;
+  }
+
+  /* ── ฟอร์มเปิดเคสใหม่ ── */
+  var ฟอร์ม = { site: '', card_id: '' };
+  function วาดฟอร์มใหม่_(){
+    var d = ข้อมูล, h = '<button class="btn sec" type="button" data-back="1" style="margin:0 0 10px">← ยกเลิก</button>';
+    /* 🔴 คำเตือนเรื่องร้องทุกข์ — ต้องอยู่เหนือกล่องเขียนทุกครั้ง (คู่มือ 3.2) */
+    h += '<div class="warn-box">⚠️ ห้ามเขียนเรื่องที่น้องเล่าให้ฟังเป็นการส่วนตัว — เรื่องแบบนั้นใช้ช่องทางปรึกษาพี่มายเท่านั้น</div>';
+    h += '<div class="card">';
+    h += '<label>ไซต์</label><select id="n-site"><option value="">— เลือกไซต์ —</option>' + d.sites.map(function(s){ return '<option value="' + esc(s) + '"' + (s === ฟอร์ม.site ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select>';
+    var คน = d.workers.filter(function(w){ return ฟอร์ม.site && w.site === ฟอร์ม.site; });
+    h += '<label>น้อง' + (ฟอร์ม.site ? ' (' + คน.length + ' คน)' : '') + '</label><div class="ppl" id="n-ppl">';
+    if (!ฟอร์ม.site) h += '<div class="empty" style="padding:10px">เลือกไซต์ก่อน</div>';
+    else if (!คน.length) h += '<div class="empty" style="padding:10px">ไซต์นี้ไม่มีน้องที่ยังทำงานอยู่</div>';
+    else คน.forEach(function(w){ h += '<div class="p" role="button" data-pick="' + esc(w.card_id) + '" aria-pressed="' + (w.card_id === ฟอร์ม.card_id ? 'true' : 'false') + '"><div class="av">' + esc(ตัวย่อ_(w.name)) + '</div><div><div class="name" style="font-size:14px">' + esc(w.name) + '</div></div></div>'; });
+    h += '</div>';
+    h += '<label>หมวด</label><select id="n-cat"><option value="">— เลือก —</option>' + d.categories.map(function(x){ return '<option value="' + esc(x) + '">' + esc(x) + '</option>'; }).join('') + '</select>';
+    h += '<label>ที่มา</label><select id="n-src"><option value="">— เลือก —</option>' + d.sources.map(function(x){ return '<option value="' + esc(x) + '">' + esc(x) + '</option>'; }).join('') + '</select>';
+    h += '<label>เรื่อง (ไม่เกิน 300 ตัวอักษร)</label><textarea id="n-text" maxlength="300" placeholder="สั้น ๆ ว่าทีมเจออะไร เช่น ขาดงาน 3 วันไม่แจ้ง"></textarea><div class="cnt" id="n-cnt">0/300</div>';
+    h += '<div class="actions"><button class="btn" type="button" id="n-submit">บันทึกเปิดเคส</button></div></div>';
+    return h;
+  }
+
+  /* ── ผูกปุ่ม (เรียกหลังวาดทุกครั้ง) ── */
+  function ผูกปุ่ม_(){
+    var W = document.getElementById('wrap');
+    var fs = document.getElementById('f-site'), fst = document.getElementById('f-status');
+    if (fs) fs.onchange = function(){ ตัวกรอง.site = fs.value; โหลด_(); };
+    if (fst) fst.onchange = function(){ ตัวกรอง.status = fst.value; โหลด_(); };
+    Array.prototype.forEach.call(W.querySelectorAll('[data-open]'), function(el){ el.onclick = function(){ มุมมอง = { ชื่อ: 'เคส', case_id: el.getAttribute('data-open') }; วาด_(); }; });
+    Array.prototype.forEach.call(W.querySelectorAll('[data-back]'), function(el){ el.onclick = function(){ มุมมอง = { ชื่อ: 'รายการ', case_id: '' }; วาด_(); }; });
+    var ns = document.getElementById('n-site');
+    if (ns) ns.onchange = function(){ ฟอร์ม.site = ns.value; ฟอร์ม.card_id = ''; วาด_(); };
+    Array.prototype.forEach.call(W.querySelectorAll('[data-pick]'), function(el){ el.onclick = function(){ ฟอร์ม.card_id = el.getAttribute('data-pick'); Array.prototype.forEach.call(W.querySelectorAll('[data-pick]'), function(x){ x.setAttribute('aria-pressed', x === el ? 'true' : 'false'); }); }; });
+    var nt = document.getElementById('n-text'), nc = document.getElementById('n-cnt');
+    if (nt) nt.oninput = function(){ nc.textContent = nt.value.length + '/300'; nc.className = 'cnt' + (nt.value.length > 300 ? ' over' : ''); };
+    var ut = document.getElementById('u-text'), uc = document.getElementById('u-cnt');
+    if (ut) ut.oninput = function(){ uc.textContent = ut.value.length + '/300'; };
+    var sb = document.getElementById('n-submit');
+    if (sb) sb.onclick = ส่งเปิดเคส_;
+    Array.prototype.forEach.call(W.querySelectorAll('[data-upd]'), function(el){ el.onclick = function(){ ส่งอัปเดต_(el.getAttribute('data-upd')); }; });
+  }
+
+  /* ── ส่ง case_open ── */
+  function ส่งเปิดเคส_(){
+    var cat = document.getElementById('n-cat').value, src = document.getElementById('n-src').value, text = document.getElementById('n-text').value.trim();
+    if (!ฟอร์ม.card_id){ toast('เลือกน้องก่อน', true); return; }
+    if (!cat || !src){ toast('เลือกหมวดและที่มาก่อน', true); return; }
+    if (!text){ toast('เขียนเรื่องก่อน', true); return; }
+    if (text.length > 300){ toast('เรื่องยาวเกิน 300 ตัวอักษร', true); return; }
+    var rid = กุญแจสำหรับ_('case_open', false);
+    if (!rid){ toast('เบราว์เซอร์นี้สร้างกุญแจกันซ้ำไม่ได้ (crypto.randomUUID) — เปิดใน LINE บนมือถือแทน', true); return; }
+    var ปุ่ม = document.getElementById('n-submit'); ปุ่ม.disabled = true; ปุ่ม.textContent = 'กำลังบันทึก…';   /* 🔴 ปิดปุ่มทันที */
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'case_open', userId: โปรไฟล์ ? โปรไฟล์.userId : '', card_id: ฟอร์ม.card_id, category: cat, source: src, text: text, req_id: rid }) })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (!data || data.ok === false){
+        var e = data && data.error;
+        if (e === 'BUSY'){ toast('ระบบกำลังทำงานอื่นอยู่ กดบันทึกอีกครั้ง (กุญแจเดิม ไม่ซ้ำแน่นอน)', true); }   /* BUSY → กุญแจเดิม */
+        else if (e === 'REQ_ID_REUSED'){ ล้างกุญแจ_('case_open'); toast('กุญแจกันซ้ำอันเดิมถูกใช้ไปกับเคสอื่นแล้ว — กดบันทึกอีกครั้ง', true); }   /* 🆕 1.1 */
+        else { ล้างกุญแจ_('case_open'); toast('เปิดเคสไม่สำเร็จ' + (e ? ' (' + e + ')' : ''), true); }             /* FAIL → กุญแจใหม่รอบหน้า */
+        ปุ่ม.disabled = false; ปุ่ม.textContent = 'บันทึกเปิดเคส'; return;
+      }
+      ล้างกุญแจ_('case_open');
+      var msg = (data.ซ้ำ ? 'เคสนี้เปิดไปแล้ว ' : 'เปิดเคสแล้ว ') + (data.case_id || '');
+      if (data.ส่งไลน์ !== 'OK') msg += ' · ⚠️ แจ้งทีมไม่สำเร็จ กรุณาบอกทีมเอง';   /* คู่มือ 3.2: เปิดสำเร็จแล้วจริง ห้ามบอกว่าไม่สำเร็จ */
+      toast(msg, data.ส่งไลน์ !== 'OK');
+      ฟอร์ม = { site: '', card_id: '' }; มุมมอง = { ชื่อ: 'รายการ', case_id: '' }; ตัวกรอง.status = '';
+      โหลด_();
+    })
+    .catch(function(){ ปุ่ม.disabled = false; ปุ่ม.textContent = 'บันทึกเปิดเคส'; toast('ส่งไม่ออก — ถ้าเน็ตกลับมาให้กดใหม่ (กุญแจเดิม ไม่ซ้ำแน่นอน)', true); });   /* ยิงไม่ออกเลย → ยังไม่รู้ผล เก็บกุญแจเดิม */
+  }
+
+  /* ── ส่ง case_update ── */
+  function ส่งอัปเดต_(status){
+    var text = (document.getElementById('u-text') || { value: '' }).value.trim();
+    if (status === 'ปิด' && !text){ toast('ปิดเคสต้องเขียนสรุปอย่างน้อย 1 บรรทัด', true); return; }
+    if (!status && !text){ toast('เขียนข้อความก่อน', true); return; }
+    if (text.length > 300){ toast('ยาวเกิน 300 ตัวอักษร', true); return; }
+    if (เคสของกุญแจอัปเดต !== มุมมอง.case_id) { ล้างกุญแจ_('case_update'); เคสของกุญแจอัปเดต = มุมมอง.case_id; }   /* 🔴 1.1 เปลี่ยนเคส = กุญแจใหม่เสมอ */
+    var rid = กุญแจสำหรับ_('case_update', false);
+    if (!rid){ toast('เบราว์เซอร์นี้สร้างกุญแจกันซ้ำไม่ได้ — เปิดใน LINE บนมือถือแทน', true); return; }
+    var ปุ่มทั้งหมด = document.querySelectorAll('[data-upd]'); Array.prototype.forEach.call(ปุ่มทั้งหมด, function(b){ b.disabled = true; });
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'case_update', userId: โปรไฟล์ ? โปรไฟล์.userId : '', case_id: มุมมอง.case_id, status: status, text: text, req_id: rid }) })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (!data || data.ok === false){
+        var e = data && data.error;
+        if (e === 'BUSY'){ toast('ระบบกำลังทำงานอื่นอยู่ กดอีกครั้ง', true); }
+        /* 🆕 1.1: กุญแจถูกใช้กับงานอื่นไปแล้ว — ขอกุญแจใหม่แล้วให้กดซ้ำ (ห้ามบอกว่าบันทึกแล้ว) */
+        else if (e === 'REQ_ID_REUSED'){ ล้างกุญแจ_('case_update'); toast('กุญแจกันซ้ำอันเดิมถูกใช้ไปกับงานอื่นแล้ว — กดอีกครั้งเพื่อบันทึกงานนี้', true); }
+        else { ล้างกุญแจ_('case_update'); toast('บันทึกไม่สำเร็จ' + (e ? ' (' + e + ')' : ''), true); }
+        Array.prototype.forEach.call(ปุ่มทั้งหมด, function(b){ b.disabled = false; }); return;
+      }
+      ล้างกุญแจ_('case_update');
+      /* 🔴 1.2 (ทีมตรวจรอบ 2 · GPT ข้อ 3): ok:true = "รับคำขอแล้ว" ไม่ใช่ "สถานะเปลี่ยนสำเร็จ"
+         และ "ไม่ทราบผล" ≠ "ไม่สำเร็จ" — ห้ามฟันธงแทนระบบ
+           FAIL    = รู้แน่ว่าสถานะไม่ได้เปลี่ยน
+           UNKNOWN/PENDING = ยังยืนยันไม่ได้ ต้องให้คนไปดูเอง
+           บันทึกสถานะ:false = ช่องผลในแถวประวัติยังค้าง ไม่ได้แปลว่างานไม่สำเร็จ */
+      var เตือนประวัติ = (data.บันทึกสถานะ === false) ? ' · ประวัติยังไม่ยืนยัน (แจ้งผู้ดูแล)' : '';
+      var สำเร็จเดิม = data.ซ้ำ ? 'บันทึกไปแล้วก่อนหน้านี้' : (status === 'ปิด' ? 'ปิดเคสแล้ว' : 'บันทึกแล้ว');
+      if (data.ผล === 'FAIL'){
+        toast('บันทึกข้อความแล้ว แต่สถานะไม่ได้เปลี่ยน (FAIL) — ดูหน้าจอหลังโหลดใหม่' + เตือนประวัติ, true);
+      } else if (data.ผล && data.ผล !== 'OK'){
+        toast('บันทึกข้อความแล้ว แต่ยังยืนยันไม่ได้ว่าสถานะเปลี่ยนหรือยัง (' + data.ผล + ') — โหลดใหม่แล้วดูสถานะ' + เตือนประวัติ, true);
+      } else if (เตือนประวัติ){
+        toast(สำเร็จเดิม + เตือนประวัติ, true);
+      } else {
+        toast(สำเร็จเดิม);
+      }
+      if (status === 'ปิด' && (!data.ผล || data.ผล === 'OK')) มุมมอง = { ชื่อ: 'รายการ', case_id: '' };   /* ปิดสำเร็จจริงเท่านั้นถึงกลับหน้ารายการ (1.1) */
+      โหลด_();   /* ตอบ/กำลังแก้ → โหลดใหม่แล้วอยู่ที่เคสเดิม เห็นไทม์ไลน์ใหม่ทันที */
+    })
+    .catch(function(){ Array.prototype.forEach.call(ปุ่มทั้งหมด, function(b){ b.disabled = false; }); toast('ส่งไม่ออก — กดใหม่ได้ (กุญแจเดิม)', true); });
+  }
+
+  /* ── เริ่ม ── */
+  document.getElementById('btn-new').onclick = function(){ กุญแจสำหรับ_('case_open', true); ฟอร์ม = { site: ตัวกรอง.site, card_id: '' }; มุมมอง = { ชื่อ: 'ใหม่', case_id: '' }; วาด_(); };   /* สร้างกุญแจตอนเริ่มกรอก */
+  (async function(){
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()){ liff.login(); return; }
+      โปรไฟล์ = (โปรไฟล์เร็ว_() || await liff.getProfile());
+      document.getElementById('hsub').textContent = 'ทีมหลังบ้าน · ' + (โปรไฟล์.displayName || '');
+      โหลด_();
+    } catch (e) {
+      document.getElementById('hsub').textContent = 'เชื่อมต่อ LINE ไม่สำเร็จ';
+      จอสถานะ_('เชื่อมต่อ LINE ไม่สำเร็จ<br><button type="button" onclick="location.reload()">ลองใหม่</button>');
+    }
+  })();
+</script>
+</body>
+</html>
