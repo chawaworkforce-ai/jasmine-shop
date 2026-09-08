@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Sick / Clinic</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; --red:#a3322b; --green:#256544; --amber:#8a5a00; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Sarabun","Padauk",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--blue); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:10px; }
+  header h1{ font-size:17px; margin:0; font-weight:700; }
+  .langbar{ display:flex; gap:8px; padding:10px 14px 0; max-width:560px; margin:0 auto; }
+  .langbar button{ flex:1; padding:9px 0; border:1px solid var(--line); background:#fff; border-radius:10px; font-size:14px; color:var(--muted); font-weight:600; }
+  .langbar button[aria-pressed="true"]{ background:var(--blue); color:#fff; border-color:var(--blue); }
+  .wrap{ padding:14px 14px 40px; max-width:560px; margin:0 auto; }
+  .big{ width:100%; padding:30px 18px; border:0; border-radius:18px; color:#fff; font-size:22px; font-weight:800;
+        line-height:1.5; margin-bottom:16px; box-shadow:0 3px 0 rgba(0,0,0,.12); }
+  .big small{ display:block; font-size:15px; font-weight:600; opacity:.92; margin-top:6px; }
+  .b-sick{ background:var(--blue); }
+  .b-ride{ background:var(--green); }
+  .big:disabled{ opacity:.5; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px 18px; text-align:center; }
+  .card h2{ font-size:19px; margin:6px 0 10px; }
+  .card p{ font-size:15px; color:#444; line-height:1.7; margin:6px 0; }
+  .ref{ font-family:ui-monospace,Menlo,monospace; font-size:17px; font-weight:700; background:#f0f4f2; border-radius:10px; padding:8px 12px; display:inline-block; margin:8px 0; }
+  .tel{ display:block; margin-top:16px; padding:16px; border-radius:14px; background:var(--red); color:#fff; font-size:19px; font-weight:800; text-decoration:none; }
+  .ghost{ display:block; width:100%; margin-top:12px; padding:14px; border:1px solid var(--line); background:#fff; border-radius:12px; font-size:15px; font-weight:600; color:var(--muted); }
+  .warn{ background:#fff8e6; border-color:#f0dfae; }
+  .hint{ font-size:13px; color:var(--muted); text-align:center; margin-top:14px; line-height:1.6; }
+  .emoji{ font-size:52px; line-height:1; }
+</style>
+</head>
+<body>
+<header><span class="emoji" style="font-size:22px">🤒</span><h1 id="ห_หัว">Sick / Clinic</h1></header>
+<div class="langbar">
+  <button id="ป_en" aria-pressed="true">English</button>
+  <button id="ป_mm" aria-pressed="false">&#4121;&#4156;&#4116;&#4154;&#4121;&#4140;</button>
+</div>
+<div class="wrap" id="จอ"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   หน้า "แจ้งป่วย / ขอรถไปหาหมอ" — ชุดที่ 3 รุ่น 1 (8 ก.ย. 2026)
+   สเปก: คู่มือระบบกลาง ฉบับ 2 ส่วนที่ 3.3
+
+   🔒 หน้านี้ "ไม่มีช่องพิมพ์" โดยตั้งใจ และด่านฝั่งเซิร์ฟเวอร์ก็ไม่รับช่องข้อความ
+      ⇒ ถึงมีคนแก้ไฟล์นี้ให้ส่งอาการไปด้วย เซิร์ฟเวอร์จะทิ้งก่อนถึงโค้ดงาน
+      🔴 ห้ามเพิ่มช่องพิมพ์ในหน้านี้เด็ดขาด นี่เป็นนโยบายที่เจ้าของกับทีมตรวจเคาะแล้ว
+
+   🔴 ห้ามลองส่งใหม่อัตโนมัติ — เบอร์สำรองคือทางออกแทนการลองใหม่
+   ══════════════════════════════════════════════════════════════════ */
+
+  /* 🔴 2 บรรทัดข้างล่างนี้ ต้องก๊อปมาจากหน้าเว็บที่ใช้อยู่จริง — ห้ามพิมพ์เอง
+     LIFF_ID  : ระบบนี้ใช้ LIFF app เดียว (Endpoint เป็นรากเว็บ) ก๊อปค่าเดียวกับ myscore.html
+     API_URL  : ก๊อปจากหน้าใดก็ได้ ทุกหน้าใช้บานเดียวกัน */
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+
+  /* เบอร์สำรอง: เจ้าของยืนยันว่าเป็นเบอร์บริษัท จึงฝังในหน้าเว็บได้
+     เซิร์ฟเวอร์จะส่งเบอร์กลับมาทุกคำตอบ ถ้าส่งมาเราใช้ของเซิร์ฟเวอร์
+     ตัวที่ฝังไว้นี้คือ "ตาข่ายกันตก" เผื่อเซิร์ฟเวอร์ไม่ตอบเลย */
+  var เบอร์สำรอง = "0849842516";
+
+  var ภาษา = 'en';
+  var โปรไฟล์ = null;
+  var กำลังส่ง = false;
+
+  var ข้อความ = {
+    en: {
+      head:   'Sick / Clinic',
+      sick:   'I am sick today',
+      sickS:  'Tell the team I cannot work',
+      ride:   'I need a ride to the clinic',
+      rideS:  'Ask the team to take me',
+      askT:   'Send this now?',
+      askS:   'The team will be told right away.',
+      yes:    'Yes, send',
+      no:     'Cancel',
+      sending:'Sending…',
+      okT:    'Saved and sent to the team',
+      okS:    'Show this number if they ask.',
+      failT:  'Saved, but the team was NOT told',
+      failS:  'Please call this number now.',
+      unkT:   'Not sure if it went through',
+      unkS:   'Please call this number to be sure.',
+      call:   'Call the team',
+      again:  'Send again',
+      back:   'Back',
+      dupT:   'You already told us',
+      dupS:   'minutes ago',
+      dupQ:   'Send again only if you still need help.',
+      errT:   'Something went wrong',
+      errS:   'Please call this number.',
+      notyou: 'Your account is not linked yet. Please call the team.',
+      out:    'Your account is closed. Please call the team.'
+    },
+    mm: {
+      head:   'နေမကောင်း / ဆေးခန်း',
+      sick:   'တွေရက် နေမကောင်းပါ',
+      sickS:  'အလုပ်မလုပ်နိုင်ကြောင်း အစီအစဉ်ကို အကြောင်းကြားပါ',
+      ride:   'ဆေးခန်းသွားရန် ကားလိုပါသည်',
+      rideS:  'အစီအစဉ်ကို ကားတောင်းပါ',
+      askT:   'အခု ပို့မလား။',
+      askS:   'အစီအစဉ်ထံ ချက်ချင်းရောက်ပါမည်။',
+      yes:    'ဟုတ်ကဲ့ ပို့ပါ',
+      no:     'မပို့တော့ပါ',
+      sending:'ပို့နေပါသည်…',
+      okT:    'မျတ်တမ်းပြီး အစီအစဉ်ထံ ပို့ပြီးပါပြီ',
+      okS:    'မေးရင် ဤနံပါတ်ကို ပြပါ',
+      failT:  'မျတ်တမ်းပြီး ဒါပေမယ့် အစီအစဉ်ထံ မရောက်ပါ',
+      failS:  '\u1024\u1016\u102F\u1014\u103A\u1038\u1014\u1036\u1015\u102B\u1010\u103A\u1000\u102D\u102F \u1001\u103B\u1000\u103A\u1001\u103B\u1004\u103A\u1038 \u1006\u1000\u103A\u101E\u103D\u101A\u103A\u1015\u102B',
+      unkT:   'ရောက်မရောက် မသေချာပါ',
+      unkS:   'စိတ်ချရန် ဤဖုန်းနံပါတ်ကို ခေါ်ပါ',
+      call:   'အစီအစဉ်ကို ဖုန်းခေါ်ပါ',
+      again:  'ထပ်ပို့ပါ',
+      back:   'နောက်သို့',
+      dupT:   'ခုနက အကြောင်းပို့ပြီးပါပြီ',
+      dupS:   'မိနစ်က ပို့ထားသည်',
+      dupQ:   'လိုအပ်သေးလျှင်သာ ထပ်ပို့ပါ',
+      errT:   'တစ်ခုခု မမှန်ပါ',
+      errS:   'ဤဖုန်းနံပါတ်ကို ခေါ်ပါ',
+      notyou: 'သင့်အကောင့် မချိတ်ရသေးပါ။ အစီအစဉ်ကို ဖုန်းဆက်ပါ',
+      out:    'သင့်အကောင့် ပိတ်ထားပါသည်။ အစီအစဉ်ကို ဖုန်းဆက်ပါ'
+    }
+  };
+  /* 🟡 ข้อความพม่าข้างบนเป็น "ร่าง" — ต้องให้เจ้าของหรือพี่มายตรวจก่อนใช้จริง
+     ใช้กติกาเดียวกับหน้ากฎบริษัทและระบบกู้ยืมที่เขียนไว้ว่าภาษาพม่าเป็นอนุมัติร่าง */
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"]/g, function(c){
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c];
+    });
+  }
+  function t_(){ return ข้อความ[ภาษา]; }
+  function จอ_(html){ document.getElementById('จอ').innerHTML = html; }
+  function เบอร์(){ return String(เบอร์สำรอง || '').replace(/[^0-9+]/g, ''); }
+  function ปุ่มโทร_(){
+    var b = เบอร์();
+    if (!b) return '';
+    return '<a class="tel" href="tel:' + esc(b) + '">📞 ' + esc(t_().call) + '<br>' + esc(b) + '</a>';
+  }
+
+  /* ── ความจำในเครื่อง: ใช้เตือน "เพิ่งแจ้งไป" เท่านั้น ─────────────
+     🔴 ไม่ใช่ตัวตัดสินธง "ซ้ำ" — ตัวตัดสินจริงคือแถวในชีตฝั่งเซิร์ฟเวอร์
+     เพราะแคชในเครื่องหายได้ ชีตไม่หาย (สเปก 3.3) */
+  function จำการส่ง_(type, ref){
+    try { localStorage.setItem('jm_sick_' + type, JSON.stringify({ t: Date.now(), ref: ref })); } catch(e){}
+  }
+  function เพิ่งส่งไป_(type){
+    try {
+      var v = JSON.parse(localStorage.getItem('jm_sick_' + type) || 'null');
+      if (!v || !v.t) return null;
+      var นาที = Math.floor((Date.now() - v.t) / 60000);
+      return (นาที >= 0 && นาที < 10) ? { นาที: นาที, ref: v.ref } : null;
+    } catch(e){ return null; }
+  }
+
+  function uuid_(){
+    try { if (crypto && crypto.randomUUID) return crypto.randomUUID(); } catch(e){}
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
+      var r = Math.random()*16|0, v = (c === 'x') ? r : ((r&0x3)|0x8);
+      return v.toString(16);
+    });
+  }
+
+  /* ── จอที่ 1 — 2 ปุ่มใหญ่ ไม่มีช่องพิมพ์ ───────────────────────── */
+  function จอเลือก_(){
+    กำลังส่ง = false;
+    var t = t_();
+    จอ_(
+      '<button class="big b-sick" id="ป_sick">🤒 ' + esc(t.sick) + '<small>' + esc(t.sickS) + '</small></button>' +
+      '<button class="big b-ride" id="ป_ride">🚗 ' + esc(t.ride) + '<small>' + esc(t.rideS) + '</small></button>' +
+      '<div class="hint">' + esc(เบอร์()) + '</div>'
+    );
+    document.getElementById('ป_sick').onclick = function(){ กดเลือก_('sick'); };
+    document.getElementById('ป_ride').onclick = function(){ กดเลือก_('ride'); };
+  }
+
+  function กดเลือก_(type){
+    var เก่า = เพิ่งส่งไป_(type);
+    if (เก่า) return จอเพิ่งแจ้ง_(type, เก่า);
+    จอยืนยัน_(type);
+  }
+
+  /* ── จอ "เพิ่งแจ้งไปเมื่อ X นาทีที่แล้ว" ─────────────────────────
+     🔴 มีปุ่ม "ส่งอีกครั้ง" เสมอ — ห้ามปิดทาง เพราะอาการอาจแย่ลง */
+  function จอเพิ่งแจ้ง_(type, เก่า){
+    var t = t_();
+    จอ_('<div class="card warn"><div class="emoji">⏱️</div>' +
+      '<h2>' + esc(t.dupT) + '</h2>' +
+      '<p>' + esc(เก่า.นาที) + ' ' + esc(t.dupS) + '</p>' +
+      (เก่า.ref ? '<div class="ref">#' + esc(เก่า.ref) + '</div>' : '') +
+      '<p>' + esc(t.dupQ) + '</p>' +
+      '<button class="big b-sick" style="margin-top:14px" id="ป_อีก">' + esc(t.again) + '</button>' +
+      '<button class="ghost" id="ป_กลับ">' + esc(t.back) + '</button>' +
+      ปุ่มโทร_() + '</div>');
+    document.getElementById('ป_อีก').onclick = function(){ จอยืนยัน_(type); };
+    document.getElementById('ป_กลับ').onclick = จอเลือก_;
+  }
+
+  /* ── จอยืนยัน 1 จอ — กันกดพลาดในกระเป๋า ───────────────────────── */
+  function จอยืนยัน_(type){
+    var t = t_();
+    จอ_('<div class="card"><div class="emoji">' + (type === 'sick' ? '🤒' : '🚗') + '</div>' +
+      '<h2>' + esc(t.askT) + '</h2>' +
+      '<p>' + esc(type === 'sick' ? t.sick : t.ride) + '</p>' +
+      '<p style="color:#777">' + esc(t.askS) + '</p>' +
+      '<button class="big ' + (type === 'sick' ? 'b-sick' : 'b-ride') + '" style="margin-top:14px" id="ป_ยืนยัน">' + esc(t.yes) + '</button>' +
+      '<button class="ghost" id="ป_ยกเลิก">' + esc(t.no) + '</button></div>');
+    document.getElementById('ป_ยืนยัน').onclick = function(){ ส่ง_(type, this); };
+    document.getElementById('ป_ยกเลิก').onclick = จอเลือก_;
+  }
+
+  /* ── ส่งจริง ─────────────────────────────────────────────────────
+     🔴 ห้ามลองใหม่อัตโนมัติ ต่อให้ไม่ได้คำตอบเลย
+     req_id สุ่มใหม่ทุกครั้งที่ "คนกด" — ไม่ใช่ทุกครั้งที่ยิง */
+  function ส่ง_(type, ปุ่ม){
+    if (กำลังส่ง) return;
+    กำลังส่ง = true;
+    if (ปุ่ม) { ปุ่ม.disabled = true; ปุ่ม.textContent = t_().sending; }
+    var rid = uuid_();
+    var หมดเวลา = setTimeout(function(){ จอไม่รู้ผล_(); }, 25000);
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'sick_report',
+        userId: โปรไฟล์ ? โปรไฟล์.userId : '',
+        type: type,
+        req_id: rid
+      })
+    })
+    .then(function(r){ return r.text(); })
+    .then(function(txt){
+      clearTimeout(หมดเวลา);
+      var d = null;
+      try { d = JSON.parse(txt); } catch(e){}
+      if (!d) return จอไม่รู้ผล_();
+      if (d.phone) เบอร์สำรอง = d.phone;
+      if (d.ok === false) return จอผิดพลาด_(d.error);
+      จำการส่ง_(type, d.ref);
+      var ส่งไลน์ = d['ส่งไลน์'];
+      if (ส่งไลน์ === 'OK') return จอสำเร็จ_(d.ref);
+      if (ส่งไลน์ === 'FAIL') return จอบันทึกแต่ไม่ถึงทีม_(d.ref);
+      return จอไม่รู้ผล_(d.ref);
+    })
+    .catch(function(){ clearTimeout(หมดเวลา); จอไม่รู้ผล_(); });
+  }
+
+  /* ── จอผลลัพธ์ 3 แบบ — ข้อความห้ามพูดเกินหลักฐาน (หลักการข้อ 13) ── */
+  function จอสำเร็จ_(ref){
+    var t = t_();
+    /* ✅ "ส่งเรื่องถึงทีมแล้ว" ไม่ใช่ "ทีมได้รับเรื่องแล้ว" — เรายืนยันไม่ได้ว่ามีคนอ่าน */
+    จอ_('<div class="card"><div class="emoji">✅</div>' +
+      '<h2 style="color:var(--green)">' + esc(t.okT) + '</h2>' +
+      (ref ? '<div class="ref">#' + esc(ref) + '</div>' : '') +
+      '<p>' + esc(t.okS) + '</p>' +
+      ปุ่มโทร_() +
+      '<button class="ghost" id="ป_กลับ">' + esc(t.back) + '</button></div>');
+    document.getElementById('ป_กลับ').onclick = จอเลือก_;
+  }
+  function จอบันทึกแต่ไม่ถึงทีม_(ref){
+    var t = t_();
+    จอ_('<div class="card"><div class="emoji">⚠️</div>' +
+      '<h2 style="color:var(--amber)">' + esc(t.failT) + '</h2>' +
+      (ref ? '<div class="ref">#' + esc(ref) + '</div>' : '') +
+      '<p><b>' + esc(t.failS) + '</b></p>' +
+      ปุ่มโทร_() +
+      '<button class="ghost" id="ป_กลับ">' + esc(t.back) + '</button></div>');
+    document.getElementById('ป_กลับ').onclick = จอเลือก_;
+  }
+  function จอไม่รู้ผล_(ref){
+    var t = t_();
+    /* 🔴 ไม่มีปุ่ม "ลองใหม่" ตรงนี้โดยตั้งใจ — คำสั่งเขียนที่ไม่รู้ผล ห้ามยิงซ้ำเอง
+       ทางออกคือโทร ไม่ใช่กดซ้ำ */
+    จอ_('<div class="card"><div class="emoji">❓</div>' +
+      '<h2 style="color:var(--amber)">' + esc(t.unkT) + '</h2>' +
+      (ref ? '<div class="ref">#' + esc(ref) + '</div>' : '') +
+      '<p><b>' + esc(t.unkS) + '</b></p>' +
+      ปุ่มโทร_() +
+      '<button class="ghost" id="ป_กลับ">' + esc(t.back) + '</button></div>');
+    document.getElementById('ป_กลับ').onclick = จอเลือก_;
+  }
+  function จอผิดพลาด_(รหัส){
+    var t = t_();
+    var บอก = t.errS;
+    if (รหัส === 'NOT_MAPPED') บอก = t.notyou;
+    if (รหัส === 'WORKER_INACTIVE') บอก = t.out;
+    จอ_('<div class="card"><div class="emoji">🛑</div>' +
+      '<h2 style="color:var(--red)">' + esc(t.errT) + '</h2>' +
+      '<p>' + esc(บอก) + '</p>' +
+      '<div class="hint">code: ' + esc(รหัส || '-') + '</div>' +
+      ปุ่มโทร_() +
+      '<button class="ghost" id="ป_กลับ">' + esc(t.back) + '</button></div>');
+    document.getElementById('ป_กลับ').onclick = จอเลือก_;
+  }
+
+  /* ── ภาษา ────────────────────────────────────────────────────── */
+  function จำภาษา_(v){ try { localStorage.setItem('jm_sick_lang', v); } catch(e){} }
+  function ภาษาที่จำไว้_(){
+    try { var v = localStorage.getItem('jm_sick_lang'); return (v === 'mm') ? 'mm' : 'en'; }
+    catch(e){ return 'en'; }
+  }
+  function ตั้งปุ่มภาษา_(){
+    var en = document.getElementById('ป_en'), mm = document.getElementById('ป_mm');
+    function สลับ(v){
+      if (ภาษา === v) return;
+      ภาษา = v; จำภาษา_(v);
+      en.setAttribute('aria-pressed', v === 'en' ? 'true' : 'false');
+      mm.setAttribute('aria-pressed', v === 'mm' ? 'true' : 'false');
+      document.getElementById('ห_หัว').textContent = t_().head;
+      จอเลือก_();
+    }
+    en.onclick = function(){ สลับ('en'); };
+    mm.onclick = function(){ สลับ('mm'); };
+    en.setAttribute('aria-pressed', ภาษา === 'en' ? 'true' : 'false');
+    mm.setAttribute('aria-pressed', ภาษา === 'mm' ? 'true' : 'false');
+    document.getElementById('ห_หัว').textContent = t_().head;
+  }
+
+  (async function เริ่ม(){
+    ภาษา = ภาษาที่จำไว้_();
+    ตั้งปุ่มภาษา_();
+    จอเลือก_();
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      โปรไฟล์ = await liff.getProfile();
+    } catch (e) {
+      /* เข้า LIFF ไม่ได้ = ส่งไม่ได้ แต่ต้องยังกดโทรได้ (สเปก: เบอร์ต้องโชว์แม้เซิร์ฟเวอร์ไม่ตอบ) */
+      จอผิดพลาด_('LIFF_INIT');
+    }
+  })();
+</script>
+</body>
+</html>
