@@ -374,7 +374,7 @@ function โปรไฟล์เร็ว_() {
              + (it.body  ? '<p>' + esc(it.body) + '</p>' : '')
              + '</div>';
       }).join('');
-      return '<details class="cat"' + (gi === 0 ? ' open' : '') + '>'
+      return '<details class="cat" open>'   /* 8 ก.ย.: เดิม (gi === 0 ? ' open' : '') = เปิดเฉพาะหมวดแรก · เจ้าของขอให้กางทุกหมวดตั้งแต่แรก · น้องยังกดพับเองได้ */
            + '<summary>' + esc(g.ชื่อ || '\u2014') + '<span class="arw">\u25B6</span></summary>'
            + ใน + '</details>';
     }).join('');
