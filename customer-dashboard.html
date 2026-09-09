@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ดูแลหน้างาน</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9;
+         --bg:#f4f6f5; --red:#a3322b; --green:#256544; --amber:#8a5a00; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Sarabun",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--blue); color:#fff; padding:14px 16px; }
+  header h1{ font-size:17px; margin:0; font-weight:700; }
+  header .sub{ font-size:13px; opacity:.92; margin-top:3px; }
+  .wrap{ padding:12px 12px 40px; max-width:620px; margin:0 auto; }
+
+  .แถบนับ{ display:flex; gap:8px; margin-bottom:12px; }
+  .นับ{ flex:1; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 8px; text-align:center; }
+  .นับ b{ display:block; font-size:22px; line-height:1.2; }
+  .นับ span{ font-size:12px; color:var(--muted); }
+  .นับ.เขียว b{ color:var(--green); }
+  .นับ.ส้ม b{ color:var(--amber); }
+
+  .เครื่องมือ{ display:flex; gap:8px; margin-bottom:12px; }
+  .เครื่องมือ input, .เครื่องมือ select{
+    flex:1; min-width:0; padding:11px 12px; border:1px solid var(--line); border-radius:12px;
+    font-size:15px; background:#fff; color:var(--ink); font-family:inherit; }
+
+  .ตาราง{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .คน{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:10px; text-align:center; }
+  .รูป{ width:100%; aspect-ratio:3/4; border-radius:10px; background:#eef2f0; object-fit:cover; display:block; }
+  .แทนรูป{ width:100%; aspect-ratio:3/4; border-radius:10px; background:#eef2f0; display:flex;
+           align-items:center; justify-content:center; font-size:30px; font-weight:800; color:#b3c1ba; }
+  .ชื่อ{ font-size:14px; font-weight:700; margin-top:8px; line-height:1.35; word-break:break-word; }
+  .ไซต์{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .ป้าย{ display:inline-block; margin-top:6px; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:700; }
+  .ป้าย.ผูก{ background:#e6f2ec; color:var(--green); }
+  .ป้าย.ยัง{ background:#fff3d9; color:var(--amber); }
+
+  .กล่อง{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; text-align:center; }
+  .กล่อง h2{ font-size:17px; margin:4px 0 8px; }
+  .กล่อง p{ font-size:14px; color:#444; line-height:1.7; margin:6px 0; }
+  .เตือน{ background:#fff8e6; border:1px solid #f0dfae; border-radius:12px; padding:11px 13px;
+          font-size:13px; line-height:1.65; margin-bottom:12px; color:#5f4b16; }
+  .ผิด{ background:#fdeceb; border:1px solid #f2c4c0; color:#7a2620; }
+  .ปุ่ม{ display:block; width:100%; margin-top:10px; padding:13px; border:0; border-radius:12px;
+         background:var(--blue); color:#fff; font-size:15px; font-weight:700; font-family:inherit; }
+  .ปุ่มรอง{ background:#fff; color:var(--muted); border:1px solid var(--line); }
+  .ปุ่ม:disabled{ opacity:.5; }
+  .เล็ก{ font-size:12px; color:var(--muted); text-align:center; margin-top:14px; line-height:1.7; }
+  .โครง{ background:linear-gradient(90deg,#eef2f0 25%,#e3e9e6 37%,#eef2f0 63%); background-size:400% 100%;
+         animation:วิ่ง 1.2s ease infinite; }
+  @keyframes วิ่ง{ 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="ห_หัว">ดูแลหน้างาน</h1>
+  <div class="sub" id="ห_ไซต์">กำลังเปิด…</div>
+</header>
+
+<div class="wrap">
+  <div id="ห_แจ้ง" class="เตือน" hidden></div>
+
+  <div id="ห_แจ้งรูป" class="เตือน ผิด" hidden>
+    <span id="ข_แจ้งรูป"></span>
+    <button class="ปุ่ม ปุ่มรอง" id="ป_ลองรูปใหม่">ลองโหลดรูปใหม่</button>
+  </div>
+
+  <div class="แถบนับ" id="ห_นับ" hidden>
+    <div class="นับ"><b id="น_ทั้งหมด">–</b><span>คนทั้งหมด</span></div>
+    <div class="นับ เขียว"><b id="น_ผูก">–</b><span>ผูกไลน์แล้ว</span></div>
+    <div class="นับ ส้ม"><b id="น_ยัง">–</b><span>ยังไม่ผูก</span></div>
+  </div>
+
+  <div class="เครื่องมือ" id="ห_เครื่องมือ" hidden>
+    <input id="ค_หา" type="search" placeholder="ค้นหาชื่อ" autocomplete="off">
+    <select id="ค_ไซต์" aria-label="เลือกไซต์"></select>
+  </div>
+
+  <div class="ตาราง" id="ห_ตาราง"></div>
+
+  <div class="กล่อง" id="ห_ว่าง" hidden>
+    <h2 id="ว_หัว">ยังไม่มีข้อมูล</h2>
+    <p id="ว_ความ"></p>
+  </div>
+
+  <div class="เล็ก" id="ห_ท้าย" hidden>
+    ที่อยู่รูปมีอายุสั้นเพื่อความปลอดภัย ถ้ารูปไม่ขึ้น กดปุ่มข้างล่างเพื่อขอใหม่
+    <button class="ปุ่ม ปุ่มรอง" id="ป_รีรูป">โหลดรูปใหม่</button>
+  </div>
+</div>
+
+<script>
+  /* ══════════════════════════════════════════════════════════════
+     หน้าดูแลหน้างานของลูกค้า · ชุดที่ 4 ส่วนอ่าน
+     รุ่น 1.1 · 9 ก.ย. 2026 — แก้ตามผลตรวจของผู้วางแผน 5 จุด
+       1. รูปพังต้องไม่เปิดจอเต็มทับรายชื่อ  (ใช้ตัวยิงดิบสำหรับคำสั่ง photos)
+       2. ตัวนับและหัวจอต้องตามไซต์ที่เลือกเสมอ
+       3. คนที่ 201 ขึ้นไปต้องได้รูปด้วย  (แบ่งเฉพาะส่วนที่เกิน)
+       4. เลิกประกอบโค้ด onerror จากชื่อคน  (วาดด้วย DOM ล้วน)
+       5. ไซต์เดียว = เลือกให้เอง · หลายไซต์ = ต้องเลือกก่อน ไม่มีตัวเลือก "ทุกไซต์"
+
+     🔴 ค่าสองตัวข้างล่างกรอกไว้แล้วจากหน้าเว็บที่ใช้งานจริง (report.html)
+     ══════════════════════════════════════════════════════════════ */
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+
+  /* 🔴 เก็บตัวยิงดิบไว้ "ก่อน" ตัวห่อจะเข้ามาครอบ window.fetch
+     คำสั่ง customer_home ใช้ตัวห่อ (ตั๋วหมดอายุแล้วได้จอเข้าใหม่ ถูกต้อง)
+     คำสั่ง photos ใช้ตัวยิงดิบ เพราะรูปพังไม่ควรลบรายชื่อที่โหลดสำเร็จแล้วทิ้งทั้งหน้า */
+  window.__ยิงดิบ = window.fetch.bind(window);
+</script>
+
+<script>
+/* ══ ตัวห่อคำขอ D1 รุ่น 2 (รายการขาว) — ฝังมาทั้งไฟล์ ══ */
+/* ══════════════════════════════════════════════════════════════════════
+   ตัวห่อคำขอ D1 — รุ่น 2 (9 ก.ย. 2026)
+   วางในทุกหน้าเว็บที่ยิง API_URL  ต้องวาง "หลัง" บรรทัดที่ประกาศ API_URL และ LIFF_ID
+
+   🔴 สิ่งที่เปลี่ยนจากรุ่น 1 มีข้อเดียว แต่เป็นข้อสำคัญ
+   ─────────────────────────────────────────────────────────────────────
+   รุ่น 1 ใช้ "รายการคำสั่งเขียน" (รายการดำ)
+        var เขียน = !!คำสั่งเขียน_[action];
+        var ลองใหม่ได้ = !เขียน;
+   ⇒ คำสั่งที่ไม่มีใครขึ้นทะเบียน จะถูกตีว่าเป็น "คำสั่งอ่าน" แล้วระบบลองส่งใหม่ให้เองเงียบ ๆ
+   ⇒ ลืมขึ้นทะเบียน = อันตราย
+
+   ร่องรอยว่าเรื่องนี้เกิดจริงมาแล้ว 2 รอบ
+     · ชุดที่ 2 ต้องตามมาเติม case_open, case_update เข้ารายการทีหลัง (cases.html บ.110)
+     · ชุดที่ 3 เลี่ยงปัญหาด้วยการไม่ใช้ตัวห่อเลย (sick.html ยิง fetch ตรง)
+       ⇒ ได้ความปลอดภัย แต่เสียจอ "เข้าใหม่" ตอนตั๋วหมดอายุ และเสียชั้นจัดการคำตอบไม่ใช่ JSON ไปด้วย
+
+   รุ่น 2 พลิกเป็น "รายการคำสั่งอ่านที่ลองใหม่ได้" (รายการขาว)
+        var ลองใหม่ได้ = !!คำสั่งอ่านที่ลองใหม่ได้_[action];
+   ⇒ ลืมขึ้นทะเบียน = ไม่ลองใหม่ = ปลอดภัยโดยปริยาย
+   ⇒ คำสั่งใหม่ของชุดที่ 4 ปลอดภัยตั้งแต่ยังไม่มีใครแตะรายการนี้
+
+   ⚠️ กติกาการเติมรายการนี้: เติมได้เฉพาะคำสั่งที่ "อ่านอย่างเดียว ไม่เขียนอะไรเลย"
+      ถ้าไม่แน่ใจว่าคำสั่งไหนเขียนหรือไม่ ห้ามเติม — ไม่เติมแล้วช้าลง ดีกว่าเติมแล้วส่งซ้ำ
+   ══════════════════════════════════════════════════════════════════════ */
+(function () {
+  var _ยิงเดิม = window.fetch;
+
+  /* รายการขาว — คำสั่งอ่านอย่างเดียวเท่านั้น ที่อนุญาตให้ลองใหม่อัตโนมัติ 1 ครั้ง
+     (ตรงกับคำสั่งอ่านใน ช่องที่รับ_ ของด่าน ณ เวอร์ชัน 24) */
+  var คำสั่งอ่านที่ลองใหม่ได้_ = {
+    workers:1, worker_reports:1, my_score:1, matched_list:1, matching_data:1,
+    dashboard:1, announce_targets:1, site_list:1, grievance_stats:1,
+    company_rules:1, case_page:1,
+    /* 🆕 ชุดที่ 4 — เติมเฉพาะคำสั่งอ่าน */
+    customer_home:1, photos:1, customer_request_status:1
+  };
+
+  var เตือนแล้ว_ = false;
+
+  function หนี_(s) {
+    return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c];
+    });
+  }
+
+  /* จอเต็มหน้าที่ใช้ร่วมกันทุกกรณี — ทับหน้าเดิมไว้ ไม่ให้ผู้ใช้เห็นข้อความดิบ */
+  function จอ_(html) {
+    if (เตือนแล้ว_) return;
+    เตือนแล้ว_ = true;
+    var d = document.createElement('div');
+    d.id = '_d1จอ';
+    d.setAttribute('style', 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;' +
+      'flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;' +
+      'text-align:center;overflow:auto;-webkit-overflow-scrolling:touch;' +
+      'font-family:-apple-system,"Segoe UI","Sarabun","Noto Sans Myanmar","Padauk",sans-serif');
+    d.innerHTML = html;
+    document.body.appendChild(d);
+
+    var โหลด = document.getElementById('_d1โหลดใหม่');
+    if (โหลด) โหลด.onclick = function () { location.reload(); };
+
+    var ปิด = document.getElementById('_d1ปิด');
+    if (ปิด) ปิด.onclick = function () {
+      var x = document.getElementById('_d1จอ');
+      if (x && x.parentNode) x.parentNode.removeChild(x);
+      เตือนแล้ว_ = false;
+    };
+
+    var สลับ = document.getElementById('_d1สลับ');
+    if (สลับ) สลับ.onclick = function () {
+      var x = document.getElementById('_d1รายละเอียด');
+      if (x) x.style.display = (x.style.display === 'none' ? 'block' : 'none');
+    };
+  }
+
+  function หน้าเข้าใหม่_(ไม่มีตั๋วเลย) {
+    if (ไม่มีตั๋วเลย) {
+      จอ_('<div style="font-size:56px">🔧</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
+        'App setup incomplete — please tell the admin</div>' +
+        '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>');
+    } else {
+      จอ_('<div style="font-size:56px">⏱️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>');
+    }
+  }
+
+  function กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ) {
+    var เวลา = '';
+    try { เวลา = new Date().toLocaleString(); } catch (e) {}
+    return '<div id="_d1สลับ" style="margin-top:20px;font-size:12px;color:#9a9a9a;' +
+      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details</div>' +
+      '<div id="_d1รายละเอียด" style="display:none;margin-top:10px;max-width:100%;' +
+      'background:#f4f4f4;border-radius:10px;padding:10px 12px;font-size:11px;color:#444;' +
+      'text-align:left;word-break:break-all;line-height:1.5;-webkit-user-select:text;user-select:text">' +
+      '<b>D1-ERR</b> · not-json<br>' +
+      'code: ' + หนี_(รหัส) + '<br>' +
+      'action: ' + หนี_(คำสั่ง) + '<br>' +
+      'time: ' + หนี_(เวลา) + '<br>' +
+      'body: ' + หนี_(String(ต้นข้อความ || '').replace(/\s+/g, ' ').slice(0, 300)) +
+      '</div>';
+  }
+
+  function หน้าคำตอบเพี้ยน_(อาจเขียนไปแล้ว, รหัส, คำสั่ง, ต้นข้อความ) {
+    if (อาจเขียนไปแล้ว) {
+      จอ_('<div style="font-size:56px">⚠️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ส่งแล้ว แต่ยังไม่รู้ผล</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
+        'Sent, but result unknown. Do NOT send again.<br>' +
+        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
+        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    } else {
+      จอ_('<div style="font-size:56px">📡</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">โหลดข้อมูลไม่สำเร็จ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
+        'Could not load. Please try again.<br>' +
+        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    }
+  }
+
+  /* คืนวัตถุที่หน้าเว็บเรียก .json() / .text() / .clone() ได้เหมือน Response เดิม */
+  function ห่อ_(r) {
+    var เนื้อ = r.txt;
+    var วัตถุ = {
+      ok: r.res ? !!r.res.ok : false,
+      status: r.res ? r.res.status : 0,
+      statusText: r.res ? r.res.statusText : '',
+      headers: r.res ? r.res.headers : null,
+      text: function () { return Promise.resolve(เนื้อ); },
+      json: function () {
+        return r.ดี ? Promise.resolve(r.j)
+                    : Promise.reject(new SyntaxError('D1: server did not return JSON'));
+      }
+    };
+    วัตถุ.clone = function () { return วัตถุ; };
+    return วัตถุ;
+  }
+
+  window.fetch = function (u, o) {
+    if (String(u) !== API_URL) return _ยิงเดิม.apply(this, arguments);
+
+    var ก้อน = {};
+    try { ก้อน = JSON.parse((o && o.body) || '{}'); } catch (e) { ก้อน = {}; }
+    var ตั๋ว = null;
+    try { ตั๋ว = liff.getIDToken(); } catch (e) {}
+    if (ตั๋ว) ก้อน.idToken = ตั๋ว;
+
+    /* ก้อนเดิมถูกใช้ซ้ำทุกครั้งที่ยิง ⇒ req_id ไม่เปลี่ยน ⇒ ตัวกันซ้ำฝั่งเซิร์ฟเวอร์ยังทำงานได้ */
+    var opt = { method: 'POST', body: JSON.stringify(ก้อน) };
+    if (o) { for (var k in o) if (k !== 'method' && k !== 'body') opt[k] = o[k]; }
+
+    /* 🔴 รุ่น 2 — รายการขาว ไม่ใช่รายการดำ */
+    var ลองใหม่ได้ = !!คำสั่งอ่านที่ลองใหม่ได้_[ก้อน.action];
+    var อาจเขียนไปแล้ว = !ลองใหม่ได้;   /* ใช้เลือกข้อความบนจอเท่านั้น — ไม่รู้จัก = เตือนแบบปลอดภัยไว้ก่อน */
+
+    function รอ_(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    function ยิงแล้วอ่าน_() {
+      return _ยิงเดิม(u, opt).then(function (res) {
+        return res.text().then(function (txt) {
+          var j = null, ดี = false;
+          try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          return { res: res, txt: txt, j: j, ดี: ดี };
+        }, function () {
+          return { res: res, txt: '', j: null, ดี: false };
+        });
+      });
+    }
+
+    /* ชั้น 1 — ยิงไม่ออกเลย (เน็ตหลุด): ลองใหม่ 1 ครั้ง เฉพาะคำสั่งในรายการขาว */
+    var งาน = ยิงแล้วอ่าน_()['catch'](function (e) {
+      if (!ลองใหม่ได้) throw e;
+      return รอ_(1500).then(ยิงแล้วอ่าน_);
+    });
+
+    /* ชั้น 2 — ยิงออกแต่คำตอบไม่ใช่ JSON: ลองใหม่ 1 ครั้ง เฉพาะคำสั่งในรายการขาว */
+    งาน = งาน.then(function (r) {
+      if (r.ดี || !ลองใหม่ได้) return r;
+      return รอ_(1200).then(ยิงแล้วอ่าน_)['catch'](function () { return r; });
+    });
+
+    return งาน.then(function (r) {
+      if (!r.ดี) {
+        หน้าคำตอบเพี้ยน_(อาจเขียนไปแล้ว, r.res ? r.res.status : 0, ก้อน.action, r.txt);
+      } else if (r.j && r.j.ok === false && r.j.error === 'AUTH_REQUIRED') {
+        หน้าเข้าใหม่_(!ตั๋ว);
+      }
+      return ห่อ_(r);
+    });
+  };
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  function ค่าตั้งครบไหม_() {
+    if (!/^\d{10}-[A-Za-z0-9]{8}$/.test(LIFF_ID)) return 'LIFF_ID_NOT_SET';
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]{40,}\/exec$/.test(API_URL)) return 'API_URL_NOT_SET';
+    return '';
+  }
+
+  var จ = function (id) { return document.getElementById(id); };
+  var ขนาดชุดขอรูป_ = 200;          /* ต้องเท่ากับเพดานฝั่งเซิร์ฟเวอร์ */
+  var สถานะ = { คน: [], ไซต์: [], รูป: {}, ขอรูปแล้ว: false, กำลังโหลดรูป: false, รอโหลดรูปใหม่: false };
+
+  function แจ้ง_(ข้อความ, ผิด) {
+    var e = จ('ห_แจ้ง');
+    e.textContent = ข้อความ || '';
+    e.className = 'เตือน' + (ผิด ? ' ผิด' : '');
+    e.hidden = !ข้อความ;
+  }
+  function แจ้งรูป_(ข้อความ) {
+    จ('ข_แจ้งรูป').textContent = ข้อความ || '';
+    จ('ห_แจ้งรูป').hidden = !ข้อความ;
+  }
+  function ว่าง_(หัว, ความ) {
+    จ('ว_หัว').textContent = หัว;
+    จ('ว_ความ').textContent = ความ || '';
+    จ('ห_ว่าง').hidden = false;
+    จ('ห_ตาราง').textContent = '';
+  }
+
+  /* ── ยิงคำขอ ──
+     ดิบ = true  ⇒ ข้ามตัวห่อ จัดการข้อผิดพลาดเองในหน้านี้ ไม่เปิดจอเต็ม */
+  function ยิง_(ก้อน, ดิบ) {
+    if (typeof liff === 'undefined' || !liff.getIDToken) return Promise.reject(new Error('NO_LIFF'));
+    var ตั๋ว = liff.getIDToken();
+    if (!ตั๋ว) return Promise.reject(new Error('NO_TICKET'));
+    var ส่ง = {};
+    for (var k in ก้อน) ส่ง[k] = ก้อน[k];
+    ส่ง.idToken = ตั๋ว;
+    var ยิงจริง = ดิบ ? window.__ยิงดิบ : window.fetch;
+    return ยิงจริง(API_URL, { method: 'POST', body: JSON.stringify(ส่ง) })
+      .then(function (r) {
+        return r.text().then(function (ข้อความ) {
+          try { return JSON.parse(ข้อความ); }
+          catch (e) { return { ok: false, error: 'NOT_JSON', http: r.status }; }
+        });
+      });
+  }
+
+  var ข้อความผิดพลาด_ = {
+    AUTH_REQUIRED: 'ตั๋วเข้าใช้งานหมดอายุ กรุณาปิดหน้านี้แล้วเปิดใหม่จากเมนู LINE',
+    FORBIDDEN:     'บัญชี LINE นี้ไม่ใช่บัญชีฝั่งลูกค้า ถ้าคิดว่าผิด แจ้งทีมงาน Jasmine',
+    NO_ROLE:       'บัญชี LINE นี้ยังไม่ได้ผูกกับระบบ แจ้งทีมงาน Jasmine เพื่อผูกให้',
+    NO_SITE:       'บัญชีนี้ยังไม่ได้ผูกกับไซต์ใด แจ้งทีมงาน Jasmine',
+    UNKNOWN_ACTION:'ระบบฝั่งเซิร์ฟเวอร์ยังไม่ได้เปิดใช้เมนูนี้ แจ้งทีมงาน Jasmine',
+    BAD_TYPE:      'ข้อมูลที่ส่งไปไม่ถูกรูปแบบ ลองเปิดหน้านี้ใหม่',
+    TOO_MANY:      'รายชื่อยาวเกินกว่าที่ขอรูปได้ในครั้งเดียว',
+    MISSING_CARD_IDS: 'ไม่มีรายชื่อที่จะขอรูป',
+    NOT_JSON:      'เซิร์ฟเวอร์ตอบกลับมาไม่ใช่ข้อมูล อาจกำลังปรับปรุงระบบ'
+  };
+  function แปลผิด_(รหัส) { return ข้อความผิดพลาด_[รหัส] || ('เกิดข้อผิดพลาด: ' + รหัส); }
+
+  var ข้อความรูป_ = {
+    OK: '',
+    NO_PHOTO: 'ยังไม่มีรูปในระบบ',
+    UNAVAILABLE: 'ไม่มีสิทธิ์ดูรูปนี้',
+    BAD_ID: 'รหัสไม่ถูกต้อง',
+    PHOTO_SOURCE_MISSING: 'ระบบยังไม่ได้ตั้งที่เก็บรูป',
+    DRIVE_FORBIDDEN: 'ระบบยังไม่มีสิทธิ์อ่านที่เก็บรูป',
+    DRIVE_UNAVAILABLE: 'ที่เก็บรูปตอบไม่ได้ชั่วคราว',
+    DRIVE_TOO_MANY_PAGES: 'รูปมีมากเกินกว่าที่อ่านได้ในรอบเดียว'
+  };
+
+  function อักษรย่อ_(ชื่อ) {
+    var s = String(ชื่อ == null ? '' : ชื่อ).trim();
+    return s ? s.charAt(0).toUpperCase() : '?';
+  }
+  function ไซต์ที่เลือก_() { return จ('ค_ไซต์').value || (สถานะ.ไซต์[0] || ''); }
+
+  /* ── วาดการ์ดด้วย DOM ล้วน ──
+     🔴 ผู้ตรวจจับได้: รุ่นก่อนประกอบโค้ด onerror จากชื่อคน
+        ชื่อที่ขึ้นต้นด้วยเครื่องหมาย ' ทำให้โค้ดในแอตทริบิวต์พัง
+        รุ่นนี้ไม่ประกอบโค้ดจากข้อมูลเลย ใช้ textContent และผูกเหตุการณ์ด้วยฟังก์ชัน */
+  function การ์ด_(w) {
+    var กล่อง = document.createElement('div');
+    กล่อง.className = 'คน';
+
+    var ตัวย่อ = อักษรย่อ_(w.name);
+    var id = String(w.card_id || '');
+    var r = สถานะ.รูป[id];
+
+    function แทนรูป_(ข้อความชั้นเพิ่ม) {
+      var d = document.createElement('div');
+      d.className = 'แทนรูป' + (ข้อความชั้นเพิ่ม || '');
+      d.textContent = ข้อความชั้นเพิ่ม ? '' : ตัวย่อ;
+      return d;
+    }
+
+    if (r && r['สถานะ'] === 'OK' && r.url) {
+      var img = document.createElement('img');
+      img.className = 'รูป';
+      img.alt = '';
+      img.loading = 'lazy';
+      img.addEventListener('error', function () {
+        if (img.parentNode) img.parentNode.replaceChild(แทนรูป_(''), img);
+      });
+      img.src = r.url;
+      กล่อง.appendChild(img);
+    } else if (!r && !สถานะ.ขอรูปแล้ว) {
+      กล่อง.appendChild(แทนรูป_(' โครง'));
+    } else {
+      กล่อง.appendChild(แทนรูป_(''));
+    }
+
+    var ชื่อ = document.createElement('div');
+    ชื่อ.className = 'ชื่อ';
+    ชื่อ.textContent = w.name || '—';
+    กล่อง.appendChild(ชื่อ);
+
+    var หมายเหตุ = (r && r['สถานะ'] && r['สถานะ'] !== 'OK') ? (ข้อความรูป_[r['สถานะ']] || r['สถานะ']) : '';
+    var ไซต์ = document.createElement('div');
+    ไซต์.className = 'ไซต์';
+    ไซต์.textContent = (w.site || '') + (หมายเหตุ ? ' · ' + หมายเหตุ : '');
+    กล่อง.appendChild(ไซต์);
+
+    var ป้าย = document.createElement('span');
+    ป้าย.className = 'ป้าย ' + (w['ผูกไลน์'] ? 'ผูก' : 'ยัง');
+    ป้าย.textContent = w['ผูกไลน์'] ? 'ผูกไลน์แล้ว' : 'ยังไม่ผูกไลน์';
+    กล่อง.appendChild(ป้าย);
+
+    return กล่อง;
+  }
+
+  /* คนในไซต์ที่เลือก (ยังไม่กรองคำค้น) — ใช้เป็นฐานของทั้งตัวนับและรายการ */
+  function คนในไซต์_() {
+    var s = ไซต์ที่เลือก_();
+    return สถานะ.คน.filter(function (w) { return String(w.site || '') === s; });
+  }
+
+  /* 🔴 ผู้ตรวจจับได้: รุ่นก่อนตั้งตัวนับครั้งเดียวตอนเปิดหน้า พอเลือกไซต์แล้วตัวเลขไม่ตาม
+     รุ่นนี้ หัวจอ ตัวนับ และรายชื่อ อ้างไซต์เดียวกันเสมอ */
+  function ปรับหัวและตัวนับ_() {
+    var s = ไซต์ที่เลือก_();
+    var ใน = คนในไซต์_();
+    var ผูก = 0;
+    ใน.forEach(function (w) { if (w['ผูกไลน์']) ผูก++; });
+    จ('ห_ไซต์').textContent = s || 'ยังไม่ได้ผูกกับไซต์ใด';
+    จ('น_ทั้งหมด').textContent = ใน.length;
+    จ('น_ผูก').textContent = ผูก;
+    จ('น_ยัง').textContent = ใน.length - ผูก;
+  }
+
+  function วาด_() {
+    ปรับหัวและตัวนับ_();
+    var คำ = จ('ค_หา').value.trim().toLowerCase();
+    var แสดง = คนในไซต์_().filter(function (w) {
+      return !คำ || String(w.name || '').toLowerCase().indexOf(คำ) > -1;
+    });
+
+    var ตาราง = จ('ห_ตาราง');
+    ตาราง.textContent = '';
+    if (!แสดง.length) {
+      ว่าง_(คำ ? 'ไม่พบคนที่ค้นหา' : 'ไซต์นี้ยังไม่มีรายชื่อ',
+            คำ ? 'ลองล้างคำค้น หรือเลือกไซต์อื่น' : 'ถ้าคิดว่าผิด แจ้งทีมงาน Jasmine');
+      return;
+    }
+    จ('ห_ว่าง').hidden = true;
+    var ถุง = document.createDocumentFragment();
+    แสดง.forEach(function (w) { ถุง.appendChild(การ์ด_(w)); });
+    ตาราง.appendChild(ถุง);
+  }
+
+  /* ── ขอรูป ──
+     🔴 ผู้ตรวจจับได้: รุ่นก่อนตัดที่ 200 คนเงียบ ๆ คนที่ 201 ขึ้นไปไม่มีทางได้รูปเลย
+        รุ่นนี้ขอทีเดียวถ้าไม่เกินเพดาน ถ้าเกินค่อยแบ่งเฉพาะส่วนที่เกิน ไม่ย้อนไปแบ่งกลุ่มละ 6 */
+  function โหลดรูป_() {
+    /* 🔴 ผู้ตรวจรอบ 11 จับได้: เดิมถ้ามีงานโหลดอยู่แล้วออกทันที
+          พอสลับไซต์ระหว่างรูปยังโหลด รายชื่อเปลี่ยนเป็นไซต์ใหม่ แต่ระบบขอรูปของไซต์เก่า
+          ⇒ ไซต์ใหม่เหลือแต่อักษรย่อ โดยไม่มีข้อความบอกอะไรเลย
+          ใหม่: จำไว้ว่าต้องโหลดต่อ แล้วพอรอบเดิมจบค่อยเริ่มใหม่ด้วยไซต์ล่าสุด */
+    if (สถานะ.กำลังโหลดรูป) { สถานะ.รอโหลดรูปใหม่ = true; return; }
+    var ids = คนในไซต์_()
+      .map(function (w) { return String(w.card_id || ''); })
+      .filter(function (x) { return /^[0-9a-f]{24}$/i.test(x); });
+    if (!ids.length) { สถานะ.ขอรูปแล้ว = true; วาด_(); return; }
+
+    var ชุด = [];
+    for (var i = 0; i < ids.length; i += ขนาดชุดขอรูป_) ชุด.push(ids.slice(i, i + ขนาดชุดขอรูป_));
+
+    สถานะ.กำลังโหลดรูป = true;
+    ตั้งปุ่มรูป_(true, 'กำลังโหลดรูป…');
+    แจ้งรูป_('');
+
+    var พัง = [], สถานะรวม = {};
+    function ทีละชุด_(n) {
+      if (n >= ชุด.length) return Promise.resolve();
+      return ยิง_({ action: 'photos', card_ids: ชุด[n] }, true)
+        .then(function (ผล) {
+          if (!ผล || ผล.ok !== true) { พัง.push(แปลผิด_(ผล && ผล.error)); return; }
+          (ผล.photos || []).forEach(function (p) {
+            สถานะ.รูป[String(p.card_id)] = { url: p.url, 'สถานะ': p['สถานะ'] };
+          });
+          var ส = ผล['สถานะรูป'];
+          if (ส && ส !== 'OK' && ส !== 'NO_ALLOWED') สถานะรวม[ส] = 1;
+        })
+        .catch(function () { พัง.push('ต่อเซิร์ฟเวอร์ไม่ได้'); })
+        .then(function () { return ทีละชุด_(n + 1); });
+    }
+
+    ทีละชุด_(0).then(function () {
+      สถานะ.กำลังโหลดรูป = false;
+      ตั้งปุ่มรูป_(false, 'โหลดรูปใหม่');
+
+      /* มีการสลับไซต์ระหว่างทาง (หรือสลับหลายทอด A → B → C)
+         ⇒ ทิ้งผลรอบนี้ แล้วเริ่มใหม่ด้วยไซต์ที่เลือกอยู่ล่าสุด
+         ทำก่อนนำผลรอบเก่ามาแสดง เพื่อไม่ให้ข้อความของไซต์เก่าค้างบนจอไซต์ใหม่
+         และทำในนี้ทั้งกรณีสำเร็จและกรณีคำขอเดิมล้มเหลว เพราะโค้ดเดินมาถึงจุดนี้เสมอ */
+      if (สถานะ.รอโหลดรูปใหม่) {
+        สถานะ.รอโหลดรูปใหม่ = false;
+        ขอรูปใหม่_();
+        return;
+      }
+
+      สถานะ.ขอรูปแล้ว = true;
+      var เหตุ = Object.keys(สถานะรวม).map(function (k) { return ข้อความรูป_[k] || k; });
+      if (พัง.length) เหตุ.push(พัง[0]);
+      /* 🔴 ข้อความรูปพังอยู่ในกรอบของตัวเอง รายชื่อยังอยู่ครบ ไม่ต้องโหลดหน้าใหม่ */
+      แจ้งรูป_(เหตุ.length ? 'รูปยังแสดงไม่ได้: ' + เหตุ.join(' · ') : '');
+      วาด_();
+    });
+  }
+
+  function ตั้งปุ่มรูป_(ปิด, ข้อความ) {
+    ['ป_รีรูป', 'ป_ลองรูปใหม่'].forEach(function (id) {
+      var b = จ(id);
+      b.disabled = !!ปิด;
+      if (id === 'ป_รีรูป') b.textContent = ข้อความ;
+    });
+  }
+
+  function ขอรูปใหม่_() {
+    สถานะ.รูป = {}; สถานะ.ขอรูปแล้ว = false; วาด_(); โหลดรูป_();
+  }
+
+  function โหลดหน้าแรก_() {
+    return ยิง_({ action: 'customer_home' }).then(function (ผล) {
+      if (!ผล || ผล.ok !== true) {
+        ว่าง_('เปิดหน้านี้ไม่ได้', แปลผิด_(ผล && ผล.error));
+        return false;
+      }
+      สถานะ.ไซต์ = (ผล.sites || []).map(function (s) { return String(s); });
+      สถานะ.คน  = ผล.workers || [];
+
+      if (!สถานะ.ไซต์.length) {
+        จ('ห_ไซต์').textContent = 'ยังไม่ได้ผูกกับไซต์ใด';
+        ว่าง_('ยังไม่ได้ผูกกับไซต์ใด', ผล.note || 'แจ้งทีมงาน Jasmine');
+        return false;
+      }
+
+      /* 🔴 ไซต์เดียว = เลือกให้เอง · หลายไซต์ = ต้องเลือกก่อน
+            ไม่มีตัวเลือก "ทุกไซต์" เพื่อให้หัวจอ ตัวนับ รายชื่อ และกลุ่มที่จะประกาศ อ้างไซต์เดียวกันเสมอ */
+      var เลือก = จ('ค_ไซต์');
+      เลือก.textContent = '';
+      สถานะ.ไซต์.forEach(function (s) {
+        var o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        เลือก.appendChild(o);
+      });
+      เลือก.value = สถานะ.ไซต์[0];
+      เลือก.hidden = (สถานะ.ไซต์.length < 2);
+
+      จ('ห_นับ').hidden = false;
+      จ('ห_เครื่องมือ').hidden = false;
+
+      if (!สถานะ.คน.length) {
+        ปรับหัวและตัวนับ_();
+        ว่าง_('ยังไม่มีรายชื่อในไซต์ของคุณ', ผล.note || 'ถ้าคิดว่าผิด แจ้งทีมงาน Jasmine');
+        return false;
+      }
+
+      จ('ห_ท้าย').hidden = false;
+      วาด_();   /* วาดชื่อก่อน รูปตามมาทีหลัง */
+
+      var พร้อมรูป = ผล['รูป'] && ผล['รูป']['พร้อม'];
+      if (พร้อมรูป === false) {
+        สถานะ.ขอรูปแล้ว = true;
+        แจ้งรูป_('ระบบยังไม่ได้ตั้งที่เก็บรูป จึงแสดงได้แค่ชื่อ — แจ้งทีมงาน Jasmine');
+        จ('ห_ท้าย').hidden = true;
+        วาด_();
+        return true;
+      }
+      โหลดรูป_();
+      return true;
+    });
+  }
+
+  /* ── เริ่มทำงาน ── */
+  ตั้งปุ่มรูป_(true, 'โหลดรูปใหม่');
+  จ('ค_หา').addEventListener('input', วาด_);
+  จ('ค_ไซต์').addEventListener('change', function () { ขอรูปใหม่_(); });
+  จ('ป_รีรูป').addEventListener('click', ขอรูปใหม่_);
+  จ('ป_ลองรูปใหม่').addEventListener('click', ขอรูปใหม่_);
+
+  (function เริ่ม_() {
+    var ขาด = ค่าตั้งครบไหม_();
+    if (ขาด) {
+      ว่าง_('หน้านี้ยังตั้งค่าไม่ครบ',
+            ขาด === 'LIFF_ID_NOT_SET'
+              ? 'ยังไม่ได้ใส่รหัส LIFF ในไฟล์นี้ — แจ้งผู้ดูแลระบบ'
+              : 'ยังไม่ได้ใส่ที่อยู่ API ในไฟล์นี้ — แจ้งผู้ดูแลระบบ');
+      return;
+    }
+    if (typeof liff === 'undefined') {
+      ว่าง_('เปิดหน้านี้ไม่ได้', 'โหลดตัว LINE ไม่สำเร็จ ลองเปิดใหม่อีกครั้ง');
+      return;
+    }
+    liff.init({ liffId: LIFF_ID })
+      .then(function () {
+        if (!liff.isLoggedIn()) { liff.login(); return null; }
+        ตั้งปุ่มรูป_(false, 'โหลดรูปใหม่');
+        return โหลดหน้าแรก_();
+      })
+      .catch(function () {
+        ว่าง_('เปิดหน้านี้ไม่ได้',
+              'เชื่อมต่อ LINE ไม่สำเร็จ กรุณาปิดหน้านี้แล้วเปิดใหม่จากเมนู LINE');
+      });
+  })();
+})();
+</script>
+</body>
+</html>
