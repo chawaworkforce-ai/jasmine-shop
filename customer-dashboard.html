@@ -53,6 +53,20 @@
          animation:วิ่ง 1.2s ease infinite; }
   @keyframes วิ่ง{ 0%{background-position:100% 50%} 100%{background-position:0 50%} }
   [hidden]{ display:none !important; }
+  /* ── 🆕 รุ่น 1.3 · จอดูรูปใหญ่ ── */
+  .คน.กดได้{ cursor:pointer; }
+  .คน.กดได้:focus-visible{ outline:2px solid var(--green); outline-offset:2px; }
+  .จอรูป{ position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.86);
+          display:flex; flex-direction:column; align-items:center; justify-content:center;
+          padding:16px; gap:10px; }
+  .จอรูป img{ max-width:100%; max-height:72vh; border-radius:12px; background:#222; object-fit:contain; }
+  .จอรูป .จชื่อ{ color:#fff; font-size:16px; font-weight:700; text-align:center; }
+  .จอรูป .จไซต์{ color:#cfd6d2; font-size:13px; text-align:center; margin-top:-4px; }
+  .จอรูป .จผิด{ color:#ffd7d2; font-size:14px; text-align:center; }
+  .จอรูป .จปิด{ position:absolute; top:10px; right:12px; width:40px; height:40px; border:0;
+                border-radius:999px; background:rgba(255,255,255,.16); color:#fff;
+                font-size:22px; line-height:1; cursor:pointer; }
+  .จอรูป .จบอก{ color:#9aa5a0; font-size:12px; }
 </style>
 </head>
 <body>
@@ -93,9 +107,20 @@
   </div>
 </div>
 
+<!-- 🆕 รุ่น 1.3 · จอดูรูปใหญ่ — อยู่นอกตาราง วาดรายชื่อใหม่กี่ครั้งก็ไม่หาย -->
+<div class="จอรูป" id="ห_จอรูป" hidden role="dialog" aria-modal="true" aria-label="รูปขนาดใหญ่">
+  <button class="จปิด" id="ป_ปิดจอรูป" aria-label="ปิด">&times;</button>
+  <img id="จ_รูปใหญ่" alt="">
+  <div class="จผิด" id="จ_ผิด" hidden>โหลดรูปใหญ่ไม่ได้ — ที่อยู่รูปอาจหมดอายุ ปิดจอนี้แล้วกด "โหลดรูปใหม่"</div>
+  <div class="จชื่อ" id="จ_ชื่อ"></div>
+  <div class="จไซต์" id="จ_ไซต์"></div>
+  <div class="จบอก">แตะที่ว่างเพื่อปิด</div>
+</div>
+
 <script>
   /* ══════════════════════════════════════════════════════════════
      หน้าดูแลหน้างานของลูกค้า · ชุดที่ 4 ส่วนอ่าน
+     รุ่น 1.3 · 10 ก.ย. 2026 — เพิ่ม "กดที่การ์ดแล้วดูรูปใหญ่" (ต่อจากรุ่น 1.2)
      รุ่น 1.1 · 9 ก.ย. 2026 — แก้ตามผลตรวจของผู้วางแผน 5 จุด
        1. รูปพังต้องไม่เปิดจอเต็มทับรายชื่อ  (ใช้ตัวยิงดิบสำหรับคำสั่ง photos)
        2. ตัวนับและหัวจอต้องตามไซต์ที่เลือกเสมอ
@@ -405,6 +430,45 @@
      🔴 ผู้ตรวจจับได้: รุ่นก่อนประกอบโค้ด onerror จากชื่อคน
         ชื่อที่ขึ้นต้นด้วยเครื่องหมาย ' ทำให้โค้ดในแอตทริบิวต์พัง
         รุ่นนี้ไม่ประกอบโค้ดจากข้อมูลเลย ใช้ textContent และผูกเหตุการณ์ด้วยฟังก์ชัน */
+  /* ══ 🆕 รุ่น 1.3 · จอดูรูปใหญ่ ══════════════════════════════════════
+     ที่อยู่รูปจาก Drive ลงท้ายด้วยขนาด เช่น =s220 ⇒ เปลี่ยนเป็นขนาดใหญ่ได้
+     ถ้ารูปแบบไม่ตรงที่คาด ให้ใช้ที่อยู่เดิม ห้ามเดาแล้วทำรูปพัง
+     ถ้ารูปใหญ่โหลดไม่ขึ้น ถอยไปใช้รูปเล็กก่อน แล้วค่อยขึ้นข้อความบอก */
+  var ขนาดรูปใหญ่_ = 1200;
+  function ขยายที่อยู่รูป_(u) {
+    var s = String(u || '');
+    if (/=s\d+(-c)?$/.test(s)) return s.replace(/=s\d+(-c)?$/, '=s' + ขนาดรูปใหญ่_);
+    if (/=w\d+-h\d+(-c)?$/.test(s)) return s.replace(/=w\d+-h\d+(-c)?$/, '=s' + ขนาดรูปใหญ่_);
+    if (/[?&]sz=w\d+/.test(s)) return s.replace(/([?&]sz=)w\d+/, '$1w' + ขนาดรูปใหญ่_);
+    return s;
+  }
+
+  function เปิดจอรูป_(w, urlเล็ก) {
+    var จอ = จ('ห_จอรูป'); if (!จอ) return;
+    var รูป = จ('จ_รูปใหญ่'), ผิด = จ('จ_ผิด');
+    ผิด.hidden = true;
+    จ('จ_ชื่อ').textContent = w.name || '—';
+    จ('จ_ไซต์').textContent = w.site || '';
+    var ถอยแล้ว = false;
+    รูป.onerror = function () {
+      if (!ถอยแล้ว) { ถอยแล้ว = true; รูป.src = urlเล็ก; return; }  /* ถอยไปรูปเล็กก่อน */
+      ผิด.hidden = false;
+    };
+    รูป.src = ขยายที่อยู่รูป_(urlเล็ก);
+    จอ.hidden = false;
+    document.body.style.overflow = 'hidden';
+    var ปิด = จ('ป_ปิดจอรูป'); if (ปิด) ปิด.focus();
+  }
+
+  function ปิดจอรูป_() {
+    var จอ = จ('ห_จอรูป'); if (!จอ || จอ.hidden) return;
+    จอ.hidden = true;
+    var รูป = จ('จ_รูปใหญ่');
+    รูป.onerror = null;
+    รูป.removeAttribute('src');           /* หยุดโหลดค้าง */
+    document.body.style.overflow = '';
+  }
+
   function การ์ด_(w) {
     var กล่อง = document.createElement('div');
     กล่อง.className = 'คน';
@@ -430,6 +494,15 @@
       });
       img.src = r.url;
       กล่อง.appendChild(img);
+
+      /* 🆕 รุ่น 1.3 — มีรูปจริงเท่านั้นถึงกดได้ (คนที่รูปพังกดแล้วไม่มีอะไรให้ดู) */
+      กล่อง.classList.add('กดได้');
+      กล่อง.setAttribute('tabindex', '0');
+      กล่อง.setAttribute('role', 'button');
+      กล่อง.addEventListener('click', function () { เปิดจอรูป_(w, r.url); });
+      กล่อง.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); เปิดจอรูป_(w, r.url); }
+      });
     } else if (!r && !สถานะ.ขอรูปแล้ว) {
       กล่อง.appendChild(แทนรูป_(' โครง'));
     } else {
@@ -624,6 +697,15 @@
   จ('ค_ไซต์').addEventListener('change', function () { ขอรูปใหม่_(); });
   จ('ป_รีรูป').addEventListener('click', ขอรูปใหม่_);
   จ('ป_ลองรูปใหม่').addEventListener('click', ขอรูปใหม่_);
+
+  /* 🆕 รุ่น 1.3 — ปิดจอรูป: กดปุ่มกากบาท · แตะพื้นหลัง · ปุ่ม Esc */
+  จ('ป_ปิดจอรูป').addEventListener('click', ปิดจอรูป_);
+  จ('ห_จอรูป').addEventListener('click', function (e) {
+    if (e.target === จ('ห_จอรูป')) ปิดจอรูป_();      /* แตะเฉพาะพื้นหลัง ไม่ใช่ตัวรูป */
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') ปิดจอรูป_();
+  });
 
   (function เริ่ม_() {
     var ขาด = ค่าตั้งครบไหม_();
