@@ -65,7 +65,14 @@
 
   var ภาษา = 'en';
   var โปรไฟล์ = null;
+  var ตั๋วล่าสุด = null;
   var กำลังส่ง = false;
+  /* 🔴 รุ่น 1.2 (ผลตรวจทีม 8 ก.ย. ข้อ 2): ห้ามเปิดปุ่มส่งก่อนระบบตัวตนพร้อม
+     รุ่น 1.1 วาดปุ่มก่อน await liff.init() ⇒ ทีมกดทันได้จริง แล้วคำขอออกไปโดยไม่มีตั๋วและ userId ว่าง */
+  var พร้อมส่ง = false;
+  /* 🔴 (ข้อ 1): เลขรอบของคำขอ — คำตอบที่ไม่ใช่ของรอบปัจจุบัน ต้องถูกทิ้ง
+     ไม่งั้นคำตอบของคำขอเก่าจะมาทับจอของคำขอใหม่ (ทีมทำซ้ำได้: ป่วย FAIL แล้วจอเด้งเขียวทับ) */
+  var รอบส่ง = 0;
 
   var ข้อความ = {
     en: {
@@ -94,7 +101,10 @@
       errT:   'Something went wrong',
       errS:   'Please call this number.',
       notyou: 'Your account is not linked yet. Please call the team.',
-      out:    'Your account is closed. Please call the team.'
+      out:    'Your account is closed. Please call the team.',
+      needline: 'Please open this page from the LINE menu, not from a web link.',
+      onlyworker: 'This page is for workers only. Admin accounts cannot send from here.',
+      waiting: 'Connecting to LINE… the buttons will turn on in a moment.'
     },
     mm: {
       head:   'နေမကောင်း / ဆေးခန်း',
@@ -122,7 +132,10 @@
       errT:   'တစ်ခုခု မမှန်ပါ',
       errS:   'ဤဖုန်းနံပါတ်ကို ခေါ်ပါ',
       notyou: 'သင့်အကောင့် မချိတ်ရသေးပါ။ အစီအစဉ်ကို ဖုန်းဆက်ပါ',
-      out:    'သင့်အကောင့် ပိတ်ထားပါသည်။ အစီအစဉ်ကို ဖုန်းဆက်ပါ'
+      out:    'သင့်အကောင့် ပိတ်ထားပါသည်။ အစီအစဉ်ကို ဖုန်းဆက်ပါ',
+      needline: '\u1024\u1005\u102C\u1019\u103B\u1000\u103A\u1014\u103E\u102C\u1000\u102D\u102F LINE \u1019\u102E\u1014\u1030\u1038\u1019\u103E \u1016\u103D\u1004\u1037\u103A\u1015\u102B',
+      onlyworker: '\u1024\u1005\u102C\u1019\u103B\u1000\u103A\u1014\u103E\u102C\u101E\u100A\u103A \u1021\u101C\u102F\u1015\u103A\u101E\u1019\u102C\u1038\u1019\u103B\u102C\u1038\u1021\u1010\u103D\u1000\u103A\u101E\u102C \u1016\u103C\u1005\u103A\u1015\u102B\u101E\u100A\u103A',
+      waiting: 'LINE \u1014\u103E\u1004\u1037\u103A \u1001\u103B\u102D\u1010\u103A\u1006\u1000\u103A\u1014\u1031\u1015\u102B\u101E\u100A\u103A\u2026'
     }
   };
   /* 🟡 ข้อความพม่าข้างบนเป็น "ร่าง" — ต้องให้เจ้าของหรือพี่มายตรวจก่อนใช้จริง
@@ -145,16 +158,32 @@
   /* ── ความจำในเครื่อง: ใช้เตือน "เพิ่งแจ้งไป" เท่านั้น ─────────────
      🔴 ไม่ใช่ตัวตัดสินธง "ซ้ำ" — ตัวตัดสินจริงคือแถวในชีตฝั่งเซิร์ฟเวอร์
      เพราะแคชในเครื่องหายได้ ชีตไม่หาย (สเปก 3.3) */
+  /* 🔴 (Q5): กุญแจต้องผูกกับบัญชีผู้ใช้ ไม่งั้นเปลี่ยนบัญชีในเครื่องเดิม
+     จะเห็นเลขเรื่องของคนก่อนหน้า (ทีมทำซ้ำได้) */
+  function กุญแจจำ_(type){
+    var uid = (โปรไฟล์ && โปรไฟล์.userId) ? String(โปรไฟล์.userId) : 'ยังไม่รู้';
+    return 'jm_sick_' + uid + '_' + type;
+  }
   function จำการส่ง_(type, ref){
-    try { localStorage.setItem('jm_sick_' + type, JSON.stringify({ t: Date.now(), ref: ref })); } catch(e){}
+    try { localStorage.setItem(กุญแจจำ_(type), JSON.stringify({ t: Date.now(), ref: ref })); } catch(e){}
   }
   function เพิ่งส่งไป_(type){
     try {
-      var v = JSON.parse(localStorage.getItem('jm_sick_' + type) || 'null');
+      var v = JSON.parse(localStorage.getItem(กุญแจจำ_(type)) || 'null');
       if (!v || !v.t) return null;
       var นาที = Math.floor((Date.now() - v.t) / 60000);
       return (นาที >= 0 && นาที < 10) ? { นาที: นาที, ref: v.ref } : null;
     } catch(e){ return null; }
+  }
+
+  function ตั๋วสด_(){
+    try { return liff.getIDToken() || null; } catch(e){ return null; }
+  }
+  function ล็อกปุ่มภาษา_(ล็อก){
+    ['ป_en','ป_mm'].forEach(function(id){
+      var b = document.getElementById(id);
+      if (b) { b.disabled = !!ล็อก; b.style.opacity = ล็อก ? '.5' : '1'; }
+    });
   }
 
   function uuid_(){
@@ -168,12 +197,17 @@
   /* ── จอที่ 1 — 2 ปุ่มใหญ่ ไม่มีช่องพิมพ์ ───────────────────────── */
   function จอเลือก_(){
     กำลังส่ง = false;
+    รอบส่ง++;                 /* คำตอบของรอบก่อนหน้าที่ยังค้างอยู่ ถือว่าหมดอายุทันที */
+    ล็อกปุ่มภาษา_(false);
     var t = t_();
+    var ปิด = พร้อมส่ง ? '' : ' disabled';
     จอ_(
-      '<button class="big b-sick" id="ป_sick">🤒 ' + esc(t.sick) + '<small>' + esc(t.sickS) + '</small></button>' +
-      '<button class="big b-ride" id="ป_ride">🚗 ' + esc(t.ride) + '<small>' + esc(t.rideS) + '</small></button>' +
+      '<button class="big b-sick" id="ป_sick"' + ปิด + '>🤒 ' + esc(t.sick) + '<small>' + esc(t.sickS) + '</small></button>' +
+      '<button class="big b-ride" id="ป_ride"' + ปิด + '>🚗 ' + esc(t.ride) + '<small>' + esc(t.rideS) + '</small></button>' +
+      (พร้อมส่ง ? '' : '<div class="hint">⏳ ' + esc(t.waiting) + '</div>') +
       '<div class="hint">' + esc(เบอร์()) + '</div>'
     );
+    if (!พร้อมส่ง) return;    /* ยังไม่พร้อม = ปุ่มกดไม่ได้จริง ๆ ไม่ใช่แค่ดูจาง */
     document.getElementById('ป_sick').onclick = function(){ กดเลือก_('sick'); };
     document.getElementById('ป_ride').onclick = function(){ กดเลือก_('ride'); };
   }
@@ -210,7 +244,8 @@
       '<button class="big ' + (type === 'sick' ? 'b-sick' : 'b-ride') + '" style="margin-top:14px" id="ป_ยืนยัน">' + esc(t.yes) + '</button>' +
       '<button class="ghost" id="ป_ยกเลิก">' + esc(t.no) + '</button></div>');
     document.getElementById('ป_ยืนยัน').onclick = function(){ ส่ง_(type, this); };
-    document.getElementById('ป_ยกเลิก').onclick = จอเลือก_;
+    /* 🔴 (ข้อ 1): ปุ่มนี้ต้องถูกปิดระหว่างส่ง ไม่งั้นกดออกไปตั้งคำขอใหม่ซ้อนได้ */
+    document.getElementById('ป_ยกเลิก').onclick = function(){ if (!กำลังส่ง) จอเลือก_(); };
   }
 
   /* ── ส่งจริง ─────────────────────────────────────────────────────
@@ -218,35 +253,54 @@
      req_id สุ่มใหม่ทุกครั้งที่ "คนกด" — ไม่ใช่ทุกครั้งที่ยิง */
   function ส่ง_(type, ปุ่ม){
     if (กำลังส่ง) return;
-    กำลังส่ง = true;
-    if (ปุ่ม) { ปุ่ม.disabled = true; ปุ่ม.textContent = t_().sending; }
-    var rid = uuid_();
-    var หมดเวลา = setTimeout(function(){ จอไม่รู้ผล_(); }, 25000);
+    /* 🔴 (ข้อ 2): ไม่มีตั๋ว = ไม่ยิง — ยิงไปก็รู้อยู่แล้วว่าด่านจะปฏิเสธ
+       บอกวิธีแก้พร้อมเบอร์โทรแทน ดีกว่าให้คนป่วยเห็นคำว่า "ผิดพลาด" เฉย ๆ */
+    var ตั๋ว = ตั๋วสด_();
+    if (!พร้อมส่ง || !ตั๋ว || !(โปรไฟล์ && โปรไฟล์.userId)) return จอผิดพลาด_('AUTH_REQUIRED');
 
-    fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'sick_report',
-        userId: โปรไฟล์ ? โปรไฟล์.userId : '',
-        type: type,
-        req_id: rid
-      })
-    })
+    กำลังส่ง = true;
+    ล็อกปุ่มภาษา_(true);       /* สลับภาษาระหว่างรอ = กลับหน้าเลือก = ตั้งคำขอซ้อนได้ */
+    if (ปุ่ม) { ปุ่ม.disabled = true; ปุ่ม.textContent = t_().sending; }
+    var ปยก = document.getElementById('ป_ยกเลิก');
+    if (ปยก) { ปยก.disabled = true; ปยก.style.opacity = '.5'; }
+
+    var รอบนี้ = ++รอบส่ง;
+    var ของรอบนี้ = function(){ return รอบนี้ === รอบส่ง; };
+    var rid = uuid_();
+    var หมดเวลา = setTimeout(function(){ if (ของรอบนี้()) จอไม่รู้ผล_(); }, 25000);
+
+    /* 🔴🔴 ต้องแนบตั๋วยืนยันตัวตนไปด้วยทุกคำขอ ไม่งั้นด่านตีกลับเป็น AUTH_REQUIRED
+       เกิดจริง 8 ก.ย. 2026: รุ่น 1 ลืมบรรทัดนี้ ทดสอบบนมือถือแล้วขึ้น Something went wrong
+       หน้าอื่นในระบบทำเรื่องนี้ในตัวห่อ fetch ของตัวเอง แต่หน้านี้แนบตรง ๆ
+       เพราะตัวห่อนั้นมีการลองส่งใหม่อัตโนมัติ ซึ่งหน้านี้ห้ามมีเด็ดขาด
+       ด่านลบ idToken ทิ้งทันทีหลังตรวจ จึงไม่หลุดไปถึงชีตหรือบันทึกการทำงาน */
+    var ก้อน = {
+      action: 'sick_report',
+      userId: โปรไฟล์ ? โปรไฟล์.userId : '',
+      type: type,
+      req_id: rid
+    };
+    ก้อน.idToken = ตั๋ว;
+
+    fetch(API_URL, { method: 'POST', body: JSON.stringify(ก้อน) })
     .then(function(r){ return r.text(); })
     .then(function(txt){
       clearTimeout(หมดเวลา);
+      /* 🔴 คำตอบที่มาช้ากว่ารอบปัจจุบัน = ของเก่า ห้ามเอามาวาดจอทับ */
+      if (!ของรอบนี้()) return;
       var d = null;
       try { d = JSON.parse(txt); } catch(e){}
       if (!d) return จอไม่รู้ผล_();
       if (d.phone) เบอร์สำรอง = d.phone;
       if (d.ok === false) return จอผิดพลาด_(d.error);
-      จำการส่ง_(type, d.ref);
       var ส่งไลน์ = d['ส่งไลน์'];
-      if (ส่งไลน์ === 'OK') return จอสำเร็จ_(d.ref);
+      /* 🔴 (Q5): จำเฉพาะตอนแจ้งทีมสำเร็จจริง
+         รุ่น 1.1 จำก่อนแยกผล ⇒ FAIL แล้วกดใหม่ ขึ้น "คุณแจ้งไปแล้ว" ทั้งที่ทีมยังไม่รู้เรื่อง */
+      if (ส่งไลน์ === 'OK') { จำการส่ง_(type, d.ref); return จอสำเร็จ_(d.ref); }
       if (ส่งไลน์ === 'FAIL') return จอบันทึกแต่ไม่ถึงทีม_(d.ref);
       return จอไม่รู้ผล_(d.ref);
     })
-    .catch(function(){ clearTimeout(หมดเวลา); จอไม่รู้ผล_(); });
+    .catch(function(){ clearTimeout(หมดเวลา); if (ของรอบนี้()) จอไม่รู้ผล_(); });
   }
 
   /* ── จอผลลัพธ์ 3 แบบ — ข้อความห้ามพูดเกินหลักฐาน (หลักการข้อ 13) ── */
@@ -288,6 +342,10 @@
     var บอก = t.errS;
     if (รหัส === 'NOT_MAPPED') บอก = t.notyou;
     if (รหัส === 'WORKER_INACTIVE') บอก = t.out;
+    if (รหัส === 'AUTH_REQUIRED' || รหัส === 'LIFF_INIT') บอก = t.needline;
+    /* บัญชีแอดมินเปิดหน้านี้ได้ แต่ส่งไม่ได้ เพราะ sick_report เป็นของ worker เท่านั้น (ตั้งใจ)
+       ถ้าจะทดสอบ ต้องใช้บัญชีไลน์ที่อยู่ในแท็บ Workers และไม่อยู่ในแท็บ AdminUsers */
+    if (รหัส === 'FORBIDDEN' || รหัส === 'NO_ROLE') บอก = t.onlyworker;
     จอ_('<div class="card"><div class="emoji">🛑</div>' +
       '<h2 style="color:var(--red)">' + esc(t.errT) + '</h2>' +
       '<p>' + esc(บอก) + '</p>' +
@@ -306,6 +364,7 @@
   function ตั้งปุ่มภาษา_(){
     var en = document.getElementById('ป_en'), mm = document.getElementById('ป_mm');
     function สลับ(v){
+      if (กำลังส่ง) return;    /* 🔴 (ข้อ 1): สลับภาษาระหว่างรอ = กลับหน้าเลือก = ส่งซ้อนได้ */
       if (ภาษา === v) return;
       ภาษา = v; จำภาษา_(v);
       en.setAttribute('aria-pressed', v === 'en' ? 'true' : 'false');
@@ -323,11 +382,17 @@
   (async function เริ่ม(){
     ภาษา = ภาษาที่จำไว้_();
     ตั้งปุ่มภาษา_();
-    จอเลือก_();
+    จอเลือก_();               /* วาดจอไว้ก่อนให้เห็นเบอร์โทรทันที แต่ปุ่มยังกดไม่ได้ */
     try {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
       โปรไฟล์ = await liff.getProfile();
+      ตั๋วล่าสุด = ตั๋วสด_();
+      /* 🔴 (ข้อ 2): เปิดปุ่มเฉพาะเมื่อ "มีตัวตนและมีตั๋วจริง" เท่านั้น
+         ได้โปรไฟล์แต่ไม่มีตั๋ว = ยิงไปก็ถูกด่านปฏิเสธ ⇒ บอกวิธีแก้ตั้งแต่ต้น */
+      if (!โปรไฟล์ || !โปรไฟล์.userId || !ตั๋วล่าสุด) return จอผิดพลาด_('AUTH_REQUIRED');
+      พร้อมส่ง = true;
+      จอเลือก_();             /* วาดใหม่อีกรอบ คราวนี้ปุ่มกดได้ */
     } catch (e) {
       /* เข้า LIFF ไม่ได้ = ส่งไม่ได้ แต่ต้องยังกดโทรได้ (สเปก: เบอร์ต้องโชว์แม้เซิร์ฟเวอร์ไม่ตอบ) */
       จอผิดพลาด_('LIFF_INIT');
