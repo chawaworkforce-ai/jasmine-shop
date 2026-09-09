@@ -39,7 +39,7 @@
    ══════════════════════════════════════════════════════════════════ */
 
   /* 🔴 ก๊อปค่านี้มาจากหน้าเว็บที่ใช้อยู่จริง ห้ามพิมพ์เอง (ระบบใช้ LIFF app เดียว) */
-  const LIFF_ID = "__ใส่รหัส_LIFF__";
+  const LIFF_ID = "2010242926-nreePSO4";   /* แก้ 9 ก.ย. 2026 — เดิมเป็นช่องว่างให้กรอก แล้วไม่มีใครกรอก LINE เลยตอบ 400 */
 
   function esc(s){
     return String(s == null ? '' : s).replace(/[<>&"]/g, function(c){
@@ -58,6 +58,8 @@
 
   (async function เริ่ม(){
     try {
+      /* กันพลาดซ้ำ: ถ้ารหัส LIFF ยังไม่ถูกกรอก อย่าเด้งไปหน้า LINE (จะได้ 400 ที่อ่านไม่รู้เรื่อง) */
+      if (!/^\d{10}-[A-Za-z0-9]{8}$/.test(LIFF_ID)) { จอผิดพลาด_('LIFF_ID_NOT_SET'); return; }
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
       var pf = await liff.getProfile();
