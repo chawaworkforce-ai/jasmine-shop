@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ส่งประกาศถึงน้องหน้างาน</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9;
+         --bg:#f4f6f5; --red:#a3322b; --green:#256544; --amber:#8a5a00; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Sarabun",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--blue); color:#fff; padding:14px 16px; }
+  header h1{ font-size:17px; margin:0; font-weight:700; }
+  header .sub{ font-size:13px; opacity:.92; margin-top:3px; line-height:1.5; }
+  .wrap{ padding:12px 12px 40px; max-width:620px; margin:0 auto; }
+
+  .การ์ด{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:12px; }
+  .การ์ด h2{ font-size:16px; margin:0 0 4px; }
+  .การ์ด .ใบ้{ font-size:13px; color:var(--muted); line-height:1.6; margin:0 0 12px; }
+
+  label.ช่อง{ display:block; font-size:14px; font-weight:700; margin:14px 0 6px; }
+  label.ช่อง:first-of-type{ margin-top:0; }
+  select, input[type=text], input[type=date], input[type=time], textarea{
+    width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:12px;
+    font-size:15px; background:#fff; color:var(--ink); font-family:inherit; }
+  textarea{ min-height:130px; resize:vertical; line-height:1.7; }
+  .คู่{ display:flex; gap:8px; } .คู่ > *{ flex:1; min-width:0; }
+
+  .เลือกแบบ{ display:flex; gap:8px; flex-wrap:wrap; }
+  .เลือกแบบ button{ flex:1; min-width:130px; padding:11px 10px; border:1px solid var(--line);
+    border-radius:12px; background:#fff; color:var(--ink); font-size:14px; font-weight:700; font-family:inherit; }
+  .เลือกแบบ button[aria-pressed=true]{ background:#e6f0f4; border-color:var(--blue); color:var(--blue-d); }
+
+  .รายคน{ max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:12px; padding:6px; }
+  .รายคน label{ display:flex; gap:10px; align-items:center; padding:9px 8px; border-radius:9px; font-size:14px; }
+  .รายคน label:nth-child(odd){ background:#fafbfa; }
+  .รายคน input{ width:20px; height:20px; flex:none; }
+  .รายคน .ไม่มีไลน์{ font-size:11px; color:var(--amber); background:#fff3d9; padding:2px 7px; border-radius:999px; margin-left:auto; flex:none; }
+
+  .ปุ่ม{ display:block; width:100%; margin-top:12px; padding:14px; border:0; border-radius:12px;
+    background:var(--blue); color:#fff; font-size:15px; font-weight:700; font-family:inherit; }
+  .ปุ่มรอง{ background:#fff; color:var(--muted); border:1px solid var(--line); }
+  .ปุ่มระวัง{ background:var(--green); }
+  .ปุ่ม:disabled{ opacity:.5; }
+
+  .แถบ{ border-radius:12px; padding:12px 14px; font-size:13.5px; line-height:1.7; margin-bottom:12px; }
+  .แถบ.กลาง{ background:#eef3f6; border:1px solid #d5e3ea; color:#24505f; }
+  .แถบ.เตือน{ background:#fff8e6; border:1px solid #f0dfae; color:#5f4b16; }
+  .แถบ.ผิด{ background:#fdeceb; border:1px solid #f2c4c0; color:#7a2620; }
+  .แถบ.ดี{ background:#e9f4ee; border:1px solid #c3e0d0; color:#1d5138; }
+  .แถบ b{ display:block; margin-bottom:3px; font-size:14px; }
+  .แถบ .ช่วยกัน{ display:block; margin-top:7px; padding-top:7px; border-top:1px dashed currentColor;
+                 opacity:.85; font-size:13px; }
+
+  .ฉบับ{ background:#fbfcfb; border:1px solid var(--line); border-radius:12px; padding:13px 14px;
+         font-size:14.5px; line-height:1.8; white-space:pre-wrap; word-break:break-word; }
+  .ฉบับ + .ฉบับ{ margin-top:8px; }
+  .ป้ายภาษา{ font-size:11px; font-weight:700; color:var(--muted); margin:12px 0 5px; letter-spacing:.3px; }
+
+  .สรุปคน{ display:flex; gap:8px; margin:12px 0 4px; }
+  .สรุปคน > div{ flex:1; background:#fff; border:1px solid var(--line); border-radius:12px; padding:11px 8px; text-align:center; }
+  .สรุปคน b{ display:block; font-size:21px; line-height:1.25; }
+  .สรุปคน span{ font-size:12px; color:var(--muted); line-height:1.45; display:block; }
+  .สรุปคน .ไลน์ b{ color:var(--green); }
+  .สรุปคน .แทน b{ color:var(--amber); }
+
+  .รายชื่อย่อ{ font-size:12.5px; color:var(--muted); line-height:1.75; margin-top:6px; word-break:break-word; }
+  .นับถอย{ font-size:12.5px; color:var(--muted); text-align:center; margin-top:10px; }
+  .นับถอย.ใกล้{ color:var(--red); font-weight:700; }
+  .นับตัวอักษร{ font-size:12px; color:var(--muted); text-align:right; margin-top:5px; }
+  .นับตัวอักษร.เกิน{ color:var(--red); font-weight:700; }
+
+  .ผลย่อย{ display:flex; justify-content:space-between; gap:10px; font-size:14px;
+           padding:9px 0; border-bottom:1px dashed var(--line); }
+  .ผลย่อย:last-child{ border-bottom:0; }
+  .ผลย่อย span:last-child{ font-weight:700; text-align:right; }
+  .เล็ก{ font-size:12px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.8; }
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ส่งประกาศถึงน้องหน้างาน</h1>
+  <div class="sub">เราส่งให้น้องที่ผูกไลน์แล้ว · ส่วนน้องที่ยังไม่มีไลน์ ทีม Jasmine ไปบอกให้ที่หน้างาน</div>
+</header>
+<div class="wrap">
+  <div id="ห_จอโหลด" class="การ์ด"><p class="ใบ้" style="margin:0">กำลังเปิดหน้าให้อยู่ครับ รอสักครู่…</p></div>
+  <div id="ห_จอผิด" class="แถบ ผิด" hidden></div>
+
+  <!-- ══ ขั้นที่ 1 · เขียนประกาศ ══ -->
+  <section id="ห_ขั้น1" hidden>
+    <div class="การ์ด">
+      <h2>1 · เขียนประกาศ</h2>
+      <p class="ใบ้">พิมพ์เป็นภาษาไทยได้เลยครับ ระบบแปลเป็นพม่าให้ แล้วส่งให้น้องทั้งสองภาษาในข้อความเดียว</p>
+
+      <label class="ช่อง" for="ช_ไซต์">ประกาศของไซต์ไหน</label>
+      <select id="ช_ไซต์"></select>
+
+      <label class="ช่อง">ใครได้รับ</label>
+      <div class="เลือกแบบ">
+        <button type="button" id="ป_ทุกคน" aria-pressed="true">ทุกคนในไซต์</button>
+        <button type="button" id="ป_เลือกคน" aria-pressed="false">เลือกเป็นรายคน</button>
+      </div>
+      <div id="ห_รายคน" class="รายคน" hidden style="margin-top:10px"></div>
+
+      <label class="ช่อง">แบบข้อความ</label>
+      <div class="เลือกแบบ">
+        <button type="button" id="ป_แม่แบบ" aria-pressed="true">ใช้แบบสำเร็จรูป</button>
+        <button type="button" id="ป_พิมพ์เอง" aria-pressed="false">พิมพ์เอง</button>
+      </div>
+
+      <div id="ห_แม่แบบ" style="margin-top:10px">
+        <label class="ช่อง" for="ช_แม่แบบ">เรื่องที่จะบอกน้อง</label>
+        <select id="ช_แม่แบบ"></select>
+        <div id="ห_ช่องแม่แบบ"></div>
+        <div class="แถบ เตือน" id="ห_เตือนแม่แบบ" hidden style="margin-top:12px"></div>
+      </div>
+
+      <div id="ห_พิมพ์เอง" hidden style="margin-top:10px">
+        <label class="ช่อง" for="ช_ข้อความ">ข้อความที่อยากบอกน้อง</label>
+        <textarea id="ช_ข้อความ" maxlength="5000"
+          placeholder="เช่น พรุ่งนี้ 13 ก.ย. ขอให้ทุกคนเข้างานเวลา 07:00 นะครับ"></textarea>
+        <div class="นับตัวอักษร" id="ห_นับตัวอักษร">0 / 5000</div>
+      </div>
+
+      <div class="แถบ กลาง" id="ห_แจ้ง1" hidden style="margin-top:12px"></div>
+      <button class="ปุ่ม" id="ป_ตรวจก่อนส่ง">ดูฉบับที่จะส่งก่อน</button>
+      <p class="ใบ้" style="text-align:center;margin:10px 0 0">ยังไม่ส่งในขั้นนี้ครับ กดแล้วจะได้ตรวจก่อนหนึ่งรอบ</p>
+    </div>
+  </section>
+
+  <!-- ══ ขั้นที่ 2 · ตรวจแล้วค่อยส่ง ══ -->
+  <section id="ห_ขั้น2" hidden>
+    <div class="การ์ด">
+      <h2>2 · ตรวจให้ชัวร์ก่อนส่ง</h2>
+      <p class="ใบ้">ส่งไปแล้วเรียกคืนไม่ได้ อ่านทวนอีกรอบนะครับ เราตรวจด้วยกันตรงนี้แหละ</p>
+
+      <div class="แถบ เตือน" id="ห_คำเตือนแปล" hidden></div>
+
+      <div class="ป้ายภาษา">ข้อความภาษาไทย</div>
+      <div class="ฉบับ" id="ห_ไทย"></div>
+      <div class="ป้ายภาษา">ข้อความภาษาพม่าที่น้องจะเห็น</div>
+      <div class="ฉบับ" id="ห_พม่า"></div>
+
+      <div class="สรุปคน">
+        <div class="ไลน์"><b id="ห_นับไลน์">0</b><span>คน ที่เราส่งเข้าไลน์ให้ทันที</span></div>
+        <div class="แทน"><b id="ห_นับแทน">0</b><span>คน ที่ทีม Jasmine ไปบอกให้ที่หน้างาน</span></div>
+      </div>
+      <div class="รายชื่อย่อ" id="ห_รายชื่อแทน" hidden></div>
+
+      <div class="แถบ กลาง" id="ห_แจ้ง2" hidden style="margin-top:12px"></div>
+      <div class="นับถอย" id="ห_นับถอย"></div>
+
+      <button class="ปุ่ม ปุ่มระวัง" id="ป_ยืนยันส่ง">ยืนยัน ส่งให้น้องเลย</button>
+      <button class="ปุ่ม ปุ่มรอง" id="ป_กลับไปแก้">กลับไปแก้ข้อความ</button>
+    </div>
+  </section>
+
+  <!-- ══ ขั้นที่ 3 · ผลและสถานะ ══ -->
+  <section id="ห_ขั้น3" hidden>
+    <div class="การ์ด">
+      <h2>3 · ผลการส่ง</h2>
+      <div id="ห_ผลรวม"></div>
+
+      <div class="ป้ายภาษา" style="margin-top:16px">ทางไลน์</div>
+      <div id="ห_ผลไลน์"></div>
+
+      <div class="ป้ายภาษา" style="margin-top:16px">ส่วนที่ทีม Jasmine ไปบอกให้ที่หน้างาน</div>
+      <div id="ห_ผลแทน"></div>
+
+      <div class="แถบ กลาง" id="ห_แจ้ง3" hidden style="margin-top:14px"></div>
+      <button class="ปุ่ม ปุ่มรอง" id="ป_ดูสถานะใหม่">ดูสถานะล่าสุดอีกครั้ง</button>
+      <button class="ปุ่ม ปุ่มรอง" id="ป_ประกาศใหม่">เขียนประกาศเรื่องใหม่</button>
+    </div>
+  </section>
+
+  <p class="เล็ก">
+    ระบบนี้เราทำงานร่วมกัน — คุณเป็นคนรู้หน้างานดีที่สุด เราช่วยเรื่องภาษาและการส่งถึงน้องให้ครับ<br>
+    ติดขัดตรงไหน ทักทีม Jasmine ได้ตลอด ไม่ต้องแก้คนเดียว
+  </p>
+</div>
+
+<script>
+  /* ══════════════════════════════════════════════════════════════
+     🔴 ค่าสองตัวนี้ต้องตรงกับหน้าเว็บอื่นที่ใช้งานจริง
+     ══════════════════════════════════════════════════════════════ */
+  const LIFF_ID = "2010242926-nreePSO4";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
+  window.__ยิงดิบ = window.fetch.bind(window);
+</script>
+<script>
+/* ══ ตัวห่อคำขอ D1 รุ่น 2 (รายการขาว) — ฝังมาทั้งไฟล์ ══ */
+/* ══════════════════════════════════════════════════════════════════════
+   ตัวห่อคำขอ D1 — รุ่น 2 (9 ก.ย. 2026)
+   วางในทุกหน้าเว็บที่ยิง API_URL  ต้องวาง "หลัง" บรรทัดที่ประกาศ API_URL และ LIFF_ID
+
+   🔴 สิ่งที่เปลี่ยนจากรุ่น 1 มีข้อเดียว แต่เป็นข้อสำคัญ
+   ─────────────────────────────────────────────────────────────────────
+   รุ่น 1 ใช้ "รายการคำสั่งเขียน" (รายการดำ)
+        var เขียน = !!คำสั่งเขียน_[action];
+        var ลองใหม่ได้ = !เขียน;
+   ⇒ คำสั่งที่ไม่มีใครขึ้นทะเบียน จะถูกตีว่าเป็น "คำสั่งอ่าน" แล้วระบบลองส่งใหม่ให้เองเงียบ ๆ
+   ⇒ ลืมขึ้นทะเบียน = อันตราย
+
+   ร่องรอยว่าเรื่องนี้เกิดจริงมาแล้ว 2 รอบ
+     · ชุดที่ 2 ต้องตามมาเติม case_open, case_update เข้ารายการทีหลัง (cases.html บ.110)
+     · ชุดที่ 3 เลี่ยงปัญหาด้วยการไม่ใช้ตัวห่อเลย (sick.html ยิง fetch ตรง)
+       ⇒ ได้ความปลอดภัย แต่เสียจอ "เข้าใหม่" ตอนตั๋วหมดอายุ และเสียชั้นจัดการคำตอบไม่ใช่ JSON ไปด้วย
+
+   รุ่น 2 พลิกเป็น "รายการคำสั่งอ่านที่ลองใหม่ได้" (รายการขาว)
+        var ลองใหม่ได้ = !!คำสั่งอ่านที่ลองใหม่ได้_[action];
+   ⇒ ลืมขึ้นทะเบียน = ไม่ลองใหม่ = ปลอดภัยโดยปริยาย
+   ⇒ คำสั่งใหม่ของชุดที่ 4 ปลอดภัยตั้งแต่ยังไม่มีใครแตะรายการนี้
+
+   ⚠️ กติกาการเติมรายการนี้: เติมได้เฉพาะคำสั่งที่ "อ่านอย่างเดียว ไม่เขียนอะไรเลย"
+      ถ้าไม่แน่ใจว่าคำสั่งไหนเขียนหรือไม่ ห้ามเติม — ไม่เติมแล้วช้าลง ดีกว่าเติมแล้วส่งซ้ำ
+   ══════════════════════════════════════════════════════════════════════ */
+(function () {
+  var _ยิงเดิม = window.fetch;
+
+  /* รายการขาว — คำสั่งอ่านอย่างเดียวเท่านั้น ที่อนุญาตให้ลองใหม่อัตโนมัติ 1 ครั้ง
+     (ตรงกับคำสั่งอ่านใน ช่องที่รับ_ ของด่าน ณ เวอร์ชัน 24) */
+  var คำสั่งอ่านที่ลองใหม่ได้_ = {
+    workers:1, worker_reports:1, my_score:1, matched_list:1, matching_data:1,
+    dashboard:1, announce_targets:1, site_list:1, grievance_stats:1,
+    company_rules:1, case_page:1,
+    /* 🆕 ชุดที่ 4 — เติมเฉพาะคำสั่งอ่าน */
+    customer_home:1, photos:1, customer_request_status:1,
+    /* 🆕 ส่วนประกาศ — ใส่เฉพาะตัวอ่านสถานะ
+       🔴 customer_announce_prepare และ customer_announce_send ห้ามใส่เด็ดขาด
+          ทั้งคู่เขียนข้อมูล ถ้ายิงไม่ออกแล้วลองใหม่เงียบ ๆ อาจกลายเป็นส่งถึงน้องสองรอบ
+          ปล่อยให้ตัวห่อขึ้นจอ "อาจเขียนไปแล้ว" ให้คนตัดสินใจเองถูกต้องกว่า */
+    customer_announce_status:1
+  };
+
+  var เตือนแล้ว_ = false;
+
+  function หนี_(s) {
+    return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) {
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[c];
+    });
+  }
+
+  /* จอเต็มหน้าที่ใช้ร่วมกันทุกกรณี — ทับหน้าเดิมไว้ ไม่ให้ผู้ใช้เห็นข้อความดิบ */
+  function จอ_(html) {
+    if (เตือนแล้ว_) return;
+    เตือนแล้ว_ = true;
+    var d = document.createElement('div');
+    d.id = '_d1จอ';
+    d.setAttribute('style', 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;' +
+      'flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;' +
+      'text-align:center;overflow:auto;-webkit-overflow-scrolling:touch;' +
+      'font-family:-apple-system,"Segoe UI","Sarabun","Noto Sans Myanmar","Padauk",sans-serif');
+    d.innerHTML = html;
+    document.body.appendChild(d);
+
+    var โหลด = document.getElementById('_d1โหลดใหม่');
+    if (โหลด) โหลด.onclick = function () { location.reload(); };
+
+    var ปิด = document.getElementById('_d1ปิด');
+    if (ปิด) ปิด.onclick = function () {
+      var x = document.getElementById('_d1จอ');
+      if (x && x.parentNode) x.parentNode.removeChild(x);
+      เตือนแล้ว_ = false;
+    };
+
+    var สลับ = document.getElementById('_d1สลับ');
+    if (สลับ) สลับ.onclick = function () {
+      var x = document.getElementById('_d1รายละเอียด');
+      if (x) x.style.display = (x.style.display === 'none' ? 'block' : 'none');
+    };
+  }
+
+  function หน้าเข้าใหม่_(ไม่มีตั๋วเลย) {
+    if (ไม่มีตั๋วเลย) {
+      จอ_('<div style="font-size:56px">🔧</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
+        'App setup incomplete — please tell the admin</div>' +
+        '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>');
+    } else {
+      จอ_('<div style="font-size:56px">⏱️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>');
+    }
+  }
+
+  function กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ) {
+    var เวลา = '';
+    try { เวลา = new Date().toLocaleString(); } catch (e) {}
+    return '<div id="_d1สลับ" style="margin-top:20px;font-size:12px;color:#9a9a9a;' +
+      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details</div>' +
+      '<div id="_d1รายละเอียด" style="display:none;margin-top:10px;max-width:100%;' +
+      'background:#f4f4f4;border-radius:10px;padding:10px 12px;font-size:11px;color:#444;' +
+      'text-align:left;word-break:break-all;line-height:1.5;-webkit-user-select:text;user-select:text">' +
+      '<b>D1-ERR</b> · not-json<br>' +
+      'code: ' + หนี_(รหัส) + '<br>' +
+      'action: ' + หนี_(คำสั่ง) + '<br>' +
+      'time: ' + หนี_(เวลา) + '<br>' +
+      'body: ' + หนี_(String(ต้นข้อความ || '').replace(/\s+/g, ' ').slice(0, 300)) +
+      '</div>';
+  }
+
+  function หน้าคำตอบเพี้ยน_(อาจเขียนไปแล้ว, รหัส, คำสั่ง, ต้นข้อความ) {
+    if (อาจเขียนไปแล้ว) {
+      จอ_('<div style="font-size:56px">⚠️</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ส่งแล้ว แต่ยังไม่รู้ผล</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
+        'Sent, but result unknown. Do NOT send again.<br>' +
+        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
+        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    } else {
+      จอ_('<div style="font-size:56px">📡</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">โหลดข้อมูลไม่สำเร็จ</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.7">' +
+        'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
+        'Could not load. Please try again.<br>' +
+        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
+    }
+  }
+
+  /* คืนวัตถุที่หน้าเว็บเรียก .json() / .text() / .clone() ได้เหมือน Response เดิม */
+  function ห่อ_(r) {
+    var เนื้อ = r.txt;
+    var วัตถุ = {
+      ok: r.res ? !!r.res.ok : false,
+      status: r.res ? r.res.status : 0,
+      statusText: r.res ? r.res.statusText : '',
+      headers: r.res ? r.res.headers : null,
+      text: function () { return Promise.resolve(เนื้อ); },
+      json: function () {
+        return r.ดี ? Promise.resolve(r.j)
+                    : Promise.reject(new SyntaxError('D1: server did not return JSON'));
+      }
+    };
+    วัตถุ.clone = function () { return วัตถุ; };
+    return วัตถุ;
+  }
+
+  window.fetch = function (u, o) {
+    if (String(u) !== API_URL) return _ยิงเดิม.apply(this, arguments);
+
+    var ก้อน = {};
+    try { ก้อน = JSON.parse((o && o.body) || '{}'); } catch (e) { ก้อน = {}; }
+    var ตั๋ว = null;
+    try { ตั๋ว = liff.getIDToken(); } catch (e) {}
+    if (ตั๋ว) ก้อน.idToken = ตั๋ว;
+
+    /* ก้อนเดิมถูกใช้ซ้ำทุกครั้งที่ยิง ⇒ req_id ไม่เปลี่ยน ⇒ ตัวกันซ้ำฝั่งเซิร์ฟเวอร์ยังทำงานได้ */
+    var opt = { method: 'POST', body: JSON.stringify(ก้อน) };
+    if (o) { for (var k in o) if (k !== 'method' && k !== 'body') opt[k] = o[k]; }
+
+    /* 🔴 รุ่น 2 — รายการขาว ไม่ใช่รายการดำ */
+    var ลองใหม่ได้ = !!คำสั่งอ่านที่ลองใหม่ได้_[ก้อน.action];
+    var อาจเขียนไปแล้ว = !ลองใหม่ได้;   /* ใช้เลือกข้อความบนจอเท่านั้น — ไม่รู้จัก = เตือนแบบปลอดภัยไว้ก่อน */
+
+    function รอ_(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    function ยิงแล้วอ่าน_() {
+      return _ยิงเดิม(u, opt).then(function (res) {
+        return res.text().then(function (txt) {
+          var j = null, ดี = false;
+          try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          return { res: res, txt: txt, j: j, ดี: ดี };
+        }, function () {
+          return { res: res, txt: '', j: null, ดี: false };
+        });
+      });
+    }
+
+    /* ชั้น 1 — ยิงไม่ออกเลย (เน็ตหลุด): ลองใหม่ 1 ครั้ง เฉพาะคำสั่งในรายการขาว */
+    var งาน = ยิงแล้วอ่าน_()['catch'](function (e) {
+      if (!ลองใหม่ได้) throw e;
+      return รอ_(1500).then(ยิงแล้วอ่าน_);
+    });
+
+    /* ชั้น 2 — ยิงออกแต่คำตอบไม่ใช่ JSON: ลองใหม่ 1 ครั้ง เฉพาะคำสั่งในรายการขาว */
+    งาน = งาน.then(function (r) {
+      if (r.ดี || !ลองใหม่ได้) return r;
+      return รอ_(1200).then(ยิงแล้วอ่าน_)['catch'](function () { return r; });
+    });
+
+    return งาน.then(function (r) {
+      if (!r.ดี) {
+        หน้าคำตอบเพี้ยน_(อาจเขียนไปแล้ว, r.res ? r.res.status : 0, ก้อน.action, r.txt);
+      } else if (r.j && r.j.ok === false && r.j.error === 'AUTH_REQUIRED') {
+        หน้าเข้าใหม่_(!ตั๋ว);
+      }
+      return ห่อ_(r);
+    });
+  };
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ══════════════════════════════════════════════════════════════════
+     ข้อความบนหน้าจอทั้งหมดอยู่ตรงนี้ที่เดียว
+     🔴 เขียนตามกฎข้อ 0 ของบริษัท — Co-operation ทำงานร่วมกัน
+        ทุกข้อความต้อง (1) เล่าตามจริงว่าเกิดอะไร ไม่ชี้นิ้วใคร
+                       (2) บอกว่าระบบ/ทีมทำอะไรไปแล้วหรือกำลังทำอะไร
+                       (3) บอกว่าลูกค้าช่วยอะไรได้ และมีทางเดินต่อเสมอ
+        ห้ามเขียนสั่งฝ่ายเดียว ห้ามปล่อยเป็นทางตัน
+     ══════════════════════════════════════════════════════════════════ */
+  var ข้อความ_ = {
+    /* ── ขั้นเตรียมประกาศ ── */
+    MISSING_SITE:        { ว่า:'ยังไม่ได้เลือกไซต์', ช่วย:'เลือกไซต์ที่จะประกาศก่อนนะครับ' },
+    MISSING_TARGET_MODE: { ว่า:'ยังไม่ได้เลือกว่าจะส่งถึงใคร', ช่วย:'เลือกว่าส่งทุกคนในไซต์ หรือเลือกเป็นรายคน' },
+    EMPTY_CARD_IDS:      { ว่า:'เลือกเป็นรายคนไว้ แต่ยังไม่ได้ติ๊กใคร', ช่วย:'ติ๊กชื่อน้องที่จะส่งถึงอย่างน้อยหนึ่งคน' },
+    BAD_SELECTION:       { ว่า:'มีรายชื่อที่เลือกไว้ไม่ตรงกับคนในไซต์นี้',
+                           ช่วย:'อาจมีน้องย้ายไซต์หรือออกไปก่อนหน้านี้ ลองเปิดหน้านี้ใหม่เพื่อดึงรายชื่อล่าสุด ถ้ายังไม่หาย ทักทีม Jasmine ได้เลย เราเช็กให้' },
+    NO_TEXT:             { ว่า:'ยังไม่มีข้อความที่จะส่ง', ช่วย:'พิมพ์ข้อความ หรือเลือกแบบสำเร็จรูปแล้วกรอกวันเวลาให้ครบ' },
+    TEXT_TOO_LONG:       { ว่า:'ข้อความยาวเกินที่ LINE รับได้', ช่วย:'ตัดให้สั้นลงหน่อยนะครับ หรือแยกส่งเป็นสองเรื่อง' },
+    ASSEMBLED_TEXT_OVER_LINE_LIMIT:
+                         { ว่า:'พอรวมไทยกับพม่าเข้าด้วยกันแล้วยาวเกินที่ LINE รับได้', ช่วย:'ลองตัดข้อความไทยให้สั้นลง แล้วกดดูฉบับที่จะส่งอีกครั้ง' },
+    NO_RECIPIENTS:       { ว่า:'ไซต์นี้ยังไม่มีน้องที่จะรับประกาศได้',
+                           ช่วย:'อาจยังไม่ได้ผูกน้องเข้าไซต์ หรือย้ายออกไปหมดแล้ว ทักทีม Jasmine ให้ช่วยตรวจทะเบียนให้ได้ครับ' },
+    WORKERS_EMPTY:       { ว่า:'ตอนนี้ยังดึงทะเบียนน้องไม่ได้', ช่วย:'ไม่ใช่ความผิดฝั่งคุณครับ ลองใหม่อีกสักครู่ ถ้ายังไม่ได้ ทักทีม Jasmine เราไปดูให้' },
+    TRANSLATE_FAILED:    { ว่า:'ตัวแปลภาษายังไม่ตอบกลับมา',
+                           ช่วย:'ข้อความยังไม่ถูกส่งออกไปนะครับ ลองกดใหม่อีกครั้ง ถ้ายังไม่ได้ ทักทีม Jasmine เราแปลให้ด้วยมือได้' },
+    REQ_ID_REUSED_WITH_DIFFERENT_CONTENT:
+                         { ว่า:'ใบนี้เคยเตรียมไว้ด้วยข้อความคนละอัน',
+                           ช่วย:'กันไว้ไม่ให้ส่งผิดฉบับครับ กด "เขียนประกาศเรื่องใหม่" แล้วเริ่มใบใหม่ได้เลย' },
+    SAVE_VERIFY_FAILED:  { ว่า:'บันทึกฉบับร่างแล้วแต่ตรวจทานกลับไม่ผ่าน',
+                           ช่วย:'ยังไม่ได้ส่งอะไรถึงน้องครับ ลองกดใหม่อีกครั้ง ถ้าเจอซ้ำ ทักทีม Jasmine เราไปดูให้' },
+
+    /* ── แม่แบบ ── */
+    UNKNOWN_TEMPLATE:    { ว่า:'ไม่รู้จักแบบสำเร็จรูปที่เลือก', ช่วย:'ลองเปิดหน้านี้ใหม่ หรือเปลี่ยนไปพิมพ์เองก่อนก็ได้ครับ' },
+    BAD_TEMPLATE_FIELDS: { ว่า:'วันหรือเวลาที่กรอกยังไม่ถูกแบบ', ช่วย:'ดูให้ครบทุกช่องนะครับ วันเป็น ปี-เดือน-วัน เวลาเป็น ชั่วโมง:นาที' },
+    BAD_TEMPLATE_FIELDS_TYPE: { ว่า:'ค่าที่กรอกในแบบสำเร็จรูปยังไม่ถูกแบบ', ช่วย:'ลองกรอกใหม่อีกรอบ หรือเปลี่ยนไปพิมพ์เองก็ได้ครับ' },
+    BAD_TIME_RANGE:      { ว่า:'เวลาจบอยู่ก่อนเวลาเริ่ม', ช่วย:'ช่วยดูเวลาเริ่มกับเวลาจบอีกทีนะครับ' },
+    TEMPLATE_PLACEHOLDER_LEFT: { ว่า:'แบบสำเร็จรูปนี้ยังกรอกไม่ครบ', ช่วย:'มีช่องที่ยังว่างอยู่ ลองดูให้ครบทุกช่อง' },
+    TEMPLATE_STRUCTURE_BROKEN: { ว่า:'แบบสำเร็จรูปนี้มีปัญหาฝั่งระบบ', ช่วย:'ไม่ได้เกิดจากข้อมูลที่กรอกครับ เป็นเรื่องฝั่งระบบเราเอง · ระหว่างนี้กดปุ่ม พิมพ์เอง ส่งไปก่อนได้ตามปกติ · ถ้าทักทีม Jasmine บอกไว้ด้วยจะช่วยให้เราแก้ได้เร็วขึ้นครับ' },
+    TEMPLATE_TRANSLATION_NOT_VERIFIED:
+                         { ว่า:'แบบสำเร็จรูปนี้ยังรอล่ามตรวจคำแปลพม่าอยู่',
+                           ช่วย:'เราตั้งใจกันไว้ครับ ไม่อยากให้น้องอ่านคำแปลที่ยังไม่มีคนตรวจ · ระหว่างนี้ใช้ "พิมพ์เอง" ส่งได้เลย ระบบจะแปลให้พร้อมป้ายกำกับว่าเป็นคำแปลเครื่อง' },
+
+    /* ── ขั้นส่งจริง ── */
+    NOT_PREPARED:        { ว่า:'ไม่พบฉบับที่เตรียมไว้', ช่วย:'อาจเปิดค้างไว้นานจนหมดอายุ กด "เขียนประกาศเรื่องใหม่" แล้วเริ่มใหม่ได้เลย' },
+    EXPIRED:             { ว่า:'ฉบับนี้หมดอายุก่อนกดส่ง',
+                           ช่วย:'ยังไม่มีอะไรถูกส่งออกไปนะครับ เราตั้งเวลาหมดอายุไว้เพื่อกันส่งข้อมูลเก่า · เขียนใหม่อีกใบได้เลย ข้อความเดิมยังก๊อปไปใช้ได้' },
+    SITE_NOT_YOURS:      { ว่า:'สิทธิ์ดูแลไซต์นี้เปลี่ยนไประหว่างทาง',
+                           ช่วย:'ถ้าคิดว่าไม่ถูกต้อง ทักทีม Jasmine ได้เลยครับ เราเช็กทะเบียนให้ทันที' },
+    RECIPIENTS_CHANGED:  { ว่า:'ข้อมูลน้องเปลี่ยนไปหลังจากที่เราตรวจกันไปเมื่อสักครู่',
+                           ช่วย:'ยังไม่ได้ส่งอะไรออกไปเลยครับ เราหยุดไว้ก่อนเพราะไม่อยากให้ประกาศไปผิดคน · กด "กลับไปแก้" แล้วกดดูฉบับใหม่ ระบบจะดึงรายชื่อล่าสุดมาให้ตรวจด้วยกันอีกรอบ' },
+    RELAY_RECIPIENTS_CHANGED:
+                         { ว่า:'ข้อความทางไลน์ส่งออกไปแล้ว ส่วนนั้นไม่ได้ถูกยกเลิก',
+                           ช่วย:'ที่ค้างคือกลุ่มที่ทีม Jasmine ต้องไปบอกที่หน้างาน ซึ่งข้อมูลเพิ่งเปลี่ยน · 🔴 อย่ากดส่งประกาศใหม่ทั้งชุดนะครับ น้องกลุ่มไลน์จะได้ข้อความสองรอบ · ทักทีม Jasmine พร้อมรหัสใบนี้ เราตามเก็บส่วนที่ค้างให้' },
+    SUPPORT_SHEET_NOT_READY:
+                         { ว่า:'ที่เก็บงานฝั่งทีม Jasmine ยังไม่พร้อมรับเรื่อง',
+                           ช่วย:'เป็นเรื่องฝั่งเราเองครับ ไม่เกี่ยวกับที่คุณกรอก · แจ้งทีม Jasmine ให้เปิดให้ แล้วกดใหม่ได้เลย ระบบจะไม่ส่งซ้ำให้น้องที่ได้รับไปแล้ว' },
+    QUOTA_BLOCKED:       { ว่า:'โควตาข้อความไลน์ของเดือนนี้เหลือไม่พอส่งรอบนี้',
+                           ช่วย:'เรากันโควตาส่วนหนึ่งไว้ให้เรื่องด่วนอย่างแจ้งป่วยและร้องทุกข์ของน้อง จึงยังไม่ยิงให้ตอนนี้' },
+    BUSY_TRY_AGAIN:      { ว่า:'ระบบกำลังทำงานอีกรายการอยู่พอดี', ช่วย:'ยังไม่มีอะไรส่งออกไปครับ รอสักครู่แล้วกดใหม่ได้เลย' },
+    EXTRA_FIELDS_NOT_ACCEPTED:
+                         { ว่า:'ขั้นส่งรับแค่รหัสใบเท่านั้น', ช่วย:'กัน ไว้ไม่ให้ข้อความเปลี่ยนหลังจากที่เราตรวจกันแล้ว · กด "กลับไปแก้" แล้วตรวจใหม่อีกรอบนะครับ' },
+    ANNOUNCE_SHEET_COLS_MISSING:
+                         { ว่า:'ที่เก็บข้อมูลประกาศยังไม่พร้อม', ช่วย:'เป็นเรื่องฝั่งระบบเราครับ แจ้งทีม Jasmine ให้ตั้งค่าให้ก่อน แล้วค่อยกดใหม่' },
+    TARGETS_EMPTY:       { ว่า:'ใบนี้ไม่มีรายชื่อผู้รับติดมา', ช่วย:'กด "เขียนประกาศเรื่องใหม่" แล้วเริ่มใบใหม่ได้เลยครับ' },
+    TARGETS_UNREADABLE:  { ว่า:'อ่านรายชื่อผู้รับของใบนี้ไม่ออก', ช่วย:'ยังไม่ได้ส่งอะไรครับ เริ่มใบใหม่ได้เลย ถ้าเจอซ้ำ ทักทีม Jasmine เราไปดูให้' },
+    PAYLOAD_EMPTY:       { ว่า:'ใบนี้ไม่มีข้อความติดมา', ช่วย:'กด "เขียนประกาศเรื่องใหม่" แล้วเริ่มใบใหม่ได้เลยครับ' },
+    PAYLOAD_UNREADABLE:  { ว่า:'อ่านข้อความของใบนี้ไม่ออก', ช่วย:'ยังไม่ได้ส่งอะไรครับ เริ่มใบใหม่ได้เลย ถ้าเจอซ้ำ ทักทีม Jasmine เราไปดูให้' },
+    NOT_FOUND:           { ว่า:'ไม่พบใบนี้ในระบบ', ช่วย:'อาจเป็นใบของคนอื่น หรือถูกล้างไปแล้ว · เริ่มใบใหม่ได้เลยครับ' },
+
+    /* ── ระบบ/ตัวตน ── */
+    AUTH_REQUIRED:       { ว่า:'ตั๋วเข้าใช้งานหมดอายุ', ช่วย:'ปิดหน้านี้แล้วเปิดใหม่จากเมนู LINE ได้เลยครับ ข้อมูลที่กรอกไว้ยังไม่หาย ถ้าเพิ่งกดเตรียมไป' },
+    FORBIDDEN:           { ว่า:'บัญชีนี้ยังไม่มีสิทธิ์ใช้หน้านี้', ช่วย:'ทักทีม Jasmine ให้เปิดสิทธิ์ให้ได้เลยครับ' },
+    NO_ROLE:             { ว่า:'ยังไม่ได้ผูกบัญชีไลน์นี้กับลูกค้ารายไหน', ช่วย:'ทักทีม Jasmine พร้อมบอกชื่อโรงงาน เราผูกให้ครับ' },
+    UNKNOWN_ACTION:      { ว่า:'ระบบยังไม่ได้เปิดใช้คำสั่งนี้', ช่วย:'ทีมกำลังทยอยเปิดให้ครับ แจ้งทีม Jasmine ได้เลย' },
+    SERVER_ERROR:        { ว่า:'ระบบสะดุดระหว่างทาง', ช่วย:'ไม่ใช่เรื่องฝั่งคุณครับ ลองใหม่อีกครั้ง ถ้ายังเจอ ทักทีม Jasmine พร้อมบอกเวลาที่กด เราตามจากบันทึกได้' },
+    NOT_JSON:            { ว่า:'ระบบตอบกลับมาไม่ครบ', ช่วย:'กด "ดูสถานะล่าสุดอีกครั้ง" เพื่อเช็กว่าส่งไปหรือยัง ก่อนกดอะไรซ้ำนะครับ' },
+    NO_LIFF:             { ว่า:'หน้านี้ต้องเปิดจากเมนูใน LINE', ช่วย:'ปิดแล้วเปิดใหม่จากเมนู LINE ของ Jasmine ครับ' },
+    NO_TICKET:           { ว่า:'ยังไม่ได้เข้าสู่ระบบ LINE', ช่วย:'ปิดแล้วเปิดใหม่จากเมนู LINE ครับ' }
+  };
+
+  function แปลผิด_(รหัส, สำรอง) {
+    var x = ข้อความ_[String(รหัส || '')];
+    if (x) return x;
+    /* ไม่รู้จักรหัสนี้ ⇒ ใช้คำอธิบายจากเซิร์ฟเวอร์ ดีกว่าโชว์รหัสดิบให้ลูกค้างง
+       🔴 ข้อความทางเทคนิคห้ามปนในประโยคที่ลูกค้าอ่าน ให้แยกเป็นบรรทัด "ข้อมูลให้ทีมดู"
+          จะได้ถ่ายจอส่งให้ทีมได้เลย = ช่วยกันแก้ ไม่ใช่โยนให้ลูกค้างงเอง */
+    return { ว่า: สำรอง || 'มีบางอย่างไม่เป็นไปตามที่ควร',
+             ช่วย: 'ทักทีม Jasmine พร้อมบอกว่ากดตอนไหน เราตามให้ได้ครับ',
+             ให้ทีมดู: รหัส ? String(รหัส) : '' };
+  }
+
+  /* ══ ตัวช่วยเล็ก ๆ ══ */
+  var จ = function (id) { return document.getElementById(id); };
+  var สถานะ = { ไซต์: [], คน: [], โหมด: 'ALL', แบบ: 'TEMPLATE', req_id: '', ฉบับ: null,
+                 นับถอยตัวจับ: null, กำลังยิง: false, ผลล่าสุด: null, ขั้น: 0,
+                 /* ธงที่ตัวจัดปุ่มใช้ตัดสิน — ต้องอัปเดตที่เดียวกับที่เปลี่ยนสถานะจริง */
+                 ส่งไปแล้ว: false, หมดอายุแล้ว: false, ผลไม่ชัด: false,
+                 เปิดทางเฉพาะแจ้งแทน: false, มีงานค้างให้กู้: false,
+                 /* 🔴 ใบยังไม่ปิด = ยิงคำสั่งส่งออกไปแล้ว แต่ยังไม่เห็นคำตอบที่ชี้ขาด
+                    ห้ามให้เตรียมใบใหม่ระหว่างนี้ เพราะใบใหม่ = รหัสใหม่ = ถ้าใบเก่าถึงจริง น้องได้สองรอบ
+                    ทางออกมีสองทางเท่านั้น: ส่งซ้ำ "ด้วยรหัสใบเดิม" (เซิร์ฟเวอร์กันซ้ำให้) หรือรอผลชี้ขาด */
+                 ใบยังไม่ปิด: false, เคยยิงส่ง: false,
+                 /* 🔴 "มีความพยายามค้าง" = เคยยิงคำสั่งส่งของใบนี้ไปแล้วอย่างน้อยหนึ่งครั้ง
+                    และยังไม่มีคำตอบระดับ "ทั้งใบ" มายืนยันว่าคำขอนั้นจบไปแล้ว
+                    ต่างจาก ผลไม่ชัด ซึ่งพูดถึงแค่ "ครั้งล่าสุด" */
+                 มีความพยายามค้าง: false };
+
+/* 🔴 รหัสแบ่งเป็นสองชั้น ห้ามปนกัน — ผู้ตรวจรอบนี้เจอว่ารุ่นก่อนใช้ชั้นเดียว
+   ชั้นที่ 1 · คำตัดสินระดับ "ทั้งใบ" — เซิร์ฟเวอร์บอกสภาพของใบนี้เอง
+     ปิดใบได้ทันที เพราะต่อให้มีคำขอเก่าค้างอยู่ คำขอนั้นก็ส่งไม่ได้แล้วเช่นกัน */
+  var รหัสที่ปิดใบได้_ = { EXPIRED:1, NOT_PREPARED:1 };
+
+/* ชั้นที่ 2 · คำตอบของ "ครั้งนี้" — ยืนยันได้แค่ว่ารอบนี้ไม่มีอะไรออกไป
+   คัดจากไฟล์ 11 (ทุก return ที่อยู่ก่อนบรรทัด "ยิงไลน์ นอกล็อก") + รหัสของด่านตรวจ
+   🔴 ห้ามใช้รหัสกลุ่มนี้ปลดใบที่มีความพยายามค้างอยู่ก่อนหน้า
+      เช่น BUSY_TRY_AGAIN บอกแค่ว่า "รอบนี้จับล็อกไม่ได้" ไม่ได้บอกว่าคำขอเก่าหายไปแล้ว
+      (ผู้ตรวจทำซ้ำได้: คำขอแรกยังทำงานอยู่ → ลองใหม่ได้ BUSY → ปลดใบ → เปิดใบใหม่ → น้องได้สองรอบ)
+   🔴 รหัสที่ไม่อยู่ในสองรายการนี้ = ไม่รู้ว่าไปถึงไหน ต้องถือว่า "อาจส่งไปแล้ว" เสมอ
+      ทั้งสองรายการต้องเป็นรายการขาว ห้ามเปลี่ยนเป็นรายการดำเด็ดขาด */
+  var รหัสที่ยังไม่ส่งรอบนี้_ = {
+    MISSING_USER:1, MISSING_REQ_ID:1, EXTRA_FIELDS_NOT_ACCEPTED:1, ANNOUNCE_SHEET_COLS_MISSING:1,
+    BUSY_TRY_AGAIN:1, TEMPLATE_TRANSLATION_NOT_VERIFIED:1,
+    SITE_NOT_YOURS:1, QUOTA_BLOCKED:1, SUPPORT_SHEET_NOT_READY:1,
+    /* ผู้รับเปลี่ยนหลังยืนยัน · ไฟล์ 11 ตรวจก่อนบรรทัดยิงไลน์ และบอกเองว่า "ยังไม่ส่งอะไรทั้งสิ้น" */
+    RECIPIENTS_CHANGED:1,
+    AUTH_REQUIRED:1, FORBIDDEN:1, BAD_TYPE:1, PAYLOAD_EMPTY:1, UNKNOWN_ACTION:1, NOT_FOUND:1
+  };
+
+  /* แม่แบบ — ต้องตรงกับไฟล์ 03 ฝั่งเซิร์ฟเวอร์
+     ถ้าไม่ตรง เซิร์ฟเวอร์จะปฏิเสธพร้อมบอกเหตุ ไม่ใช่เงียบ ๆ ผิด */
+  var แม่แบบ_ = [
+    { id:'OT',          ชื่อ:'มีงานล่วงเวลา',
+      ช่อง:[ {ก:'วันเริ่ม',ชนิด:'date',จำเป็น:true},  {ก:'เวลาเริ่ม',ชนิด:'time',จำเป็น:true},
+             {ก:'วันสิ้นสุด',ชนิด:'date',จำเป็น:false,ใบ้:'ไม่กรอก = วันเดียวกับวันเริ่ม'},
+             {ก:'เวลาจบ',ชนิด:'time',จำเป็น:true} ] },
+    { id:'HOLIDAY',     ชื่อ:'วันหยุด',
+      ช่อง:[ {ก:'วันที่',ชนิด:'date',จำเป็น:true} ] },
+    { id:'TIME_CHANGE', ชื่อ:'เปลี่ยนเวลาเข้างาน',
+      ช่อง:[ {ก:'วันที่มีผล',ชนิด:'date',จำเป็น:true}, {ก:'เวลาเริ่ม',ชนิด:'time',จำเป็น:true} ] }
+  ];
+
+  function แถบ_(ที่, ชนิด, ก้อน) {
+    var e = จ(ที่);
+    if (!ก้อน) { e.hidden = true; e.textContent = ''; return; }
+    e.className = 'แถบ ' + ชนิด;
+    e.textContent = '';
+    var b = document.createElement('b'); b.textContent = ก้อน.ว่า || ''; e.appendChild(b);
+    if (ก้อน.ความ) e.appendChild(document.createTextNode(ก้อน.ความ));
+    if (ก้อน.ช่วย) {
+      var s = document.createElement('span'); s.className = 'ช่วยกัน'; s.textContent = ก้อน.ช่วย;
+      e.appendChild(s);
+    }
+    if (ก้อน['ให้ทีมดู']) {
+      var t = document.createElement('span'); t.className = 'ช่วยกัน';
+      t.style.opacity = '.7'; t.style.fontSize = '11.5px';
+      t.textContent = 'ข้อมูลให้ทีมดู: ' + ก้อน['ให้ทีมดู'];
+      e.appendChild(t);
+    }
+    e.hidden = false;
+  }
+  function ไปขั้น_(n) {
+    สถานะ.ขั้น = n;
+    จ('ห_จอโหลด').hidden = true;
+    [1,2,3].forEach(function (i) { จ('ห_ขั้น' + i).hidden = (i !== n); });
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+  function หยุดนับถอย_() {
+    if (สถานะ.นับถอยตัวจับ) { clearInterval(สถานะ.นับถอยตัวจับ); สถานะ.นับถอยตัวจับ = null; }
+  }
+  function รหัสใบใหม่_() {
+    var s = 'ANN-' + Date.now().toString(36);
+    if (window.crypto && crypto.getRandomValues) {
+      var a = new Uint8Array(4); crypto.getRandomValues(a);
+      s += '-' + Array.prototype.map.call(a, function (x) { return x.toString(16); }).join('');
+    } else { s += '-' + Math.floor(Math.random() * 1e8).toString(16); }
+    return s;
+  }
+
+  function ยิง_(ก้อน) {
+    if (typeof liff === 'undefined' || !liff.getIDToken) return Promise.reject(new Error('NO_LIFF'));
+    var ตั๋ว = liff.getIDToken();
+    if (!ตั๋ว) return Promise.reject(new Error('NO_TICKET'));
+    var ส่ง = {}; for (var k in ก้อน) ส่ง[k] = ก้อน[k];
+    ส่ง.idToken = ตั๋ว;
+    return window.fetch(API_URL, { method: 'POST', body: JSON.stringify(ส่ง) })
+      .then(function (r) {
+        return r.text().then(function (t) {
+          try { return JSON.parse(t); } catch (e) { return { ok:false, error:'NOT_JSON', http:r.status }; }
+        });
+      });
+  }
+
+  /* ══ ขั้นที่ 1 — เขียนประกาศ ══ */
+  function วาดไซต์_() {
+    var s = จ('ช_ไซต์'); s.textContent = '';
+    สถานะ.ไซต์.forEach(function (ชื่อ) {
+      var o = document.createElement('option'); o.value = ชื่อ; o.textContent = ชื่อ; s.appendChild(o);
+    });
+    s.disabled = (สถานะ.ไซต์.length <= 1);
+  }
+  function คนในไซต์_() {
+    var ไซต์ = จ('ช_ไซต์').value;
+    return สถานะ.คน.filter(function (w) { return String(w.site || '') === ไซต์; });
+  }
+  function วาดรายคน_() {
+    var ห = จ('ห_รายคน'); ห.textContent = '';
+    var คน = คนในไซต์_();
+    if (!คน.length) {
+      var v = document.createElement('div'); v.className = 'ใบ้'; v.style.padding = '10px';
+      v.textContent = 'ไซต์นี้ยังไม่มีรายชื่อน้องในทะเบียน ทักทีม Jasmine ให้ช่วยตรวจให้ได้ครับ';
+      ห.appendChild(v); return;
+    }
+    คน.forEach(function (w) {
+      var l = document.createElement('label');
+      var c = document.createElement('input');
+      c.type = 'checkbox'; c.value = String(w.card_id || ''); c.className = 'ติ๊กคน';
+      var n = document.createElement('span'); n.textContent = w.name || '—';
+      l.appendChild(c); l.appendChild(n);
+      if (!w['ผูกไลน์']) {
+        var p = document.createElement('span'); p.className = 'ไม่มีไลน์';
+        p.textContent = 'ทีมไปบอกให้ที่หน้างาน'; l.appendChild(p);
+      }
+      ห.appendChild(l);
+    });
+  }
+  function วาดช่องแม่แบบ_() {
+    var id = จ('ช_แม่แบบ').value;
+    var t = แม่แบบ_.filter(function (x) { return x.id === id; })[0];
+    var ห = จ('ห_ช่องแม่แบบ'); ห.textContent = '';
+    if (!t) return;
+    t.ช่อง.forEach(function (f) {
+      var lb = document.createElement('label'); lb.className = 'ช่อง';
+      lb.textContent = f.ก + (f.จำเป็น ? '' : ' (ไม่บังคับ)');
+      lb.setAttribute('for', 'มบ_' + f.ก);
+      var ip = document.createElement('input');
+      ip.type = f.ชนิด; ip.id = 'มบ_' + f.ก; ip.className = 'ช่องแม่แบบ';
+      ip.setAttribute('data-ชื่อ', f.ก);
+      ห.appendChild(lb); ห.appendChild(ip);
+      if (f.ใบ้) {
+        var u = document.createElement('div'); u.className = 'ใบ้';
+        u.style.margin = '5px 0 0'; u.textContent = f.ใบ้; ห.appendChild(u);
+      }
+    });
+    /* 🔴 ไม่ประกาศเองว่าแม่แบบ "รอล่ามตรวจ" อยู่หรือไม่
+       สถานะคำแปลอยู่ฝั่งเซิร์ฟเวอร์ ถ้าเขียนตายตัวไว้ในหน้าเว็บ วันที่ล่ามส่งคำแปลมาแล้ว
+       หน้านี้จะยังโกหกลูกค้าอยู่ · ปล่อยให้ความจริงมาจากคำตอบตอนกดดูฉบับแทน */
+    แถบ_('ห_เตือนแม่แบบ', 'เตือน', null);
+  }
+  function เก็บค่าแม่แบบ_() {
+    var out = {}, ขาด = [];
+    Array.prototype.forEach.call(document.querySelectorAll('.ช่องแม่แบบ'), function (ip) {
+      var ชื่อ = ip.getAttribute('data-ชื่อ'), ค่า = String(ip.value || '').trim();
+      if (ค่า) out[ชื่อ] = ค่า;
+    });
+    var t = แม่แบบ_.filter(function (x) { return x.id === จ('ช_แม่แบบ').value; })[0];
+    if (t) t.ช่อง.forEach(function (f) { if (f.จำเป็น && !out[f.ก]) ขาด.push(f.ก); });
+    return { ค่า: out, ขาด: ขาด };
+  }
+
+  /* ══ กดดูฉบับที่จะส่ง (customer_announce_prepare) ══ */
+  function ตรวจก่อนส่ง_() {
+    if (สถานะ.กำลังยิง) return;
+    /* 🔴 ด่านสุดท้ายกันส่งซ้ำ — ปุ่มถูกปิดอยู่แล้ว แต่ยังมีทางเข้ามาทางอื่น (กดจากคีย์บอร์ด · เรียกจากโค้ด)
+          ใบใหม่ = รหัสใหม่ = เซิร์ฟเวอร์กันซ้ำให้ไม่ได้ ⇒ ต้องกันที่นี่ ไม่ใช่กันแค่ที่ปุ่ม */
+    if (สถานะ.ใบยังไม่ปิด) {
+      แถบ_('ห_แจ้ง1','เตือน', { ว่า:'ใบก่อนหน้ายังไม่รู้ผล ขอเช็กให้จบก่อนนะครับ',
+        ช่วย:'ถ้าเปิดใบใหม่ตอนนี้แล้วใบเก่าออกไปแล้วจริง น้องจะได้ข้อความสองรอบ · ' +
+             'กด "ตรวจสถานะใบนี้อีกครั้ง" ก่อน · ถ้ายังต้องส่ง ให้กดส่งด้วยใบเดิม ระบบกันซ้ำให้อยู่แล้ว' });
+      if (สถานะ.ขั้น === 2) เปิดปุ่มดูสถานะกลางคัน_();
+      จัดปุ่มตามสถานะ_();
+      return;
+    }
+    แถบ_('ห_แจ้ง1', 'กลาง', null);
+
+    var ก้อน = { action:'customer_announce_prepare', req_id: รหัสใบใหม่_(),
+                 site: จ('ช_ไซต์').value, target_mode: สถานะ.โหมด };
+
+    if (สถานะ.โหมด === 'SELECTED') {
+      var ติ๊ก = Array.prototype.filter.call(document.querySelectorAll('.ติ๊กคน'), function (c) { return c.checked; })
+                   .map(function (c) { return c.value; });
+      if (!ติ๊ก.length) { แถบ_('ห_แจ้ง1','ผิด', แปลผิด_('EMPTY_CARD_IDS')); return; }
+      ก้อน.card_ids = ติ๊ก;
+    }
+
+    if (สถานะ.แบบ === 'TEMPLATE') {
+      var ม = เก็บค่าแม่แบบ_();
+      if (ม.ขาด.length) {
+        แถบ_('ห_แจ้ง1','ผิด', { ว่า:'ยังกรอกไม่ครบ', ความ:'ขาด ' + ม.ขาด.join(' · '),
+                                 ช่วย:'กรอกให้ครบแล้วกดใหม่ได้เลยครับ' });
+        return;
+      }
+      ก้อน.template_id = จ('ช_แม่แบบ').value;
+      ก้อน.template_fields = ม.ค่า;
+    } else {
+      var ข = String(จ('ช_ข้อความ').value || '').trim();
+      if (!ข) { แถบ_('ห_แจ้ง1','ผิด', แปลผิด_('NO_TEXT')); return; }
+      ก้อน.text_th = ข;
+    }
+
+    สถานะ.กำลังยิง = true; จัดปุ่มตามสถานะ_();
+    จ('ป_ตรวจก่อนส่ง').textContent = 'กำลังเตรียมให้…';
+    ยิง_(ก้อน).then(function (ผล) {
+      สถานะ.กำลังยิง = false;
+      จ('ป_ตรวจก่อนส่ง').textContent = 'ดูฉบับที่จะส่งก่อน';
+      if (!ผล || ผล.ok !== true) {
+        แถบ_('ห_แจ้ง1','ผิด', แปลผิด_(ผล && ผล.error, ผล && ผล['อธิบาย']));
+        จัดปุ่มตามสถานะ_();
+        return;
+      }
+      /* 🔴 ได้ฉบับใหม่ = ล้างสถานะและปุ่มเฉพาะกิจของใบก่อนให้หมดก่อนเสมอ */
+      ล้างสถานะใบก่อน_();
+      สถานะ.req_id = ก้อน.req_id;
+      สถานะ.ฉบับ = ผล;
+      สถานะ.ไซต์ที่เลือก = ก้อน.site;
+      จำใบไว้_(ก้อน.req_id, 'เตรียมแล้ว');
+      ไปขั้น_(2);
+      วาดฉบับ_(ผล);
+      จัดปุ่มตามสถานะ_();
+    })['catch'](function (e) {
+      สถานะ.กำลังยิง = false;
+      จ('ป_ตรวจก่อนส่ง').textContent = 'ดูฉบับที่จะส่งก่อน';
+      แถบ_('ห_แจ้ง1','ผิด', แปลผิด_(String(e && e.message)));
+      จัดปุ่มตามสถานะ_();
+    });
+  }
+
+  /* ══ ขั้นที่ 2 — วาดฉบับยืนยัน ══ */
+  function วาดฉบับ_(ผล) {
+    จ('ห_ไทย').textContent  = (ผล['ข้อความ'] && ผล['ข้อความ']['ฉบับที่จะส่ง']) || (ผล['ข้อความ'] && ผล['ข้อความ']['ไทย']) || '';
+    จ('ห_พม่า').textContent = (ผล['ข้อความ'] && ผล['ข้อความ']['พม่า']) || '— ยังไม่มีคำแปล —';
+
+    var เตือนแปล = ผล['ข้อความ'] && ผล['ข้อความ']['คำเตือนคำแปล'];
+    if (เตือนแปล) {
+      แถบ_('ห_คำเตือนแปล','เตือน', { ว่า:'คำแปลพม่านี้มาจากเครื่อง ยังไม่ผ่านล่าม',
+        ช่วย:'ช่วยอ่านทวนอีกรอบนะครับ ถ้าตรงความหมายที่ตั้งใจก็ส่งได้เลย · ถ้าไม่แน่ใจ ทักทีม Jasmine ให้ล่ามช่วยดูก่อนได้' });
+    } else { แถบ_('ห_คำเตือนแปล','เตือน', null); }
+
+    var ไลน์ = (ผล['ส่งทางไลน์'] && ผล['ส่งทางไลน์']['จำนวนคน']) || 0;
+    var แทน  = (ผล['ให้Jasmineแจ้งแทน'] && ผล['ให้Jasmineแจ้งแทน']['จำนวน']) || 0;
+    จ('ห_นับไลน์').textContent = ไลน์;
+    จ('ห_นับแทน').textContent  = แทน;
+
+    /* 🔴 ให้ลูกค้าตรวจบทบาทของตัวเองได้จริง ต้องเห็น ไซต์ · รายชื่อผู้รับ · วันเวลาที่จะส่ง */
+    var ชื่อไลน์ = (ผล['ส่งทางไลน์'] && ผล['ส่งทางไลน์']['รายชื่อ']) || [];
+    var รายชื่อ = (ผล['ให้Jasmineแจ้งแทน'] && ผล['ให้Jasmineแจ้งแทน']['รายชื่อ']) || [];
+    var บรรทัด = [];
+    บรรทัด.push('ไซต์: ' + (ผล.site || สถานะ.ไซต์ที่เลือก || '—'));
+    if (ชื่อไลน์.length) บรรทัด.push('ส่งเข้าไลน์ให้: ' + ชื่อไลน์.join(' · '));
+    if (รายชื่อ.length) บรรทัด.push('ทีม Jasmine ไปบอกที่หน้างานให้: ' + รายชื่อ.join(' · '));
+    บรรทัด.push('เวลาที่กดส่ง: ระบบส่งทันทีที่กดยืนยัน ไม่มีตั้งเวลาล่วงหน้า');
+    จ('ห_รายชื่อแทน').hidden = false;
+    จ('ห_รายชื่อแทน').textContent = บรรทัด.join('\n');
+
+    if (ไลน์ === 0 && แทน > 0) {
+      แถบ_('ห_แจ้ง2','เตือน', { ว่า:'รอบนี้ยังไม่มีใครรับทางไลน์ได้เลย',
+        ช่วย:'น้องกลุ่มนี้ยังไม่ได้ผูกไลน์ครับ กดส่งได้ตามปกติ เราจะเปิดเป็นงานให้ทีม Jasmine เดินไปบอกที่หน้างานแทน' });
+    } else if (ไลน์ > 0 && แทน > 0) {
+      แถบ_('ห_แจ้ง2','กลาง', { ว่า:'รอบนี้แบ่งกันสองทาง',
+        ช่วย:'เราส่งเข้าไลน์ให้ ' + ไลน์ + ' คนทันที ส่วนอีก ' + แทน + ' คนทีม Jasmine รับไปบอกที่หน้างานให้' });
+    } else { แถบ_('ห_แจ้ง2','กลาง', null); }
+
+    เริ่มนับถอย_(ผล['หมดอายุ']);
+  }
+
+  function เริ่มนับถอย_(หมดอายุ) {
+    หยุดนับถอย_();
+    var จบ = หมดอายุ ? new Date(หมดอายุ).getTime() : 0;
+    if (!จบ) { จ('ห_นับถอย').textContent = ''; return; }
+    function เดิน() {
+      var เหลือ = Math.max(0, Math.round((จบ - Date.now()) / 1000));
+      var e = จ('ห_นับถอย');
+      if (เหลือ <= 0) {
+        /* 🔴 ตัวนับถอยหลังรู้แค่ "ครบเวลายืนยันแล้ว" ไม่รู้ว่าใบนี้ส่งออกไปหรือยัง
+              ใบที่ยังไม่รู้ผล ห้ามบอกว่า "ยังไม่มีอะไรถูกส่งออกไป" เพราะเรายืนยันไม่ได้
+              ให้ผลจากเซิร์ฟเวอร์ที่แสดงอยู่ด้านบนเป็นตัวบอกแทน */
+        e.textContent = สถานะ.ใบยังไม่ปิด
+          ? 'ครบเวลายืนยันของฉบับนี้แล้ว — ทำต่อตามสถานะที่แสดงด้านบนได้เลยครับ'
+          : 'ฉบับนี้หมดอายุแล้ว — กดกลับไปแก้แล้วกดดูฉบับใหม่ได้เลยครับ ยังไม่มีอะไรถูกส่งออกไป';
+        e.className = 'นับถอย ใกล้';
+        สถานะ.หมดอายุแล้ว = true;
+        จัดปุ่มตามสถานะ_();
+        หยุดนับถอย_();
+        return;
+      }
+      var น = Math.floor(เหลือ / 60), ว = เหลือ % 60;
+      e.textContent = 'ฉบับนี้ใช้ได้อีก ' + น + ':' + (ว < 10 ? '0' : '') + ว +
+                      ' นาที — เราตั้งเวลาไว้กันส่งข้อมูลเก่าครับ';
+      e.className = 'นับถอย' + (เหลือ <= 60 ? ' ใกล้' : '');
+    }
+    เดิน();
+    สถานะ.นับถอยตัวจับ = setInterval(เดิน, 1000);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     🔴 ตัวแปลงคำตอบกลาง — จุดเดียวที่แปลงคำตอบเซิร์ฟเวอร์เป็นรูปแบบที่หน้าเว็บใช้
+
+     ทำไมต้องมี: คำสั่งส่ง กับ คำสั่งอ่านสถานะ คืนชื่อช่องไม่เหมือนกัน
+       ตอนส่ง    → งานให้Jasmineแจ้งแทน { จำนวนคน · ผล · รหัสงาน · อ้างอิง · เหตุ } + ผลแจ้งทีม แยกอยู่นอก
+       ตอนสถานะ  → งานให้Jasmineแจ้งแทน { มีงานไหม · จำนวนคน · รหัสงาน · สถานะ · ผลสร้างงาน · ผลแจ้งทีม · ต้องทำอะไรต่อ }
+     รุ่นก่อนอ่าน 'ผล' ทั้งสองทาง ⇒ พอกดดูสถานะ งานที่เปิดสำเร็จกลับขึ้นว่า "ยังไม่สำเร็จ"
+     (ผู้ตรวจทำซ้ำได้ · และเทสต์ผมก็ผิดตามเพราะลอกชื่อช่องจากหน้าเว็บ ไม่ได้ลอกจากเซิร์ฟเวอร์)
+     ══════════════════════════════════════════════════════════════════ */
+  function แปลงคำตอบ_(ผล, มาจาก) {
+    ผล = ผล || {};
+    var ไลน์ดิบ = (มาจาก === 'สถานะ') ? (ผล['ส่งทางไลน์'] || {}) : (ผล['ผลไลน์'] || {});
+    var งานดิบ  = ผล['งานให้Jasmineแจ้งแทน'] || {};
+    var ยอด = ไลน์ดิบ['ยอด'] || {};
+
+    var เลข = function (a, b) { return Number(a !== undefined ? a : (b || 0)) || 0; };
+    var ไลน์ = {
+      สถานะ:   String(ไลน์ดิบ['สถานะ'] || ''),
+      อธิบาย:  String(ไลน์ดิบ['อธิบาย'] || ''),
+      ตั้งใจส่ง: เลข(ไลน์ดิบ['ตั้งใจส่ง']),
+      รับไว้:   เลข(ไลน์ดิบ['รับไว้'], ยอด['รับไว้']),
+      ปฏิเสธ:   เลข(ไลน์ดิบ['ปฏิเสธ'], ยอด['ปฏิเสธ']),
+      ไม่ทราบ:  เลข(ไลน์ดิบ['ยังไม่ทราบผล'], ยอด['ไม่ทราบ'])
+    };
+
+    /* ผลสร้างงาน: ตอนส่งอยู่ในช่อง ผล · ตอนสถานะอยู่ในช่อง ผลสร้างงาน */
+    var ผลสร้างงาน = String(งานดิบ['ผลสร้างงาน'] || งานดิบ['ผล'] || '');
+    /* 🔴 คำตอบ "ผิดพลาดระหว่างส่ง" ของเซิร์ฟเวอร์แนบมาแค่ผลไลน์ ไม่มีก้อนงานเลย (ไฟล์ 11 · คืนข้อผิดพลาด_)
+          ถ้าเชื่อแต่ก้อนงาน จะได้ 0 คน ⇒ หน้าผลขึ้นว่า "ไม่มีน้องที่ต้องให้ทีมไปบอก" ซึ่งผิด
+          และปุ่มกู้งานจะไม่โผล่ทั้งที่งานค้างอยู่จริง
+          ตัวเลขสำรองเอาจาก "ฉบับที่ลูกค้าเพิ่งกดยืนยัน" ซึ่งเป็นตัวเลขเดียวกับที่เขาเห็นตอนกดส่ง */
+    var จำนวนจากฉบับ = 0;
+    try {
+      var ฉ = สถานะ.ฉบับ && สถานะ.ฉบับ['ให้Jasmineแจ้งแทน'];
+      จำนวนจากฉบับ = ฉ ? (Number(ฉ['จำนวน']) || 0) : 0;
+    } catch (e) { จำนวนจากฉบับ = 0; }
+    var จำนวนคน = (งานดิบ['จำนวนคน'] !== undefined) ? เลข(งานดิบ['จำนวนคน']) : จำนวนจากฉบับ;
+    /* มีงานจริงไหม: เชื่อช่อง มีงานไหม ก่อน ถ้าไม่มีช่องนั้นค่อยดูจากผลสร้างงาน */
+    var มีงาน = (งานดิบ['มีงานไหม'] !== undefined)
+      ? (งานดิบ['มีงานไหม'] === true)
+      : (ผลสร้างงาน === 'CREATED' || ผลสร้างงาน === 'ALREADY');
+
+    var งาน = {
+      จำนวนคน: จำนวนคน,
+      มีงาน: มีงาน,
+      ผลสร้างงาน: ผลสร้างงาน,
+      รหัสงาน: String(งานดิบ['รหัสงาน'] || ''),
+      สถานะงาน: String(งานดิบ['สถานะ'] || ''),
+      ต้องทำอะไรต่อ: String(งานดิบ['ต้องทำอะไรต่อ'] || ''),
+      เหตุ: String(งานดิบ['เหตุ'] || ''),
+      /* ผลแจ้งทีม: ตอนส่งอยู่ชั้นนอก · ตอนสถานะอยู่ในก้อนงาน */
+      แจ้งทีม: String(ผล['ผลแจ้งทีม'] || งานดิบ['ผลแจ้งทีม'] || '')
+    };
+    /* 🔴 งานยังค้าง = มีคนต้องแจ้งแทน · ยังไม่มีงานจริง · และคำขอนี้ผ่านขั้นส่งมาแล้วจริง
+       สามสถานะนี้ "ยังไม่มีงาน" เหมือนกัน แต่กู้ไม่ได้ ต้องไม่ขึ้นปุ่มกู้ให้:
+         PENDING      = ยังไม่ได้กดส่ง  ⇒ กดปุ่มกู้ = เปิดงานให้ทีมโดยที่ไลน์ยังไม่ออก
+         EXPIRED      = ระบบปฏิเสธไปแล้ว ⇒ กดแล้วโดนปฏิเสธซ้ำ เป็นทางตัน
+         NOT_REQUIRED = ไม่มีงานให้เปิดตั้งแต่แรก                                */
+    var กู้ไม่ได้ = (ผลสร้างงาน === 'PENDING' || ผลสร้างงาน === 'EXPIRED' || ผลสร้างงาน === 'NOT_REQUIRED');
+    งาน.กู้ไม่ได้ = กู้ไม่ได้;
+    งาน.ยังค้าง = (จำนวนคน > 0 && !มีงาน && !กู้ไม่ได้);
+    return { ไลน์: ไลน์, งาน: งาน, ดิบ: ผล };
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     🔴 จุดเดียวที่ตัดสินว่าปุ่มไหนกดได้ — เรียกทุกครั้งที่สถานะเปลี่ยน
+     รุ่นก่อนกระจายการสั่ง disabled ไว้หลายที่ ⇒ ฉบับหมดอายุแล้วกลับไปเตรียมใหม่
+     ปุ่มส่งยังค้างปิดจากใบเก่า (ผู้ตรวจทำซ้ำได้)
+     ══════════════════════════════════════════════════════════════════ */
+  function จัดปุ่มตามสถานะ_() {
+    /* 🔴 เงื่อนไขครบทุกข้อที่ทำให้ "ห้ามกดส่ง" — ต้องอยู่ที่นี่ที่เดียว
+       · ผลไม่ชัด   = ยิงไม่ออก และยังไม่ได้อ่านสถานะใหม่ ⇒ ให้ไปกดตรวจสถานะก่อน
+       · เปิดทางเฉพาะแจ้งแทน = โควตาไลน์ถูกกั้น ทางส่งปกติกดไปก็ไม่ผ่าน เหลือแต่ทางงานแจ้งแทน
+       🔴 หมดอายุแล้ว ปิดปุ่มได้เฉพาะตอน "ใบปิดแล้ว"
+          ถ้าใบยังค้าง ต้องปล่อยให้กดส่งด้วยรหัสเดิม แล้วให้เซิร์ฟเวอร์เป็นคนตัดสินว่า EXPIRED จริงไหม
+          ไม่ตัดสินจากตัวนับถอยหลังฝั่งหน้าเว็บอย่างเดียว ไม่งั้นใบค้างที่หมดอายุจะกลายเป็นทางตัน */
+    var ส่งได้ = (สถานะ.ขั้น === 2) && !!สถานะ.req_id && !สถานะ.กำลังยิง &&
+                 (!สถานะ.หมดอายุแล้ว || สถานะ.ใบยังไม่ปิด) && !สถานะ.ส่งไปแล้ว &&
+                 !สถานะ.ผลไม่ชัด && !สถานะ.เปิดทางเฉพาะแจ้งแทน;
+    if (สถานะ.ใบยังไม่ปิด && ส่งได้) {
+      var ปส0 = จ('ป_ยืนยันส่ง');
+      if (ปส0) ปส0.textContent = 'ส่งด้วยใบเดิมนี้';
+    }
+    var ปส = จ('ป_ยืนยันส่ง');
+    if (ปส) { ปส.disabled = !ส่งได้; ปส.hidden = (สถานะ.ขั้น !== 2); }
+
+    var ปุ่มชั่วคราว = ['ป_เฉพาะแจ้งแทน', 'ป_ดูสถานะกลางคัน', 'ป_กู้งานค้าง', 'ป_ตรวจสถานะขั้น1'];
+    ปุ่มชั่วคราว.forEach(function (id) {
+      var b = จ(id);
+      if (!b) return;
+      var ควรมี = (id === 'ป_เฉพาะแจ้งแทน') ? สถานะ.เปิดทางเฉพาะแจ้งแทน
+                : (id === 'ป_ดูสถานะกลางคัน') ? (สถานะ.ผลไม่ชัด || สถานะ.ใบยังไม่ปิด)
+                : (id === 'ป_ตรวจสถานะขั้น1') ? (สถานะ.ใบยังไม่ปิด && สถานะ.ขั้น === 1)
+                : สถานะ.มีงานค้างให้กู้;
+      if (!ควรมี && b.parentNode) b.parentNode.removeChild(b);
+      else if (b) b.disabled = !!สถานะ.กำลังยิง;
+    });
+
+    var ปด = จ('ป_ดูสถานะใหม่'); if (ปด) ปด.disabled = !!สถานะ.กำลังยิง || !สถานะ.req_id;
+
+    /* 🔴 ใบยังค้าง ⇒ ห้ามเดินออกจากใบนี้ไปหน้าเขียนใหม่
+          รุ่นก่อนปล่อยให้กด "กลับไปแก้" ไปขั้น 1 ซึ่งปุ่มเตรียมถูกปิด
+          และปุ่มตรวจสถานะอยู่ในขั้น 2 ที่ถูกซ่อน ⇒ ลูกค้าติดตาย ต้องปิดเปิดหน้าเอง */
+    var ปก = จ('ป_กลับไปแก้');
+    if (ปก) ปก.disabled = !!สถานะ.กำลังยิง || !!สถานะ.ใบยังไม่ปิด;
+    /* 🔴 ใบเก่ายังไม่รู้ผล ⇒ ห้ามเตรียมใบใหม่ เพราะใบใหม่ = รหัสใหม่ = ถ้าใบเก่าถึงจริง น้องได้สองรอบ
+       (ผู้ตรวจทำซ้ำได้: คำตอบกลับมาไม่ใช่ JSON → กลับไปแก้ → เตรียมใหม่ → ส่ง = ส่งซ้ำ) */
+    var ปต = จ('ป_ตรวจก่อนส่ง');
+    if (ปต) ปต.disabled = !!สถานะ.กำลังยิง || !!สถานะ.ใบยังไม่ปิด;
+
+    /* 🔴 ใบยังไม่ปิด ⇒ ต้องมีปุ่มตรวจสถานะที่ "มองเห็นได้ในขั้นที่กำลังโชว์" เสมอ
+          ไม่ว่าจะไปโผล่ที่ขั้นไหน ลูกค้าต้องมีทางเดินต่อที่กดได้จริงตลอดเวลา */
+    if (สถานะ.ใบยังไม่ปิด) {
+      if (สถานะ.ขั้น === 2) เปิดปุ่มดูสถานะกลางคัน_();
+      else if (สถานะ.ขั้น === 1) เปิดปุ่มตรวจสถานะขั้น1_();
+    }
+  }
+
+  /* ══ จำรหัสใบไว้ กันกรณีคำตอบหาย/ปิดหน้าไปแล้วเปิดใหม่ ══
+     🔴 ถ้าไม่จำ พอเปิดหน้าใหม่รหัสใบหาย ลูกค้าจะเริ่มใบใหม่แล้วส่งเรื่องเดิมซ้ำ
+        น้องได้ข้อความสองรอบ (ผู้ตรวจทำซ้ำได้)
+     ที่เก็บอาจถูกปิดในบางเบราว์เซอร์ ⇒ ห่อ try ทุกครั้ง ใช้ไม่ได้ก็ยังทำงานต่อได้ */
+  /* 🔴 แยกช่องเก็บตามผู้ใช้ — เครื่องที่ออฟฟิศไซต์มักใช้ร่วมกันหลายคน
+        ถ้าใช้กุญแจเดียวกันหมด คนที่สองเปิดหน้าจะไปเจอใบค้างของคนแรก
+        ไม่เก็บ LINE user id ตรง ๆ · ย่อเป็นเลขสั้นพอให้แยกช่องกันได้เท่านั้น
+        (ไม่ใช่การปกปิดตัวตน — หน้านี้เข้าถึง id ได้อยู่แล้ว แค่ไม่ทิ้งไว้ในที่เก็บให้อ่านง่าย) */
+  var กุญแจฐาน_ = 'jasmine_ประกาศ_ใบล่าสุด';
+  var กุญแจจำ_ = กุญแจฐาน_ + ':ทั่วไป';
+  function ย่อเป็นเลข_(ข้อความ) {
+    var h = 5381, s = String(ข้อความ || '');
+    for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  }
+  function ตั้งกุญแจตามผู้ใช้_() {
+    try {
+      var c = (typeof liff !== 'undefined' && liff.getContext) ? liff.getContext() : null;
+      var id = c && c.userId;
+      กุญแจจำ_ = กุญแจฐาน_ + ':' + (id ? ย่อเป็นเลข_(id) : 'ทั่วไป');
+    } catch (e) { กุญแจจำ_ = กุญแจฐาน_ + ':ทั่วไป'; }
+  }
+  function จำใบไว้_(req_id, สภาพ) {
+    try {
+      window.localStorage.setItem(กุญแจจำ_, JSON.stringify({
+        req_id: req_id, สภาพ: สภาพ || '', เมื่อ: Date.now() }));
+    } catch (e) {}
+  }
+  function อ่านใบที่จำไว้_() {
+    try {
+      var s = window.localStorage.getItem(กุญแจจำ_);
+      if (!s) return null;
+      var o = JSON.parse(s);
+      if (!o || !o.req_id) return null;
+      /* 🔴 ใบที่ "ยังไม่รู้ผล" ห้ามลืมเพราะครบ 24 ชม.
+            ใบธรรมดาหมดอายุไปเองได้ แต่ใบที่ไม่รู้ผลคือใบที่อาจส่งถึงน้องไปแล้ว
+            ถ้าลืมทิ้ง ลูกค้าจะเริ่มใบใหม่โดยไม่รู้ตัว (ผู้ตรวจสั่งไว้รอบนี้) */
+      var ยังไม่รู้ผล = (o['สภาพ'] === 'กำลังส่ง' || o['สภาพ'] === 'ไม่ทราบผล');
+      if (!ยังไม่รู้ผล && (Date.now() - Number(o['เมื่อ'] || 0)) > 86400000) return null;
+      return o;
+    } catch (e) { return null; }
+  }
+  function ลืมใบ_() { try { window.localStorage.removeItem(กุญแจจำ_); } catch (e) {} }
+
+  /* ══ ขั้นที่ 3 — ส่งจริง (customer_announce_send) ══
+     🔴 ขั้นนี้แนบได้แค่ req_id เท่านั้น เซิร์ฟเวอร์ปฏิเสธช่องอื่นทั้งหมด
+        เป็นเรื่องตั้งใจ เพื่อให้สิ่งที่ส่งออก = สิ่งที่ตรวจกันไปแล้วเป๊ะ ๆ */
+  function ยืนยันส่ง_(เฉพาะงานแจ้งแทน) {
+    if (สถานะ.กำลังยิง || !สถานะ.req_id) return;
+    แถบ_('ห_แจ้ง2','กลาง', null);
+    /* 🔴 จำรหัสใบ "ก่อน" ยิงเสมอ ถ้าคำตอบหายหรือปิดหน้าไป จะกู้กลับมาถามสถานะได้
+          ไม่ต้องเดาว่าส่งไปหรือยัง และไม่ต้องเริ่มใบใหม่ซึ่งทำให้น้องได้ข้อความซ้ำ */
+    จำใบไว้_(สถานะ.req_id, 'กำลังส่ง');
+    /* 🔴 ต้องจำ "ก่อนเริ่มลองรอบนี้" ว่าใบนี้มีความพยายามค้างอยู่แล้วหรือยัง
+          เพราะคำตอบของรอบนี้ (เช่น BUSY_TRY_AGAIN) บอกได้แค่เรื่องของรอบนี้
+          ถ้าเอาไปปลดใบที่มีคำขอเก่าค้างอยู่ จะกลายเป็นเปิดทางให้สร้างใบใหม่แล้วส่งซ้ำ */
+    var ค้างมาก่อน = สถานะ.มีความพยายามค้าง === true;
+    /* 🔴 ยกธงตั้งแต่ก่อนยิง · ถ้าคำตอบหายกลางทาง ธงนี้คือสิ่งเดียวที่กันไม่ให้ไปเปิดใบใหม่ */
+    สถานะ.เคยยิงส่ง = true;
+    สถานะ.ใบยังไม่ปิด = true;
+    สถานะ.มีความพยายามค้าง = true;
+    สถานะ.กำลังยิง = true;
+    จัดปุ่มตามสถานะ_();
+    จ('ป_ยืนยันส่ง').textContent = 'กำลังส่งให้น้อง…';
+    หยุดนับถอย_();
+
+    var ก้อน = { action:'customer_announce_send', req_id: สถานะ.req_id };
+    if (เฉพาะงานแจ้งแทน === true) ก้อน['เฉพาะงานแจ้งแทน'] = true;
+
+    ยิง_(ก้อน).then(function (ผล) {
+      สถานะ.กำลังยิง = false;
+      จ('ป_ยืนยันส่ง').textContent = 'ยืนยัน ส่งให้น้องเลย';
+      if (!ผล || ผล.ok !== true) { ส่งไม่ผ่าน_(ผล, ค้างมาก่อน); return; }
+      สถานะ.ส่งไปแล้ว = true;
+      สถานะ.ใบยังไม่ปิด = false;   /* ได้คำตอบชี้ขาดแล้ว */
+      สถานะ.มีความพยายามค้าง = false;
+      สถานะ.ผลไม่ชัด = false;
+      จำใบไว้_(สถานะ.req_id, 'ส่งแล้ว');
+      แสดงผล_(แปลงคำตอบ_(ผล, 'ส่ง'));
+    })['catch'](function (e) {
+      สถานะ.กำลังยิง = false;
+      จ('ป_ยืนยันส่ง').textContent = 'ยืนยัน ส่งให้น้องเลย';
+      /* ยิงไม่ออก = ไม่รู้ว่าถึงเซิร์ฟเวอร์หรือยัง ⇒ ห้ามชวนกดซ้ำ ให้ไปดูสถานะก่อน */
+      สถานะ.ผลไม่ชัด = true;
+      จำใบไว้_(สถานะ.req_id, 'ไม่ทราบผล');
+      เปิดปุ่มดูสถานะกลางคัน_();
+      แถบ_('ห_แจ้ง2','เตือน', { ว่า:'ส่งคำสั่งไม่ออก และตอนนี้ยังไม่รู้ว่าไปถึงระบบหรือยัง',
+        ช่วย:'🔴 อย่าเพิ่งกดส่งซ้ำนะครับ อาจกลายเป็นน้องได้ข้อความสองรอบ · กด "ดูสถานะล่าสุดอีกครั้ง" ก่อน แล้วค่อยตัดสินใจด้วยกัน · รหัสใบนี้ระบบจำไว้ให้แล้ว ปิดหน้าไปแล้วเปิดใหม่ก็ยังถามสถานะใบเดิมได้' });
+      จัดปุ่มตามสถานะ_();
+    });
+  }
+
+  function ส่งไม่ผ่าน_(ผล, ค้างมาก่อน) {
+    var รหัส = ผล && ผล.error;
+    var ก้อน = แปลผิด_(รหัส, ผล && ผล['อธิบาย']);
+
+    /* 🔴 ตัดสินสองชั้น ห้ามรวบเป็นชั้นเดียว
+       ชั้นใบ    = เซิร์ฟเวอร์บอกสภาพของใบนี้เอง ⇒ ปิดใบได้ แม้เคยมีคำขอค้าง
+       ชั้นครั้ง = บอกแค่ว่ารอบนี้ไม่มีอะไรออกไป ⇒ ปิดใบได้เฉพาะเมื่อ "ไม่เคยมีความพยายามค้างมาก่อน" */
+    var ปิดใบได้เลย    = !!(รหัส && รหัสที่ปิดใบได้_[String(รหัส)]);
+    var ยังไม่ส่งรอบนี้ = !!(รหัส && รหัสที่ยังไม่ส่งรอบนี้_[String(รหัส)]);
+    var ยืนยันว่ายังไม่ส่ง = ปิดใบได้เลย || (ยังไม่ส่งรอบนี้ && ค้างมาก่อน !== true);
+
+    if (รหัส === 'QUOTA_BLOCKED' && ผล['ทำเฉพาะงานแจ้งแทนได้ไหม'] === true && ค้างมาก่อน !== true) {
+      สถานะ.ใบยังไม่ปิด = false;
+      สถานะ.มีความพยายามค้าง = false;
+      สถานะ.เปิดทางเฉพาะแจ้งแทน = true;
+      แสดงปุ่มเฉพาะแจ้งแทน_();
+      แถบ_('ห_แจ้ง2','เตือน', { ว่า: ก้อน.ว่า, ช่วย: ก้อน.ช่วย +
+        ' · ส่วนที่ทีม Jasmine ไปบอกที่หน้างาน ยังเปิดงานให้ได้เลยครับ กดปุ่มข้างล่าง' });
+      จัดปุ่มตามสถานะ_();
+      return;
+    }
+
+    /* 🔴 ok:false ที่ยังมีผลไลน์ติดมา = ไลน์ออกไปแล้วจริง ห้ามทิ้งเป็นข้อความผิดพลาดทั่วไป
+          ไม่ผูกกับรหัสใดรหัสหนึ่ง เพราะเซิร์ฟเวอร์อาจเพิ่มรหัสใหม่ในอนาคต
+          เกณฑ์คือ "มีผลไลน์ติดมาไหม" ไม่ใช่ "รหัสชื่ออะไร" (ผู้ตรวจรอบนี้) */
+    if (ผล && ผล['ผลไลน์']) {
+      สถานะ.ส่งไปแล้ว = true;
+      สถานะ.ใบยังไม่ปิด = false;
+      สถานะ.มีความพยายามค้าง = false;
+      จำใบไว้_(สถานะ.req_id, 'ส่งแล้ว');
+      แสดงผล_(แปลงคำตอบ_(ผล, 'ส่ง'), ก้อน);
+      return;
+    }
+
+    if (!ยืนยันว่ายังไม่ส่ง) {
+      /* 🔴 ไม่รู้ว่าไปถึงไหน — ทางเดียวกับตอนเน็ตหลุด ห้ามปล่อยให้ไปเปิดใบใหม่
+            (ผู้ตรวจทำซ้ำได้: เซิร์ฟเวอร์ส่งสำเร็จแต่คำตอบกลับมาเป็น HTML) */
+      สถานะ.ผลไม่ชัด = true;
+      จำใบไว้_(สถานะ.req_id, 'ไม่ทราบผล');
+      เปิดปุ่มดูสถานะกลางคัน_();
+      แถบ_('ห_แจ้ง2','เตือน', { ว่า:'ระบบตอบกลับมาไม่ครบ และตอนนี้ยังไม่รู้ว่าส่งออกไปแล้วหรือยัง',
+        ช่วย:'🔴 อย่าเพิ่งเขียนใบใหม่นะครับ ถ้าใบนี้ออกไปแล้วจริง น้องจะได้ข้อความสองรอบ · ' +
+             'กด "ตรวจสถานะใบนี้อีกครั้ง" ข้างล่างก่อน · ถ้าต้องส่งจริง ๆ ให้กดส่งด้วยใบเดิมได้เลย ' +
+             'ระบบฝั่งเราจะไม่ส่งซ้ำให้น้องที่ได้รับไปแล้ว',
+        'ให้ทีมดู': รหัส ? String(รหัส) : '' });
+      จัดปุ่มตามสถานะ_();
+      return;
+    }
+
+    สถานะ.ใบยังไม่ปิด = false;   /* ยืนยันแล้วว่ายังไม่มีอะไรออกไป */
+    สถานะ.มีความพยายามค้าง = false;
+    if (รหัส === 'EXPIRED' || รหัส === 'NOT_PREPARED') สถานะ.หมดอายุแล้ว = true;
+    แถบ_('ห_แจ้ง2','ผิด', ก้อน);
+    จัดปุ่มตามสถานะ_();
+  }
+
+  /* 🔴 ทุกปุ่มชั่วคราวต้องระบุ "ปุ่มเพื่อนบ้าน" ที่อยู่ในขั้นเดียวกับที่กำลังโชว์
+        รุ่นก่อนอิงปุ่มส่งของขั้น 2 เสมอ ⇒ ปุ่มกู้งานไปโผล่ในส่วนที่ถูกซ่อนอยู่
+        ผู้ตรวจกดจริงแล้วกดไม่ได้ · เทสต์เก่าไม่จับ เพราะเรียก onclick ตรง ๆ ไม่ได้กดผ่านหน้าจอ */
+  function ปุ่มชั่วคราว_(id, คลาส, คำ, งาน, เพื่อนบ้าน) {
+    var เดิม = จ(id);
+    if (เดิม) return เดิม;
+    if (!เพื่อนบ้าน) return null;
+    var b = document.createElement('button');
+    b.id = id; b.className = คลาส; b.textContent = คำ; b.onclick = งาน;
+    เพื่อนบ้าน.parentNode.insertBefore(b, เพื่อนบ้าน);
+    return b;
+  }
+  function แสดงปุ่มเฉพาะแจ้งแทน_() {
+    return ปุ่มชั่วคราว_('ป_เฉพาะแจ้งแทน', 'ปุ่ม', 'เปิดงานให้ทีมไปบอกที่หน้างาน',
+      function () { ยืนยันส่ง_(true); }, จ('ป_ยืนยันส่ง'));
+  }
+  /* ปุ่มดูสถานะกลางคัน = ของขั้น 2 เท่านั้น · ขั้น 3 มีปุ่มดูสถานะติดมากับหน้าอยู่แล้ว */
+  /* ปุ่มตรวจสถานะสำหรับขั้นที่ 1 — ใช้ตอนเปิดหน้าใหม่แล้วอ่านสถานะใบค้างไม่สำเร็จ */
+  function เปิดปุ่มตรวจสถานะขั้น1_() {
+    return ปุ่มชั่วคราว_('ป_ตรวจสถานะขั้น1', 'ปุ่ม', 'ลองตรวจสถานะใบที่ค้างอีกครั้ง',
+      function () { ดูสถานะ_(false); }, จ('ป_ตรวจก่อนส่ง'));
+  }
+  function เปิดปุ่มดูสถานะกลางคัน_() {
+    return ปุ่มชั่วคราว_('ป_ดูสถานะกลางคัน', 'ปุ่ม ปุ่มรอง', 'ตรวจสถานะใบนี้อีกครั้ง',
+      function () { ดูสถานะ_(true); }, จ('ป_กลับไปแก้'));
+  }
+  /* 🔴 ปุ่มกู้งานที่ค้าง — ต้องอยู่ใน "ขั้นที่ 3" ข้างผลของงานทีม เพราะที่นั่นคือที่ที่ข้อความชวนให้กด
+        และเรียก "ตัวส่งเดิมด้วยรหัสใบเดิม" ไม่ใช่คำสั่งอ่านสถานะ (อ่านอย่างเดียว งานไม่ถูกเปิด) */
+  function เปิดปุ่มกู้งานค้าง_() {
+    return ปุ่มชั่วคราว_('ป_กู้งานค้าง', 'ปุ่ม', 'ให้ระบบเปิดงานที่ค้างให้ทีม',
+      function () { ยืนยันส่ง_(true); }, จ('ป_ดูสถานะใหม่'));
+  }
+
+  /* ══ วาดผล ══ */
+  function บรรทัดผล_(ที่, ซ้าย, ขวา) {
+    var d = document.createElement('div'); d.className = 'ผลย่อย';
+    var a = document.createElement('span'); a.textContent = ซ้าย;
+    var b = document.createElement('span'); b.textContent = ขวา;
+    d.appendChild(a); d.appendChild(b); จ(ที่).appendChild(d);
+  }
+
+  /* ══ วาดผล — กินเฉพาะ "ก้อนกลาง" จากตัวแปลง ไม่แตะรูปแบบดิบของเซิร์ฟเวอร์อีก ══
+     🔴 ถ้อยคำยึดหลักฐานที่ระบบยืนยันได้จริงเท่านั้น
+        LINE บอกได้แค่ "รับคำขอไว้แล้ว" ไม่ได้บอกว่าน้องได้รับหรืออ่าน
+        ระบบบอกได้แค่ "บันทึกงานและส่งแจ้งเตือนทีมแล้ว" ไม่ได้บอกว่าทีมอ่านแล้ว   */
+  function แสดงผล_(ก, ก้อนเตือน) {
+    สถานะ.ผลล่าสุด = ก;
+    var ไลน์ = ก.ไลน์, งาน = ก.งาน;
+
+    /* ── สรุปบนสุด ── */
+    /* 🔴 มีทั้งข้อผิดพลาดและ "ยังไม่ทราบผลบางส่วน" พร้อมกัน ⇒ ต้องเห็นทั้งคู่
+          รุ่นก่อนเอาข้อความผิดพลาดทับคำเตือนห้ามส่งซ้ำ ซึ่งเป็นคำเตือนที่สำคัญกว่า */
+    if (ก้อนเตือน && ไลน์.ไม่ทราบ > 0) {
+      แถบ_('ห_ผลรวม','เตือน', { ว่า:'ส่งออกไปแล้ว แต่บางส่วนยังไม่รู้ผลแน่ชัด · ' + ก้อนเตือน.ว่า,
+        ช่วย:'🔴 อย่าเพิ่งส่งเรื่องเดิมซ้ำนะครับ ส่วนที่ยังไม่รู้ผลอาจถึงน้องไปแล้ว ถ้าส่งอีกน้องจะได้สองรอบ · ' +
+             ก้อนเตือน.ช่วย,
+        'ให้ทีมดู': ก้อนเตือน['ให้ทีมดู'] || '' });
+    } else if (ก้อนเตือน) {
+      แถบ_('ห_ผลรวม','เตือน', ก้อนเตือน);
+    } else if (ไลน์.ไม่ทราบ > 0) {
+      แถบ_('ห_ผลรวม','เตือน', { ว่า:'ส่งออกไปแล้ว แต่บางส่วนยังไม่รู้ผลแน่ชัด',
+        ช่วย:'🔴 อย่าเพิ่งส่งเรื่องเดิมซ้ำนะครับ ส่วนที่ยังไม่รู้ผลอาจถึงน้องไปแล้ว ถ้าส่งอีกน้องจะได้สองรอบ · กด "ดูสถานะล่าสุดอีกครั้ง" สักพัก หรือทักทีม Jasmine ให้ช่วยเช็กกับ LINE ให้ก็ได้' });
+    } else if (ไลน์.รับไว้ > 0) {
+      แถบ_('ห_ผลรวม','ดี', { ว่า:'LINE รับคำขอส่งแล้ว ' + ไลน์.รับไว้ + ' บัญชี',
+        ช่วย:'สิ่งที่ระบบยืนยันได้คือ LINE รับคำขอไว้แล้ว · ยังบอกไม่ได้ว่าน้องเปิดอ่านหรือยัง ' +
+             'ถ้าเป็นเรื่องด่วน ฝากหัวหน้าหน้างานช่วยย้ำอีกทางจะครบทั้งสองทางครับ' });
+    } else if (ไลน์.สถานะ === 'ไม่มีผู้รับทางไลน์' || (ไลน์.ตั้งใจส่ง === 0 && งาน.จำนวนคน > 0)) {
+      แถบ_('ห_ผลรวม','กลาง', { ว่า:'รอบนี้ไม่ได้ส่งทางไลน์',
+        ช่วย:'น้องกลุ่มนี้ยังไม่ได้ผูกไลน์ ระบบจึงบันทึกเป็นงานให้ทีม Jasmine ไปบอกที่หน้างานแทน' });
+    } else {
+      แถบ_('ห_ผลรวม','เตือน', { ว่า: ไลน์.สถานะ || 'ส่งแล้ว', ช่วย: ไลน์.อธิบาย || '' });
+    }
+
+    /* ── ทางไลน์ ── */
+    จ('ห_ผลไลน์').textContent = '';
+    บรรทัดผล_('ห_ผลไลน์', 'สถานะ', ไลน์.สถานะ || '—');
+    บรรทัดผล_('ห_ผลไลน์', 'ตั้งใจส่งถึง', ไลน์.ตั้งใจส่ง + ' บัญชี');
+    บรรทัดผล_('ห_ผลไลน์', 'LINE ยืนยันว่ารับคำขอแล้ว', ไลน์.รับไว้ + ' บัญชี');
+    บรรทัดผล_('ห_ผลไลน์', 'LINE ปฏิเสธ', ไลน์.ปฏิเสธ + ' บัญชี');
+    บรรทัดผล_('ห_ผลไลน์', 'ยังไม่ทราบผล', ไลน์.ไม่ทราบ + ' บัญชี');
+
+    /* ── ส่วนที่ทีมไปบอกให้ ── */
+    จ('ห_ผลแทน').textContent = '';
+    สถานะ.มีงานค้างให้กู้ = false;
+    if (!งาน.จำนวนคน) {
+      บรรทัดผล_('ห_ผลแทน', 'รอบนี้', 'ไม่มีน้องที่ต้องให้ทีมไปบอก');
+      แถบ_('ห_แจ้ง3','กลาง', null);
+    } else {
+      บรรทัดผล_('ห_ผลแทน', 'จำนวนที่ฝากทีมไว้', งาน.จำนวนคน + ' คน');
+      บรรทัดผล_('ห_ผลแทน', 'บันทึกงานให้ทีมแล้วหรือยัง', งาน.มีงาน ? 'บันทึกแล้ว' : 'ยังไม่สำเร็จ');
+      if (งาน.สถานะงาน) บรรทัดผล_('ห_ผลแทน', 'สถานะงานฝั่งทีม', งาน.สถานะงาน);
+      if (งาน.รหัสงาน)  บรรทัดผล_('ห_ผลแทน', 'รหัสงานไว้อ้างอิงกับทีม', งาน.รหัสงาน);
+
+      if (!งาน.มีงาน && !งาน.ยังค้าง) {
+        /* ยังไม่มีงาน และกู้ไม่ได้ ⇒ ไม่มีปุ่มให้กด แต่ต้องมีทางเดินต่อเสมอ (กฎข้อ 0)
+           ข้อความหลักใช้ของเซิร์ฟเวอร์ ถ้าเซิร์ฟเวอร์ไม่ได้ส่งมา ต้องมีของเราสำรองไว้ */
+        แถบ_('ห_แจ้ง3','กลาง', { ว่า:'ยังไม่ได้เปิดงานให้ทีมในรอบนี้',
+          ช่วย: งาน.ต้องทำอะไรต่อ ||
+                'ยังไม่ถึงขั้นเปิดงานครับ กดส่งประกาศก่อน ระบบจะเปิดงานให้ทีมต่อให้เอง · ถ้าไม่แน่ใจ ทักทีม Jasmine พร้อมรหัสใบได้เลย' });
+      } else if (งาน.ยังค้าง) {
+        สถานะ.มีงานค้างให้กู้ = true;
+        เปิดปุ่มกู้งานค้าง_();
+        แถบ_('ห_แจ้ง3','เตือน', { ว่า:'ยังบันทึกงานให้ทีมไม่สำเร็จ',
+          ช่วย:'ส่วนที่ส่งไลน์ไปแล้วไม่ได้หายไปไหนครับ · กดปุ่ม "ให้ระบบเปิดงานที่ค้างให้ทีม" ข้างล่าง ' +
+               'ระบบจะเก็บเฉพาะงานที่ค้าง ไม่ส่งไลน์ซ้ำให้น้องที่ได้รับไปแล้ว' +
+               (งาน.เหตุ ? '' : '') });
+      } else if (งาน.แจ้งทีม === 'SENT') {
+        แถบ_('ห_แจ้ง3','ดี', { ว่า:'บันทึกงานและส่งแจ้งเตือนทีมแล้ว',
+          ช่วย:'ทีม Jasmine จะไปบอกน้องที่หน้างานให้ · ถ้าอยากเร่ง ทักทีมพร้อมรหัสงานข้างบนได้เลย' });
+      } else if (งาน.แจ้งทีม === 'NOTIFY_FAILED') {
+        แถบ_('ห_แจ้ง3','เตือน', { ว่า:'บันทึกงานแล้ว แต่ส่งแจ้งเตือนทีมไม่สำเร็จ',
+          ช่วย:'งานไม่หายครับ อยู่ในระบบแล้ว แต่ทีมอาจยังไม่เห็นแจ้งเตือน · ทักทีม Jasmine พร้อมรหัสงานข้างบนอีกทางจะชัวร์ที่สุด' });
+      } else if (งาน.แจ้งทีม === 'UNKNOWN') {
+        แถบ_('ห_แจ้ง3','เตือน', { ว่า:'บันทึกงานแล้ว แต่ยังไม่ทราบว่าแจ้งเตือนถึงทีมหรือยัง',
+          ช่วย:'ไม่ต้องกดซ้ำนะครับ งานอยู่ในระบบแล้ว การกดซ้ำไม่ได้ทำให้ทีมรู้เร็วขึ้น · ถ้าด่วน ทักทีมพร้อมรหัสงานข้างบนได้เลย' });
+      } else if (งาน.ต้องทำอะไรต่อ) {
+        แถบ_('ห_แจ้ง3','กลาง', { ว่า:'สิ่งที่ทำต่อได้', ช่วย: งาน.ต้องทำอะไรต่อ });
+      } else { แถบ_('ห_แจ้ง3','กลาง', null); }
+    }
+
+    ไปขั้น_(3);
+    จัดปุ่มตามสถานะ_();
+  }
+
+  /* ══ ดูสถานะ (customer_announce_status) ══ */
+  /* ดูสถานะ = คำสั่งอ่านอย่างเดียว ไม่เปิดงานให้
+     ถ้ามีงานค้าง ตัวแสดงผลจะขึ้นปุ่ม "ให้ระบบเปิดงานที่ค้างให้ทีม" ให้เอง */
+  function ดูสถานะ_(จากขั้น2, เงียบ) {
+    if (สถานะ.กำลังยิง || !สถานะ.req_id) return Promise.resolve(null);
+    var ปุ่ม = จากขั้น2 ? 'ป_ดูสถานะกลางคัน' : 'ป_ดูสถานะใหม่';
+    สถานะ.กำลังยิง = true; จัดปุ่มตามสถานะ_();
+    if (จ(ปุ่ม)) จ(ปุ่ม).textContent = 'กำลังเช็กให้…';
+    return ยิง_({ action:'customer_announce_status', req_id: สถานะ.req_id }).then(function (ผล) {
+      สถานะ.กำลังยิง = false;
+      if (จ(ปุ่ม)) จ(ปุ่ม).textContent = 'ดูสถานะล่าสุดอีกครั้ง';
+      if (!ผล || ผล.ok !== true) {
+        if (!เงียบ) แถบ_(จากขั้น2 ? 'ห_แจ้ง2' : 'ห_แจ้ง3','ผิด', แปลผิด_(ผล && ผล.error, ผล && ผล['อธิบาย']));
+        จัดปุ่มตามสถานะ_();
+        return ผล;
+      }
+      var stage = String(ผล.stage || '');
+      /* stage ที่ผ่านขั้นส่งแล้ว ⇒ ใบนี้ส่งไปแล้ว ห้ามเปิดปุ่มส่งอีก */
+      if (stage === 'SENT' || stage === 'SENDING') สถานะ.ส่งไปแล้ว = true;
+      if (stage === 'EXPIRED') สถานะ.หมดอายุแล้ว = true;
+
+      /* 🔴 คำตอบที่ "ชี้ขาด" มีแค่สามแบบนี้ · PREPARED ทั้งที่เคยกดส่งไปแล้วไม่ชี้ขาด
+            เพราะคำขอเดิมอาจยังทำงานค้างอยู่ฝั่งเซิร์ฟเวอร์ การสรุปว่า "ส่งไปไม่ถึง" คือเดาเกินหลักฐาน
+            ทางที่ปลอดภัยคือกลับไปขั้น 2 แล้วให้กดส่ง "ด้วยรหัสใบเดิม" ซึ่งเซิร์ฟเวอร์กันซ้ำให้เอง */
+      var ชี้ขาด = (stage === 'SENT' || stage === 'SENDING' || stage === 'EXPIRED');
+      /* 🔴 อ่านสถานะสำเร็จ = เพิ่งได้ข้อมูลสดของใบนี้มา ⇒ "ครั้งล่าสุดไม่ชัด" หมดไปแล้วเสมอ
+            ถ้าไม่ปลดตรงนี้ ปุ่มส่งจะยังปิดอยู่ทั้งที่เราเพิ่งบอกลูกค้าให้กดส่งด้วยใบเดิม
+            (ผู้ตรวจทำซ้ำได้: ตรวจสถานะต่อในหน้าเดิมแล้วปุ่มกดไม่ได้ ต้องรีโหลดก่อน) */
+      สถานะ.ผลไม่ชัด = false;
+      if (ชี้ขาด || !สถานะ.เคยยิงส่ง) {
+        สถานะ.ใบยังไม่ปิด = false;
+        สถานะ.มีความพยายามค้าง = false;
+      }
+
+      /* 🔴 จุดรับข้อมูลจุดเดียว — แปลงเป็นรูปแบบ "ฉบับยืนยัน" แล้วค่อยเก็บ ทุกทางโดยไม่มีข้อยกเว้น
+            ต้องแปลงก่อนเก็บเสมอ ไม่ใช่เก็บคำตอบดิบแล้วค่อยแปลงตอนวาด
+            เพราะค่าที่เก็บไว้ถูกใช้เป็น "ตัวสำรอง" ตอนคำตอบรอบถัดไปไม่มีก้อนงานติดมา */
+      สถานะ.ฉบับ = ฉบับจากสถานะ_(ผล);
+      if (stage === 'PREPARED' && สถานะ.เคยยิงส่ง) { กลับไปส่งใบเดิม_(); return ผล; }
+      แสดงผล_(แปลงคำตอบ_(ผล, 'สถานะ'));
+      return ผล;
+    })['catch'](function (e) {
+      สถานะ.กำลังยิง = false;
+      if (จ(ปุ่ม)) จ(ปุ่ม).textContent = 'ดูสถานะล่าสุดอีกครั้ง';
+      if (!เงียบ) แถบ_(จากขั้น2 ? 'ห_แจ้ง2' : 'ห_แจ้ง3','ผิด', แปลผิด_(String(e && e.message)));
+      จัดปุ่มตามสถานะ_();
+      return null;
+    });
+  }
+
+  /* ══ กลับไปขั้น 2 เพื่อส่งด้วยใบเดิม ══
+     🔴 ใช้เมื่อ "เคยกดส่งไปแล้ว แต่เซิร์ฟเวอร์ยังบอกว่าอยู่ขั้นเตรียม"
+        พูดเท่าที่รู้จริง: ระบบยังไม่บันทึกว่าส่งออกไป · ไม่ยืนยันว่าคำสั่งเดิมหายไปแล้วแน่นอน
+        แล้วชี้ทางที่ปลอดภัยทางเดียว คือส่งด้วยรหัสใบเดิม                                  */
+  function ฉบับจากสถานะ_(ผล) {
+    var ก = แปลงคำตอบ_(ผล, 'สถานะ');
+    var ข = ผล['ข้อความ'] || {};
+    return {
+      site: ผล.site || '',
+      /* คำตอบหน้าสถานะไม่มีช่อง "ฉบับที่จะส่ง" และไม่มีรายชื่อผู้รับ — ไม่เติมเองเด็ดขาด */
+      'ข้อความ': { 'ไทย': String(ข['ไทย'] || ''), 'พม่า': String(ข['พม่า'] || '') },
+      'ส่งทางไลน์': { 'จำนวนคน': ก.ไลน์.ตั้งใจส่ง, 'รายชื่อ': [] },
+      'ให้Jasmineแจ้งแทน': { 'จำนวน': ก.งาน.จำนวนคน, 'รายชื่อ': [] },
+      'หมดอายุ': (ผล['เวลา'] || {})['หมดอายุ'] || null
+    };
+  }
+
+  function กลับไปส่งใบเดิม_() {
+    /* ใช้ฉบับที่ ดูสถานะ_ แปลงและเก็บไว้แล้ว — ห้ามเขียนคำตอบดิบทับที่นี่อีก */
+    ไปขั้น_(2);
+    วาดฉบับ_(สถานะ.ฉบับ || {});
+    แถบ_('ห_แจ้ง2','เตือน', {
+      ว่า: 'ใบนี้ยังไม่ถูกบันทึกว่าส่งออกไป',
+      ช่วย: 'สิ่งที่ระบบยืนยันได้ตอนนี้คือ ยังไม่มีบันทึกว่าส่งสำเร็จ · ' +
+            'แต่ยังบอกไม่ได้ร้อยเปอร์เซ็นต์ว่าคำสั่งรอบก่อนหายไปแล้ว จึงยังไม่ชวนให้เขียนใบใหม่ · ' +
+            'กด "ยืนยัน ส่งให้น้องเลย" ด้วยใบเดิมนี้ได้เลยครับ ระบบฝั่งเราจะไม่ส่งซ้ำให้น้องที่ได้รับไปแล้ว'
+    });
+    จัดปุ่มตามสถานะ_();
+  }
+
+  /* ══ เริ่มใบใหม่ ══ */
+  /* 🔴 ล้างสถานะของ "ใบก่อน" ให้หมด — ใช้ทั้งตอนเริ่มใบใหม่ และตอนได้ฉบับใหม่มา
+        รุ่นก่อนล้างไม่ครบ ⇒ ฉบับหมดอายุแล้วเตรียมใหม่ ปุ่มส่งยังค้างปิด (ผู้ตรวจทำซ้ำได้) */
+  function ล้างสถานะใบก่อน_() {
+    สถานะ.req_id = ''; สถานะ.ฉบับ = null; สถานะ.ผลล่าสุด = null;
+    สถานะ.ส่งไปแล้ว = false; สถานะ.หมดอายุแล้ว = false; สถานะ.ผลไม่ชัด = false;
+    สถานะ.เปิดทางเฉพาะแจ้งแทน = false; สถานะ.มีงานค้างให้กู้ = false;
+    สถานะ.ใบยังไม่ปิด = false; สถานะ.เคยยิงส่ง = false; สถานะ.มีความพยายามค้าง = false;
+    หยุดนับถอย_();
+    ['ห_แจ้ง1','ห_แจ้ง2','ห_แจ้ง3','ห_ผลรวม','ห_คำเตือนแปล'].forEach(function (id) { แถบ_(id,'กลาง',null); });
+    ['ป_เฉพาะแจ้งแทน','ป_ดูสถานะกลางคัน','ป_กู้งานค้าง','ป_ตรวจสถานะขั้น1'].forEach(function (id) {
+      var b = จ(id); if (b && b.parentNode) b.parentNode.removeChild(b);
+    });
+    จ('ห_นับถอย').textContent = '';
+    จัดปุ่มตามสถานะ_();
+  }
+
+  function ประกาศใหม่_() {
+    ล้างสถานะใบก่อน_();
+    ลืมใบ_();
+    จ('ช_ข้อความ').value = '';
+    Array.prototype.forEach.call(document.querySelectorAll('.ช่องแม่แบบ'), function (i) { i.value = ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('.ติ๊กคน'), function (c) { c.checked = false; });
+    นับตัวอักษร_();
+    ไปขั้น_(1);
+    จัดปุ่มตามสถานะ_();
+  }
+
+  function นับตัวอักษร_() {
+    var n = String(จ('ช_ข้อความ').value || '').length;
+    var e = จ('ห_นับตัวอักษร');
+    e.textContent = n + ' / 5000';
+    e.className = 'นับตัวอักษร' + (n > 4500 ? ' เกิน' : '');
+  }
+
+  /* ══ ผูกปุ่ม ══ */
+  function ผูกปุ่ม_() {
+    จ('ป_ทุกคน').onclick = function () {
+      สถานะ.โหมด = 'ALL';
+      จ('ป_ทุกคน').setAttribute('aria-pressed','true');
+      จ('ป_เลือกคน').setAttribute('aria-pressed','false');
+      จ('ห_รายคน').hidden = true;
+    };
+    จ('ป_เลือกคน').onclick = function () {
+      สถานะ.โหมด = 'SELECTED';
+      จ('ป_ทุกคน').setAttribute('aria-pressed','false');
+      จ('ป_เลือกคน').setAttribute('aria-pressed','true');
+      วาดรายคน_();
+      จ('ห_รายคน').hidden = false;
+    };
+    จ('ป_แม่แบบ').onclick = function () {
+      สถานะ.แบบ = 'TEMPLATE';
+      จ('ป_แม่แบบ').setAttribute('aria-pressed','true');
+      จ('ป_พิมพ์เอง').setAttribute('aria-pressed','false');
+      จ('ห_แม่แบบ').hidden = false; จ('ห_พิมพ์เอง').hidden = true;
+    };
+    จ('ป_พิมพ์เอง').onclick = function () {
+      สถานะ.แบบ = 'FREE';
+      จ('ป_แม่แบบ').setAttribute('aria-pressed','false');
+      จ('ป_พิมพ์เอง').setAttribute('aria-pressed','true');
+      จ('ห_แม่แบบ').hidden = true; จ('ห_พิมพ์เอง').hidden = false;
+    };
+    จ('ช_ไซต์').onchange = function () {
+      if (สถานะ.โหมด === 'SELECTED') วาดรายคน_();
+    };
+    จ('ช_แม่แบบ').onchange = วาดช่องแม่แบบ_;
+    จ('ช_ข้อความ').oninput = นับตัวอักษร_;
+    จ('ป_ตรวจก่อนส่ง').onclick = ตรวจก่อนส่ง_;
+    จ('ป_ยืนยันส่ง').onclick  = function () { ยืนยันส่ง_(false); };
+    จ('ป_ดูสถานะใหม่').onclick = function () { ดูสถานะ_(false); };
+    จ('ป_กลับไปแก้').onclick = function () { ไปขั้น_(1); จัดปุ่มตามสถานะ_(); };
+    จ('ป_ประกาศใหม่').onclick  = ประกาศใหม่_;
+  }
+
+  /* ══ เปิดหน้า ══ */
+  function จอผิด_(ก้อน) {
+    จ('ห_จอโหลด').hidden = true;
+    แถบ_('ห_จอผิด','ผิด', ก้อน);
+  }
+
+  function ค่าตั้งครบไหม_() {
+    if (!/^\d{10}-[A-Za-z0-9]{8}$/.test(LIFF_ID)) return 'LIFF_ID_NOT_SET';
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]{40,}\/exec$/.test(API_URL)) return 'API_URL_NOT_SET';
+    return '';
+  }
+
+  function เปิดหน้า_() {
+    /* ปุ่มในหน้า HTML ตั้งค่าเริ่มต้นไว้ที่ "ทุกคนในไซต์" + "ใช้แบบสำเร็จรูป"
+       ตัวแปรสถานะต้องตรงกับที่ตาเห็นเสมอ ไม่งั้นกดครั้งแรกจะไปคนละทาง */
+    สถานะ.โหมด = 'ALL';
+    สถานะ.แบบ = 'TEMPLATE';
+    var ขาด = ค่าตั้งครบไหม_();
+    if (ขาด) {
+      จอผิด_({ ว่า:'หน้านี้ยังตั้งค่าไม่ครบ',
+               ช่วย:'ไม่ใช่เรื่องฝั่งคุณครับ แจ้งทีม Jasmine ให้ใส่ค่าที่อยู่ระบบให้ก่อน (' + ขาด + ')' });
+      return;
+    }
+    if (typeof liff === 'undefined') {
+      จอผิด_(แปลผิด_('NO_LIFF')); return;
+    }
+    liff.init({ liffId: LIFF_ID })
+      .then(function () {
+        if (!liff.isLoggedIn()) { liff.login(); return null; }
+        /* ต้องตั้งกุญแจก่อนอ่าน/เขียนที่เก็บทุกครั้ง ไม่งั้นจะอ่านผิดช่อง */
+        ตั้งกุญแจตามผู้ใช้_();
+        return ยิง_({ action:'customer_home' });
+      })
+      .then(function (ผล) {
+        if (!ผล) return;
+        if (ผล.ok !== true) { จอผิด_(แปลผิด_(ผล.error, ผล['อธิบาย'])); return; }
+        สถานะ.ไซต์ = (ผล.sites || []).map(String);
+        สถานะ.คน   = ผล.workers || [];
+        if (!สถานะ.ไซต์.length) {
+          จอผิด_({ ว่า:'บัญชีนี้ยังไม่ได้ผูกกับไซต์ไหน',
+                   ช่วย:'ทักทีม Jasmine พร้อมบอกชื่อโรงงาน เราผูกให้แล้วใช้ได้ทันทีครับ' });
+          return;
+        }
+        วาดไซต์_();
+        แม่แบบ_.forEach(function (t) {
+          var o = document.createElement('option'); o.value = t.id; o.textContent = t.ชื่อ;
+          จ('ช_แม่แบบ').appendChild(o);
+        });
+        วาดช่องแม่แบบ_();
+        นับตัวอักษร_();
+        ผูกปุ่ม_();
+        ไปขั้น_(1);
+        จัดปุ่มตามสถานะ_();
+        กู้ใบที่ค้างไว้_();
+      })
+      ['catch'](function (e) {
+        จอผิด_({ ว่า:'เปิดหน้านี้ไม่สำเร็จ',
+                 ช่วย:'ลองปิดแล้วเปิดใหม่จากเมนู LINE ครับ ถ้ายังไม่ได้ ทักทีม Jasmine เราดูให้ (' +
+                      String((e && e.message) || e) + ')' });
+      });
+  }
+
+  /* ══ กู้ใบที่ค้างจากรอบก่อน ══
+     🔴 เปิดหน้าใหม่แล้วรหัสใบหาย = ลูกค้าจะเริ่มใบใหม่แล้วส่งเรื่องเดิมซ้ำ น้องได้สองรอบ
+        ถ้ามีใบค้างอยู่ ให้ไปถามสถานะใบเดิมก่อน แล้วค่อยให้คนตัดสินใจ */
+  function กู้ใบที่ค้างไว้_() {
+    var เก็บ = อ่านใบที่จำไว้_();
+    if (!เก็บ) return;
+    สถานะ.req_id = เก็บ.req_id;
+    /* 🔴 ยกธงก่อนไปถามสถานะ เพื่อให้ ดูสถานะ_ ตัดสินเรื่อง PREPARED ได้ถูกตั้งแต่รอบแรก
+          ถ้ายกทีหลัง จะวาดหน้าผลไปแล้วค่อยย้อนกลับมาขั้น 2 ซึ่งลูกค้าเห็นจอกระพริบ */
+    if (เก็บ['สภาพ'] === 'กำลังส่ง' || เก็บ['สภาพ'] === 'ไม่ทราบผล') {
+      สถานะ.เคยยิงส่ง = true;
+      สถานะ.ใบยังไม่ปิด = true;
+      /* 🔴 ความพยายามของ "รอบก่อนปิดหน้า" ก็นับเป็นความพยายามที่ยังค้างอยู่
+            ถ้าไม่ยกธงนี้ พอลองส่งใหม่แล้วได้ BUSY_TRY_AGAIN หน้าเว็บจะนึกว่าเป็นครั้งแรก
+            แล้วปลดใบให้ไปเปิดใบใหม่ ทั้งที่คำขอเก่ายังทำงานอยู่ = น้องได้สองรอบ */
+      สถานะ.มีความพยายามค้าง = true;
+    }
+    แถบ_('ห_แจ้ง1','เตือน', {
+      ว่า: 'มีใบประกาศที่ทำค้างไว้จากรอบก่อน',
+      ช่วย: 'ระบบกำลังเช็กให้ว่าใบนั้นส่งออกไปแล้วหรือยัง · รอสักครู่ก่อนเริ่มใบใหม่นะครับ ' +
+            'จะได้ไม่ส่งเรื่องเดิมซ้ำจนน้องได้ข้อความสองรอบ'
+    });
+    ดูสถานะ_(false, true).then(function (ผล) {
+      if (!ผล || ผล.ok !== true) {
+        /* 🔴 อ่านสถานะไม่ได้ ไม่ใช่เหตุให้ทิ้งใบ และต้องไม่พาไปติดหน้าที่ไม่มีปุ่มอะไรกดได้
+              ใบที่เคยกดส่งไปแล้วยังต้องค้างไว้ พร้อมปุ่มลองตรวจใหม่และรหัสใบให้ถ่ายจอส่งทีม */
+        แถบ_('ห_แจ้ง1','เตือน', {
+          ว่า: 'มีใบค้างจากรอบก่อน แต่ตอนนี้เช็กสถานะไม่ได้',
+          ช่วย: (สถานะ.ใบยังไม่ปิด
+                  ? 'ยังไม่เขียนใบใหม่ก่อนนะครับ ใบเดิมอาจส่งออกไปแล้ว · กด "ลองตรวจสถานะใบที่ค้างอีกครั้ง" ข้างล่างได้เลย · '
+                  : 'ลองกดตรวจอีกครั้งได้ครับ · ') +
+                'ถ้ายังไม่ได้ ทักทีม Jasmine พร้อมรหัสใบนี้ เราเช็กให้จากบันทึกฝั่งเราได้',
+          'ให้ทีมดู': เก็บ.req_id
+        });
+        ไปขั้น_(1);
+        จัดปุ่มตามสถานะ_();
+        return;
+      }
+      /* ส่งไปแล้วจริง ⇒ อยู่หน้าผลให้ดู · ยังไม่ส่ง ⇒ ขึ้นกับว่ารอบก่อนเคยกดส่งไปหรือยัง */
+      if (String(ผล.stage || '') === 'PREPARED') {
+        if (สถานะ.เคยยิงส่ง) {
+          /* 🔴 ห้ามสรุปว่า "คำสั่งส่งไปไม่ถึง" — เดาเกินหลักฐาน คำขอเดิมอาจยังทำงานค้างอยู่
+                ดูสถานะ_ พากลับมาขั้น 2 ให้แล้ว ตรงนี้เติมเฉพาะคำอธิบายที่หัวหน้า */
+          แถบ_('ห_แจ้ง1','เตือน', {
+            ว่า:'ใบที่ค้างไว้จากรอบก่อน ยังไม่ถูกบันทึกว่าส่งออกไป',
+            ช่วย:'เราเปิดใบเดิมให้แล้วข้างล่าง · กดส่งด้วยใบเดิมนี้ได้เลยครับ ระบบจะไม่ส่งซ้ำให้น้องที่ได้รับไปแล้ว · ' +
+                 'ยังไม่ต้องเขียนใบใหม่ เพราะใบใหม่จะกันซ้ำให้ไม่ได้'
+          });
+        } else {
+          /* เตรียมไว้แล้วแต่ยังไม่เคยกดส่งเลย ⇒ ไม่มีอะไรต้องกู้ เริ่มใหม่ได้ตามปกติ */
+          ลืมใบ_(); ไปขั้น_(1); จัดปุ่มตามสถานะ_();
+        }
+      }
+    });
+  }
+
+  /* เปิดให้เครื่องทดสอบเรียกได้ ไม่กระทบการใช้งานจริง */
+  window.__หน้าประกาศ = { เปิดหน้า_: เปิดหน้า_, สถานะ: สถานะ, แปลผิด_: แปลผิด_,
+                          ข้อความ_: ข้อความ_, แสดงผล_: แสดงผล_, แปลงคำตอบ_: แปลงคำตอบ_,
+                          ยืนยันส่ง_: ยืนยันส่ง_, ดูสถานะ_: ดูสถานะ_, ประกาศใหม่_: ประกาศใหม่_,
+                          จัดปุ่มตามสถานะ_: จัดปุ่มตามสถานะ_, อ่านใบที่จำไว้_: อ่านใบที่จำไว้_,
+                          ลืมใบ_: ลืมใบ_, ล้างสถานะใบก่อน_: ล้างสถานะใบก่อน_,
+                          เริ่มนับถอย_: เริ่มนับถอย_,
+                          กุญแจจำตอนนี้_: function () { return กุญแจจำ_; } };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', เปิดหน้า_);
+  else เปิดหน้า_();
+})();
+</script>
+</body>
+</html>
