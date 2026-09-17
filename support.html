@@ -38,13 +38,80 @@
       <label>เรื่องที่ต้องการให้ช่วย (ถ้ามี)</label>
       <textarea id="note" rows="3" placeholder="เช่น ขอคนเพิ่ม, ปัญหาหน้างาน, ขอคุยกับทีม…"></textarea>
       <button class="btn btn-notify" id="notifyBtn" onclick="sendSupport()">📨 แจ้งทีมงานให้ติดต่อกลับ</button>
+      <div id="กล่องผล"></div>
       <a class="btn btn-call" href="tel:0970313769">📞 โทรหาแอดมินตอนนี้</a>
       <p class="hint">กด "แจ้งทีมงาน" เพื่อให้แอดมินติดต่อกลับ หรือกด "โทรหาแอดมิน" หากต้องการคุยด่วน</p>
     </div>
   </div>
 
 <script>
+  /* ═══════════════════════════════════════════════════════════════════
+     รุ่น 2 · 17 ก.ย. 2026 — แก้ "เฉพาะจุด" บนไฟล์ของจริง ไม่ได้เขียนใหม่
+     ของเดิมที่ยังอยู่ครบ ห้ามแตะ: ตัวห่อ D1 (เติม idToken · ลองใหม่เฉพาะคำสั่งอ่าน ·
+     กันคำตอบไม่ใช่ JSON · หน้าเข้าใหม่เมื่อตั๋วหมดอายุ) และ โปรไฟล์เร็ว_
+     เพิ่มรอบนี้ 3 อย่างเท่านั้น
+       1. req_id — ส่งไปด้วย และ "ใช้รหัสเดิมเมื่อกดส่งซ้ำ"  (เกณฑ์ G3)
+       2. ปุ่มตรวจสถานะ ใช้คำสั่ง support_status                (เกณฑ์ G5)
+       3. แสดง message_th กับ เลขเรื่อง ที่เซิร์ฟเวอร์ส่งมา แทน alert เปล่า
+     ═══════════════════════════════════════════════════════════════════ */
   const LIFF_ID = "2010242926-nreePSO4";
+
+  /* 🔴 รหัสคำขอ — ต้องใช้รหัสเดิมเมื่อกดส่งซ้ำ ห้ามสร้างใหม่ทุกครั้งที่กด
+     ถ้าสร้างใหม่ทุกครั้ง การกดซ้ำจะกลายเป็นคนละเรื่อง = ผิดเกณฑ์ G3
+     รูปแบบต้องเป็น A-Z a-z 0-9 _ - ยาว 16 ถึง 64 (ฝั่งเซิร์ฟเวอร์บังคับไว้) */
+  var รหัสคำขอ = null;
+  function สุ่มรหัส_(){
+    var s = 'req-', ตัวเลือก = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    for (var i = 0; i < 24; i++) s += ตัวเลือก.charAt(Math.floor(Math.random() * ตัวเลือก.length));
+    return s;
+  }
+  function รหัสของรอบนี้_(เริ่มใหม่){
+    if (เริ่มใหม่ || !รหัสคำขอ) รหัสคำขอ = สุ่มรหัส_();
+    return รหัสคำขอ;
+  }
+
+  function กล่องผล_(ชนิด, ข้อความ){
+    var el = document.getElementById('กล่องผล');
+    if (!el) return;
+    var สี = (ชนิด === 'bad')
+      ? 'background:#fef2f2;border:1px solid #fecaca;color:#b91c1c'
+      : 'background:#fffbeb;border:1px solid #fde68a;color:#b45309';
+    el.innerHTML = '<div style="border-radius:12px;padding:12px 14px;font-size:14px;' +
+                   'line-height:1.6;margin-top:12px;' + สี + '">' + ข้อความ + '</div>';
+  }
+
+  /* ปุ่มตรวจสถานะ — ใส่เมื่อจำเป็นเท่านั้น ไม่รกหน้าจอตอนปกติ */
+  function ใส่ปุ่มตรวจสถานะ_(ที่){
+    if (document.getElementById('checkBtn')) return;
+    var b = document.createElement('button');
+    b.className = 'btn btn-call'; b.id = 'checkBtn';
+    b.textContent = '🔍 ตรวจสถานะเรื่องนี้';
+    b.onclick = ตรวจสถานะ_;
+    (ที่ || document.getElementById('formCard')).appendChild(b);
+  }
+
+  function ตรวจสถานะ_(){
+    var b = document.getElementById('checkBtn');
+    if (!รหัสคำขอ) { กล่องผล_('bad', 'ยังไม่มีเรื่องให้ตรวจ'); return; }
+    if (b) { b.disabled = true; b.textContent = 'กำลังตรวจ…'; }
+    /* ตัวห่อ D1 เติม idToken ให้เอง และจัดการคำตอบเพี้ยนให้เองแล้ว */
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({
+      action: 'support_status',
+      userId: profile ? profile.userId : '',
+      req_id: รหัสคำขอ
+    })})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (b) { b.disabled = false; b.textContent = '🔍 ตรวจสถานะเรื่องนี้'; }
+      var ข้อความ = (d && d.message_th) || (d && d.ok ? 'พบเรื่องนี้ในระบบแล้ว' : 'ยังตรวจไม่ได้');
+      if (d && d.case_id) ข้อความ += '<br><b>เลขเรื่อง: ' + d.case_id + '</b>';
+      กล่องผล_(d && d.ok ? 'warn' : 'bad', ข้อความ);
+    })
+    ['catch'](function(){
+      if (b) { b.disabled = false; b.textContent = '🔍 ตรวจสถานะเรื่องนี้'; }
+      กล่องผล_('warn', 'ยังตรวจไม่ได้ในตอนนี้ กรุณาลองใหม่อีกครั้ง');
+    });
+  }
   const API_URL = "https://script.google.com/macros/s/AKfycbyI8iSCTn1mYB0qS7m19DrgrG-Fh3w4j1xibRWBc7l77pLaIT9nLvFUBaQ_d8JcmifE/exec";
 
 /* ── D1-ความเร็ว · 2 ก.ย. 2026 ─────────────────────────────────────────────
@@ -265,14 +332,45 @@ function โปรไฟล์เร็ว_() {
     try{
       const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({
         action:"support", userId: profile.userId, reporterName: profile.displayName,
-        note: document.getElementById('note').value.trim()
+        note: document.getElementById('note').value.trim(),
+        req_id: รหัสของรอบนี้_(false)        /* 🔴 false = ใช้รหัสเดิมถ้ากดซ้ำ */
       })});
       const data = await res.json();
-      if(!data.ok){ alert("แจ้งไม่สำเร็จ: "+(data.error||"")); btn.disabled=false; btn.textContent="📨 แจ้งทีมงานให้ติดต่อกลับ"; return; }
+      if(!data.ok){
+        /* ใช้ข้อความจากเซิร์ฟเวอร์ ไม่เขียนคำเอง ⇒ เปลี่ยนคำแก้ที่เซิร์ฟเวอร์ที่เดียว
+           AUTH_REQUIRED มีตัวห่อ D1 ขึ้นหน้าเข้าใหม่ให้แล้ว ไม่ต้องทำซ้ำ */
+        if (data.error !== 'AUTH_REQUIRED') {
+          กล่องผล_(data.next_action === 'RESEND_OK' || data.next_action === 'CHECK_STATUS' ? 'warn' : 'bad',
+                   data.message_th || ("แจ้งไม่สำเร็จ: " + (data.error || "")));
+          if (data.next_action === 'CHECK_STATUS') ใส่ปุ่มตรวจสถานะ_();
+        }
+        btn.disabled=false; btn.textContent="📨 แจ้งทีมงานให้ติดต่อกลับ"; return;
+      }
+      var ซ้ำ = (data.duplicate === true);
       document.getElementById('formCard').innerHTML =
-        '<div class="done"><div class="c">✅</div><p>แจ้งทีมงานเรียบร้อย<br>แอดมินจะติดต่อกลับโดยเร็วครับ</p>'
-        + '<a class="btn btn-call" href="tel:0970313769">📞 โทรหาแอดมินตอนนี้</a></div>';
-    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="📨 แจ้งทีมงานให้ติดต่อกลับ"; }
+        '<div class="done"><div class="c">' + (ซ้ำ ? '↩️' : '✅') + '</div><p>'
+        + (data.message_th || (ซ้ำ ? 'คำขอนี้ถูกบันทึกไว้แล้วก่อนหน้านี้ ไม่ได้สร้างเรื่องใหม่'
+                                   : 'แจ้งทีมงานเรียบร้อย<br>แอดมินจะติดต่อกลับโดยเร็วครับ')) + '</p>'
+        + (data.case_id ? '<div style="display:inline-block;margin-top:12px;padding:8px 14px;border-radius:10px;'
+                          + 'background:#f0fdf4;border:1px solid #bbf7d0;font-size:14px;font-weight:700;'
+                          + 'word-break:break-all">เลขเรื่อง: ' + data.case_id + '</div>' : '')
+        + '<a class="btn btn-call" href="tel:0970313769">📞 โทรหาแอดมินตอนนี้</a>'
+        + '<div id="กล่องผล"></div></div>';
+      /* ยังไม่ทราบผลการแจ้งทีม = ต้องให้ตามต่อได้ ห้ามบอกว่าส่งถึงแล้ว */
+      if (data.notify_state && data.notify_state !== 'NOTIFY_OK') {
+        กล่องผล_('warn', 'บันทึกเรื่องเรียบร้อยแล้ว แต่ยังไม่ทราบผลการแจ้งทีม<br>'
+                       + 'ถ้าเกิน 1 ชั่วโมงยังไม่มีใครติดต่อกลับ กรุณาโทรหาแอดมินพร้อมแจ้งเลขเรื่อง');
+        ใส่ปุ่มตรวจสถานะ_(document.querySelector('#formCard .done'));
+      }
+    }catch(e){
+      /* ยิงไม่ออกหรือคำตอบเพี้ยน = ยังไม่ทราบผล อาจบันทึกสำเร็จแล้วก็ได้
+         ห้ามบอกว่าไม่สำเร็จ และห้ามให้กดใหม่โดยไม่ตรวจก่อน */
+      กล่องผล_('warn', 'ยังไม่ทราบผลการแจ้ง — <b>อาจบันทึกสำเร็จแล้วก็ได้</b><br>'
+                     + 'กรุณากด "ตรวจสถานะเรื่องนี้" ก่อน<br>'
+                     + 'ถ้ายังไม่พบ กดแจ้งอีกครั้งได้เลย ระบบใช้รหัสคำขอเดิม จึงไม่เกิดเรื่องซ้ำ');
+      ใส่ปุ่มตรวจสถานะ_();
+      btn.disabled=false; btn.textContent="📨 แจ้งทีมงานให้ติดต่อกลับ";
+    }
   }
 
   main();
