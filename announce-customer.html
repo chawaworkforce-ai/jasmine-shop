@@ -304,14 +304,29 @@
       '</div>';
   }
 
+  /* 🔴 ข้อความต้องตรงกับ "ชนิดคำสั่ง" — ผู้วางแผนเคาะ 19 ก.ย. 2026
+        เดิมใช้ข้อความชุดเดียวกับทุกคำสั่งที่เขียนข้อมูล ⇒ คำสั่งเตรียมใบ
+        ซึ่งไม่เคยส่งอะไรออกเลย ก็ได้คำว่า "ส่งแล้ว" ไปด้วย (เจ้าของเจอจริง 19 ก.ย. 18:05
+        เซิร์ฟเวอร์เตรียมใบสำเร็จ แต่คำตอบไม่ถึงหน้าเว็บ)
+        ผิดกฎของระบบเองข้อ "ห้ามหน้าจอแจ้งสำเร็จก่อนหลังบ้านรองรับ"
+        และอันตรายกว่าการส่งซ้ำ เพราะลูกค้าจะเชื่อว่าน้องได้ข้อความแล้วจึงไม่แจ้งซ้ำ = เสียหายเงียบ
+        🔴 จอนี้เป็นจอของ "ลูกค้า" ไม่ใช่ของน้อง ⇒ ไทย + อังกฤษ เท่านั้น ไม่ใส่พม่า
+           เนื้อประกาศที่ส่งถึงน้องยังเป็นสองภาษาเหมือนเดิม คนละเรื่องกับจอนี้ */
   function หน้าคำตอบเพี้ยน_(อาจเขียนไปแล้ว, รหัส, คำสั่ง, ต้นข้อความ) {
     if (อาจเขียนไปแล้ว) {
+      var เตรียมใบ = String(คำสั่ง || '') === 'customer_announce_prepare';
       จอ_('<div style="font-size:56px">⚠️</div>' +
-        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ส่งแล้ว แต่ยังไม่รู้ผล</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">' +
+        (เตรียมใบ ? 'ยังไม่ทราบผลการเตรียมใบ' : 'ส่งแล้ว แต่ยังไม่รู้ผล') + '</div>' +
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
-        '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
-        'Sent, but result unknown. Do NOT send again.<br>' +
-        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        (เตรียมใบ
+          ? '🔴 <b>ยังไม่มีข้อความออกไปหาน้องแม้แต่คนเดียว</b><br>' +
+            'กดดูสถานะก่อน อย่าเพิ่งเริ่มใบใหม่<br>' +
+            'Draft status unknown. Nothing was sent to anyone yet.<br>' +
+            'Check status before starting a new one.'
+          : '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
+            'Sent, but result unknown. Do NOT send again.') +
+        '</div>' +
         '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
         'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
@@ -320,10 +335,9 @@
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">โหลดข้อมูลไม่สำเร็จ</div>' +
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
-        'Could not load. Please try again.<br>' +
-        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        'Could not load. Please try again.</div>' +
         '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / Retry</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
     }
   }
