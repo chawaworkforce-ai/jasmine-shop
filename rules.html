@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Company Rules</title>
+<title>ကုမ္ပဏီစည်းမျဉ်း / Company Rules</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; --red:#a3322b; --green:#256544; }
@@ -38,16 +38,16 @@
 </head>
 <body>
   <header>
-    <h1>📋 Company Rules / ကုမ္ပဏီစည်းမျဉ်း</h1>
-    <p id="hsub">Connecting…</p>
+    <h1>📋 ကုမ္ပဏီစည်းမျဉ်း / Company Rules</h1>
+    <p id="hsub">ခဏစောင့်ပါ… / Connecting…</p>
   </header>
 
   <div class="langbar" id="langbar" style="display:none">
-    <button id="btn-en" type="button" aria-pressed="true">English</button>
-    <button id="btn-mm" type="button" aria-pressed="false">မြန်မာ</button>
+    <button id="btn-mm" type="button" aria-pressed="true">မြန်မာ</button>
+    <button id="btn-en" type="button" aria-pressed="false">English</button>
   </div>
 
-  <div id="status">Loading… / ခဏစောင့်ပါ…</div>
+  <div id="status">ခဏစောင့်ပါ… / Loading…</div>
   <div class="wrap" id="wrap" style="display:none"></div>
 
 <script>
@@ -283,7 +283,10 @@ function โปรไฟล์เร็ว_() {
   /* \U0001F7E1 ข้อความพม่าข้างบนเป็นร่าง — ให้เจ้าของหรือพี่มายตรวจก่อนใช้จริง
      (ใช้กติกาเดียวกับระบบกู้ยืมที่เขียนไว้ว่า "ภาษาพม่าเป็นอนุมัติร่าง ให้เจ้าของตรวจ") */
 
-  var ภาษา = 'en';
+  /* 🔴 20 ก.ย. 2026 (เจ้าของสั่ง): เปิดหน้ามาเป็นพม่าก่อนเสมอ
+     หลังบ้าน อ่านกฎบริษัท_() รับ lang='mm' และตอบ lang:'mm' กลับมาตรงกัน
+     (ดูไฟล์ร่างโค้ดชุดที่1 รุ่น3.3 บรรทัด 490: ค่าอื่นตกเป็น en) ⇒ ไม่เกิด LANG_MISMATCH */
+  var ภาษา = 'mm';
   var โปรไฟล์ = null;
 
   function esc(s){
@@ -294,8 +297,9 @@ function โปรไฟล์เร็ว_() {
 
   function จำภาษา_(v){ try { localStorage.setItem('jm_rules_lang', v); } catch(e){} }
   function ภาษาที่จำไว้_(){
-    try { var v = localStorage.getItem('jm_rules_lang'); return (v === 'mm') ? 'mm' : 'en'; }
-    catch(e){ return 'en'; }
+    /* ค่าเริ่มต้น = พม่า · จะเป็นอังกฤษก็ต่อเมื่อน้องเคยกดปุ่ม English ไว้เองเท่านั้น */
+    try { var v = localStorage.getItem('jm_rules_lang'); return (v === 'en') ? 'en' : 'mm'; }
+    catch(e){ return 'mm'; }
   }
 
   function จอสถานะ_(html){
@@ -394,7 +398,7 @@ function โปรไฟล์เร็ว_() {
   function โหลด_(){
     var t = ข้อความ[ภาษา];
     var ของฉัน = ++เลขคำขอ;
-    จอสถานะ_('Loading\u2026 / \u1001\u100F\u1005\u1031\u102C\u1004\u1037\u103A\u1015\u102B\u2026');
+    จอสถานะ_('\u1001\u100F\u1005\u1031\u102C\u1004\u1037\u103A\u1015\u102B\u2026 / Loading\u2026');
     document.getElementById('hsub').textContent = t.sub;
 
     fetch(API_URL, {
