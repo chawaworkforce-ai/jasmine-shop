@@ -20,7 +20,7 @@
          text-decoration:none; color:inherit; }
   .card.soon{ opacity:.72; }
   .ctitle{ font-size:15.5px; font-weight:700; color:var(--blue-d); margin:0 0 6px;
-           line-height:1.45; display:flex; align-items:flex-start; gap:8px; }
+           line-height:1.75; display:flex; align-items:flex-start; gap:8px; }
   .ctitle > span:nth-child(2){ flex:1; }
   .cwhy{ font-size:13px; line-height:1.55; color:var(--muted); margin:0; }
   .cmy{ font-size:13px; line-height:1.7; color:var(--muted); margin:4px 0 0; }
@@ -39,15 +39,15 @@
   <div class="wrap">
 
     <div class="card soon">
-      <p class="ctitle"><span>🧾</span><span id="t_pay_en">Payslip and loan statement</span>
+      <p class="ctitle"><span>🧾</span><span id="t_pay_1">Payslip and loan statement</span>
          <span class="pill">SOON</span></p>
-      <p class="cmy" id="t_pay_my"></p>
+      <p class="cmy" id="t_pay_2"></p>
     </div>
 
     <div class="card soon">
-      <p class="ctitle"><span>⭐</span><span id="t_score_en">My Score</span>
+      <p class="ctitle"><span>⭐</span><span id="t_score_1">My Score</span>
          <span class="pill">SOON</span></p>
-      <p class="cmy" id="t_score_my"></p>
+      <p class="cmy" id="t_score_2"></p>
     </div>
 
     <a class="back" href="#" id="t_back">← Back</a>
@@ -80,18 +80,27 @@ var T = {
             my:'' }
 };
 
-/* หัวข้อหน้า: อังกฤษ + พม่า (แบบเดียวกับ myscore.html "⭐ My Score / မိမိအမှတ်") */
 (function () {
-  var h = document.getElementById('t_title');
-  h.textContent = '⭐ ' + T['A4-1'].en + (T['A4-1'].my ? ' / ' + T['A4-1'].my : '');
+  /* ── พม่าเป็นบรรทัดหลัก อังกฤษเป็นบรรทัดรอง (เจ้าของสั่ง 20 ก.ย. 2026) ──
+   น้องอ่านอังกฤษได้ราว 10% เท่านั้น จึงต้องเห็นพม่าก่อน
+   🔴 ตอนนี้ช่อง my ยังว่าง (รอล่ามส่งกลับ ~28 ก.ย.) ถ้าปล่อยตามตรงจอจะว่างเปล่า
+      จึงมีตัวกันจอว่าง: ไม่มีพม่า -> เอาอังกฤษขึ้นบรรทัดหลักไปก่อน และไม่ต้องพิมพ์ซ้ำบรรทัดล่าง
+      พอเติมคำพม่าลงตาราง T หน้านี้จะสลับเป็นพม่านำเองทันที ไม่ต้องแก้โค้ดอีก */
+  function หลัก_(code){ return T[code].my || T[code].en; }
+  function รอง_(code){ return T[code].my ? T[code].en : ''; }
 
-  document.getElementById('t_pay_en').textContent   = T['A4-2'].en;
-  document.getElementById('t_score_en').textContent = T['A4-3'].en;
-  document.getElementById('t_pay_my').textContent   = T['A4-2'].my || '';
-  document.getElementById('t_score_my').textContent = T['A4-3'].my || '';
+  /* บอกเบราว์เซอร์ว่าหน้านี้ภาษาอะไร เพื่อให้เลือกฟอนต์ถูก — เปลี่ยนตามว่ามีคำพม่าแล้วหรือยัง */
+  document.documentElement.lang = T['A4-1'].my ? 'my' : 'en';
+  document.title = หลัก_('A4-1');
 
-  var b = document.getElementById('t_back');
-  b.textContent = '← ' + T['A4-4'].en + (T['A4-4'].my ? ' / ' + T['A4-4'].my : '');
+  document.getElementById('t_title').textContent = '⭐ ' + หลัก_('A4-1');
+
+  document.getElementById('t_pay_1').textContent   = หลัก_('A4-2');   /* บรรทัดบน */
+  document.getElementById('t_pay_2').textContent   = รอง_('A4-2');    /* บรรทัดล่าง */
+  document.getElementById('t_score_1').textContent = หลัก_('A4-3');
+  document.getElementById('t_score_2').textContent = รอง_('A4-3');
+
+  document.getElementById('t_back').textContent = '← ' + หลัก_('A4-4');
 })();
 
 /* ปุ่มกลับ: ถ้ามีหน้าก่อนหน้าให้ถอยกลับ ถ้าไม่มี (เปิดจากเมนูตรง ๆ) ให้ปิดหน้าต่าง LIFF
