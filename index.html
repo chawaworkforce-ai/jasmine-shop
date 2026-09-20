@@ -328,7 +328,13 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
       if(items.length===0) return;
       if(!profile){ showError('No LINE profile'); return; }
       var btn=$('confirmBtn'); btn.disabled=true; btn.textContent=t('sending');
-      fetch(API_URL, { method:'POST', body: JSON.stringify({ profile:profile, items:items }) })
+      /* 🔴 ด่านตรวจตัวตน — เพิ่ม 20 ก.ย. 2026 ห้ามถอดออก
+         ของเดิมส่งรหัสไลน์ของตัวเองไปให้หลังบ้านเชื่อตรง ๆ ⇒ ใครรู้ที่อยู่ /exec ก็สั่งซื้อแทนคนอื่นได้
+         ของใหม่ส่ง "ตั๋ว" ที่ LINE ออกให้ หลังบ้านเอาไปถาม LINE ว่าเป็นของใคร แล้วเชื่อคำตอบนั้นเท่านั้น */
+      var tk = null;
+      try { tk = liff.getIDToken(); } catch(e) {}
+      if(!tk){ showError('Please open the shop from the LINE menu'); btn.disabled=false; btn.textContent=t('confirm'); return; }
+      fetch(API_URL, { method:'POST', body: JSON.stringify({ idToken:tk, profile:profile, items:items }) })
         .then(function(r){ return r.json(); })
         .then(function(res){
           btn.disabled=false; btn.textContent=t('confirm');
