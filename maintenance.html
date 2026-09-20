@@ -13,7 +13,7 @@
         font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Myanmar","Padauk",sans-serif; }
   .box{ max-width:460px; width:100%; }
   .ico{ font-size:58px; line-height:1; margin-bottom:14px; }
-  h1{ font-size:19px; font-weight:700; margin:0 0 6px; }
+  h1{ font-size:17px; font-weight:700; line-height:1.55; margin:0 0 6px; }
   .th{ font-size:15px; color:#48564f; line-height:1.6; margin:0 0 4px; }
   .my{ font-size:15px; color:#48564f; line-height:1.8; margin:0; }
   .urgent{ margin-top:22px; padding-top:18px; border-top:1px solid var(--line); }
@@ -26,13 +26,12 @@
 <body>
   <div class="box">
     <div class="ico">🔧</div>
-    <h1 id="t_h1">This page is temporarily closed</h1>
-    <p class="th" id="t_1_en">Please try again later.</p>
-    <p class="my" id="t_1_my"></p>
+    <h1 id="t_h1">This page is temporarily closed. Please try again later.</h1>
+    <p class="my" id="t_1_b"></p>
 
     <div class="urgent">
-      <p id="t_2_en">If urgent, contact your supervisor.</p>
-      <p id="t_2_my"></p>
+      <p id="t_2_a">If urgent, contact your supervisor.</p>
+      <p id="t_2_b"></p>
     </div>
 
     <button id="t_retry">Try again</button>
@@ -55,8 +54,21 @@ var T = {
 };
 /* 🔴 น้องเห็นแค่อังกฤษกับพม่า ไทยเก็บไว้ให้เจ้าของกับล่ามอ่านเทียบเท่านั้น
    (หน้าเว็บของน้องทุกหน้าที่มีอยู่เป็นอังกฤษ+พม่า ไม่มีไทย) */
-document.getElementById('t_1_my').textContent = T['A5-1'].my || '';
-document.getElementById('t_2_my').textContent = T['A5-2'].my || '';
+(function () {
+  /* ── พม่าเป็นบรรทัดหลัก อังกฤษเป็นบรรทัดรอง (เจ้าของสั่ง 20 ก.ย. 2026) ──
+   น้องอ่านอังกฤษได้ราว 10% เท่านั้น จึงต้องเห็นพม่าก่อน
+   🔴 ตอนนี้ช่อง my ยังว่าง (รอล่ามส่งกลับ ~28 ก.ย.) ถ้าปล่อยตามตรงจอจะว่างเปล่า
+      จึงมีตัวกันจอว่าง: ไม่มีพม่า -> เอาอังกฤษขึ้นบรรทัดหลักไปก่อน และไม่ต้องพิมพ์ซ้ำบรรทัดล่าง
+      พอเติมคำพม่าลงตาราง T หน้านี้จะสลับเป็นพม่านำเองทันที ไม่ต้องแก้โค้ดอีก */
+  function หลัก_(code){ return T[code].my || T[code].en; }
+  function รอง_(code){ return T[code].my ? T[code].en : ''; }
+
+  document.documentElement.lang = T['A5-1'].my ? 'my' : 'en';
+  document.getElementById('t_h1').textContent   = หลัก_('A5-1');   /* บรรทัดบน */
+  document.getElementById('t_1_b').textContent  = รอง_('A5-1');    /* บรรทัดล่าง */
+  document.getElementById('t_2_a').textContent  = หลัก_('A5-2');
+  document.getElementById('t_2_b').textContent  = รอง_('A5-2');
+})();
 
 /* ปุ่มลองใหม่: ถ้ามีหน้าก่อนหน้าให้ถอยกลับไปลองใหม่ ถ้าไม่มีก็โหลดหน้านี้ซ้ำ
    ไม่พาไปหน้าอื่นเด็ดขาด เพราะตอนระบบล่ม เราไม่รู้ว่าหน้าไหนยังดีอยู่ */
