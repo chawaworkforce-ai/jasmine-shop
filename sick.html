@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Sick / Clinic</title>
+<title>နေမကောင်း / ဆေးခန်း</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; --red:#a3322b; --green:#256544; --amber:#8a5a00; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Sarabun","Padauk",sans-serif; background:var(--bg); color:var(--ink); }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Myanmar","Padauk","Sarabun",sans-serif; background:var(--bg); color:var(--ink); }
   header{ background:var(--blue); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:10px; }
   header h1{ font-size:17px; margin:0; font-weight:700; }
   .langbar{ display:flex; gap:8px; padding:10px 14px 0; max-width:560px; margin:0 auto; }
@@ -33,10 +33,10 @@
 </style>
 </head>
 <body>
-<header><span class="emoji" style="font-size:22px">🤒</span><h1 id="ห_หัว">Sick / Clinic</h1></header>
+<header><span class="emoji" style="font-size:22px">🤒</span><h1 id="ห_หัว">နေမကောင်း / ဆေးခန်း</h1></header>
 <div class="langbar">
-  <button id="ป_en" aria-pressed="true">English</button>
-  <button id="ป_mm" aria-pressed="false">&#4121;&#4156;&#4116;&#4154;&#4121;&#4140;</button>
+  <button id="ป_mm" aria-pressed="true">&#4121;&#4156;&#4116;&#4154;&#4121;&#4140;</button>
+  <button id="ป_en" aria-pressed="false">English</button>
 </div>
 <div class="wrap" id="จอ"></div>
 
@@ -63,7 +63,9 @@
      ตัวที่ฝังไว้นี้คือ "ตาข่ายกันตก" เผื่อเซิร์ฟเวอร์ไม่ตอบเลย */
   var เบอร์สำรอง = "0849842516";
 
-  var ภาษา = 'en';
+  /* 🔴 20 ก.ย. 2026 (เจ้าของสั่ง): เปิดหน้ามาเป็นพม่าก่อนเสมอ
+     น้องอ่านอังกฤษได้ราว 10% เท่านั้น · กดปุ่ม English เปลี่ยนได้ และระบบจะจำค่าที่กดไว้ */
+  var ภาษา = 'mm';
   var โปรไฟล์ = null;
   var ตั๋วล่าสุด = null;
   var กำลังส่ง = false;
@@ -358,8 +360,9 @@
   /* ── ภาษา ────────────────────────────────────────────────────── */
   function จำภาษา_(v){ try { localStorage.setItem('jm_sick_lang', v); } catch(e){} }
   function ภาษาที่จำไว้_(){
-    try { var v = localStorage.getItem('jm_sick_lang'); return (v === 'mm') ? 'mm' : 'en'; }
-    catch(e){ return 'en'; }
+    /* ค่าเริ่มต้น = พม่า · จะเป็นอังกฤษก็ต่อเมื่อน้องเคยกดปุ่ม English ไว้เองเท่านั้น */
+    try { var v = localStorage.getItem('jm_sick_lang'); return (v === 'en') ? 'en' : 'mm'; }
+    catch(e){ return 'mm'; }
   }
   function ตั้งปุ่มภาษา_(){
     var en = document.getElementById('ป_en'), mm = document.getElementById('ป_mm');
