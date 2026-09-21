@@ -10,5 +10,7 @@
   "index": "on",
   "customer-dashboard": "on",
   "kpi": "on",
-  "support": "on"
+  "support": "on",
+  "cases": "on",
+  "announce-customer": "on"
 }

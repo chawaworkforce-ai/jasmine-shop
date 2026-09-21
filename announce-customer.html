@@ -2,6 +2,28 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
+<script>
+/* สวิตช์ปิดหน้า (S4-4) 21 ก.ย. 2026 — ปิดหน้าไหนก็ได้โดยแก้ไฟล์ flags.json ไฟล์เดียว
+   หลักที่ยึด: "อ่านไม่ได้ = เปิดตามปกติ" (fail-open)
+   ถ้าเน็ตช้า ไฟล์หาย หรือไฟล์เสีย ⇒ หน้าทำงานปกติ ห้ามพังเพราะตัวกันพัง
+   ใส่ ?ts= กับ no-store เพื่อไม่ให้ติดแคช 10 นาทีของ GitHub Pages ⇒ ปิดแล้วเห็นผลเกือบทันที */
+(function () {
+  try {
+    if (!window.fetch || !window.AbortController) return;          // เบราว์เซอร์เก่า = เปิดตามปกติ
+    var ชื่อหน้า = (location.pathname.split('/').pop() || '').replace(/\.html$/i, '') || 'index';
+    var ตัวตัด = new AbortController();
+    var นาฬิกา = setTimeout(function () { ตัวตัด.abort(); }, 3000); // เกิน 3 วินาที = เลิกถาม เปิดตามปกติ
+    fetch('flags.json?ts=' + Date.now(), { cache: 'no-store', signal: ตัวตัด.signal })
+      .then(function (r) { clearTimeout(นาฬิกา); return r.ok ? r.json() : null; })
+      .then(function (ธง) {
+        if (ธง && String(ธง[ชื่อหน้า] == null ? '' : ธง[ชื่อหน้า]).trim().toLowerCase() === 'off') {
+          location.replace('maintenance.html?p=' + encodeURIComponent(ชื่อหน้า));
+        }
+      })
+      .catch(function () { clearTimeout(นาฬิกา); });                 // อ่านไม่ได้ = เปิดตามปกติ
+  } catch (e) { /* อะไรก็ตามที่พังตรงนี้ ห้ามทำให้หน้าพัง */ }
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>ส่งประกาศถึงน้องหน้างาน</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -379,8 +401,34 @@
 
     function รอ_(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
+    /* 🔴 เพดานเวลารอ (S4-5 · 21 ก.ย. 2026) — ยกมาจากหน้าน้อง 11 หน้าที่ใส่ไปแล้ว
+       ปัญหาเดิมของหน้านี้: ไม่มีเพดานเลย ⇒ เน็ตหน้างานไม่หลุดแต่ช้ามาก fetch รอไปเรื่อย ๆ
+       ไม่มีวันจบ คนใช้เห็นวงกลมหมุนค้างแล้วกดซ้ำ
+       ของใหม่: นับเวลารวมทั้งคำขอ (ยิงครั้งแรก + รอ + ยิงซ้ำ) ครบแล้วตัดทิ้ง
+       คำสั่งอ่าน (ลองใหม่ได้) = 20 วินาที ให้รอบสองมีเวลาจบจริง
+         (ล็อกการรัน 21 ก.ย.: คำสั่ง dashboard ใช้ 2.6-3.9 วินาทีตอนเครื่องอุ่น
+          และ 7.7-12.5 วินาทีตอนเครื่องเย็น ช้าสุด 12.455 ⇒ 8 วินาทีไม่พอแม้รอบเดียว)
+       คำสั่งเขียน = 8 วินาที ยิงครั้งเดียว ไม่ต้องเผื่อรอบสอง
+       ⚠️ ต้องประกาศหลัง ลองใหม่ได้ เท่านั้น (สลับลำดับ = undefined = ทั้งไฟล์พัง)
+       เบราว์เซอร์ที่ไม่มี AbortController = ข้ามเพดานไป ทำงานเหมือนเดิม ไม่พัง */
+    var เพดานรวม_ = ลองใหม่ได้ ? 20000 : 8000;
+    var เส้นตาย_ = Date.now() + เพดานรวม_;
+    function เหลือเวลา_() { return เส้นตาย_ - Date.now(); }
+    function ยิงมีเพดาน_() {
+      var เหลือ = เหลือเวลา_();
+      if (!window.AbortController || opt.signal) return _ยิงเดิม(u, opt);  /* ของเดิมส่ง signal มาเอง = ไม่แตะ */
+      if (เหลือ <= 0) return Promise.reject(new Error('D1: timeout'));
+      var ตัวตัด_ห่อ = new AbortController();
+      var o2 = {}; for (var k2 in opt) o2[k2] = opt[k2];
+      o2.signal = ตัวตัด_ห่อ.signal;
+      var นาฬิกา_ห่อ = setTimeout(function () { ตัวตัด_ห่อ.abort(); }, เหลือ);
+      return _ยิงเดิม(u, o2).then(
+        function (r) { clearTimeout(นาฬิกา_ห่อ); return r; },
+        function (e) { clearTimeout(นาฬิกา_ห่อ); throw e; });
+    }
+
     function ยิงแล้วอ่าน_() {
-      return _ยิงเดิม(u, opt).then(function (res) {
+      return ยิงมีเพดาน_().then(function (res) {
         return res.text().then(function (txt) {
           var j = null, ดี = false;
           try { j = JSON.parse(txt); ดี = true; } catch (e) {}
@@ -393,8 +441,9 @@
 
     /* ชั้น 1 — ยิงไม่ออกเลย (เน็ตหลุด): ลองใหม่ 1 ครั้ง เฉพาะคำสั่งในรายการขาว */
     var งาน = ยิงแล้วอ่าน_()['catch'](function (e) {
-      if (!ลองใหม่ได้) throw e;
-      return รอ_(1500).then(ยิงแล้วอ่าน_);
+      /* ยิงไม่ออก หรือหมดเวลา: ลองใหม่เฉพาะคำสั่งในรายการที่ลองใหม่ได้ และเฉพาะเมื่อยังเหลือเวลาในเพดาน */
+      if (!ลองใหม่ได้ || เหลือเวลา_() <= 300) throw e;
+      return รอ_(Math.min(1500, Math.max(0, เหลือเวลา_() - 500))).then(ยิงแล้วอ่าน_);
     });
 
     /* ชั้น 2 — ยิงออกแต่คำตอบไม่ใช่ JSON: ลองใหม่ 1 ครั้ง เฉพาะคำสั่งในรายการขาว */
