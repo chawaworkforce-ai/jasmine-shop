@@ -2,6 +2,28 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
+<script>
+/* สวิตช์ปิดหน้า (S4-4) 21 ก.ย. 2026 — ปิดหน้าไหนก็ได้โดยแก้ไฟล์ flags.json ไฟล์เดียว
+   หลักที่ยึด: "อ่านไม่ได้ = เปิดตามปกติ" (fail-open)
+   ถ้าเน็ตช้า ไฟล์หาย หรือไฟล์เสีย ⇒ หน้าทำงานปกติ ห้ามพังเพราะตัวกันพัง
+   ใส่ ?ts= กับ no-store เพื่อไม่ให้ติดแคช 10 นาทีของ GitHub Pages ⇒ ปิดแล้วเห็นผลเกือบทันที */
+(function () {
+  try {
+    if (!window.fetch || !window.AbortController) return;          // เบราว์เซอร์เก่า = เปิดตามปกติ
+    var ชื่อหน้า = (location.pathname.split('/').pop() || '').replace(/\.html$/i, '') || 'index';
+    var ตัวตัด = new AbortController();
+    var นาฬิกา = setTimeout(function () { ตัวตัด.abort(); }, 3000); // เกิน 3 วินาที = เลิกถาม เปิดตามปกติ
+    fetch('flags.json?ts=' + Date.now(), { cache: 'no-store', signal: ตัวตัด.signal })
+      .then(function (r) { clearTimeout(นาฬิกา); return r.ok ? r.json() : null; })
+      .then(function (ธง) {
+        if (ธง && String(ธง[ชื่อหน้า] == null ? '' : ธง[ชื่อหน้า]).trim().toLowerCase() === 'off') {
+          location.replace('maintenance.html?p=' + encodeURIComponent(ชื่อหน้า));
+        }
+      })
+      .catch(function () { clearTimeout(นาฬิกา); });                 // อ่านไม่ได้ = เปิดตามปกติ
+  } catch (e) { /* อะไรก็ตามที่พังตรงนี้ ห้ามทำให้หน้าพัง */ }
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>ดูแลหน้างาน</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
