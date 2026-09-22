@@ -398,6 +398,7 @@ function โปรไฟล์เร็ว_() {
 
   function openOv(w){
     currentWorker = w; ratings = [0,0,0,0,0];
+    รหัสของรอบนี้_(true);   /* 🔴 น้องคนใหม่ = คำขอใหม่ ต้องได้รหัสใหม่ */
     document.getElementById('ovName').textContent = w.name;
     document.getElementById('ovSite').textContent = "โรงงาน: " + w.site;
     document.getElementById('note').value = "";
@@ -440,6 +441,20 @@ function โปรไฟล์เร็ว_() {
     document.getElementById('sendBtn').disabled = ratings.some(function(r){return r===0;});
   }
 
+  /* ═══ ก้อน A · 22 ก.ย. 2026 — รหัสคำขอ (ลอกจาก support.html ทั้งก้อน) ═══
+     🔴 กดซ้ำต้องใช้รหัสเดิม ห้ามสร้างใหม่ทุกครั้งที่กด
+        ไม่งั้นเซิร์ฟเวอร์มองว่าเป็นคนละคำขอ แล้วได้ข้อมูลซ้ำ */
+  var รหัสคำขอ = null;
+  function สุ่มรหัส_(){
+    var s = 'req-', ตัวเลือก = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    for (var i = 0; i < 24; i++) s += ตัวเลือก.charAt(Math.floor(Math.random() * ตัวเลือก.length));
+    return s;
+  }
+  function รหัสของรอบนี้_(เริ่มใหม่){
+    if (เริ่มใหม่ || !รหัสคำขอ) รหัสคำขอ = สุ่มรหัส_();
+    return รหัสคำขอ;
+  }
+
   async function submitKpi(){
     if(ratings.some(function(r){return r===0;})) return;
     const btn = document.getElementById('sendBtn');
@@ -447,12 +462,21 @@ function โปรไฟล์เร็ว_() {
     try{
       const payload = {
         action:"kpi", userId: profile.userId, reporterName: profile.displayName,
-        card_id: currentWorker.card_id, worker_name: currentWorker.name, site: currentWorker.site,
-        scores: ratings, note: document.getElementById('note').value.trim()
+        card_id: currentWorker.card_id, worker_name: currentWorker.name,
+        /* 🔴 ไม่ส่ง site แล้ว — เซิร์ฟเวอร์อ่านไซต์จากทะเบียนเอง (มติผู้วางแผน 2.2)
+           ส่งมาก็ถูกทิ้ง แต่ตัดออกเพื่อไม่ให้คนอ่านโค้ดเข้าใจผิดว่าหน้าเว็บกำหนดไซต์ */
+        scores: ratings, note: document.getElementById('note').value.trim(),
+        req_id: รหัสของรอบนี้_(false)        /* false = กดซ้ำใช้รหัสเดิม */
       };
       const res = await fetch(API_URL, { method:"POST", body: JSON.stringify(payload) });
       const data = await res.json();
-      if(!data.ok){ alert("บันทึกไม่สำเร็จ: "+(data.error||"")); btn.disabled=false; btn.textContent="บันทึก KPI"; return; }
+      if(!data.ok){
+        /* 🔴 ใช้ข้อความไทยจากเซิร์ฟเวอร์ ไม่โยนรหัส error ดิบใส่หน้าลูกค้า
+           (บทเรียนเดียวกับที่แก้ในหน้าร้องทุกข์รอบ S4-6)
+           AUTH_REQUIRED มีตัวห่อ D1 ขึ้นหน้าเข้าใหม่ให้แล้ว ไม่ต้องทำซ้ำ */
+        if (data.error !== 'AUTH_REQUIRED') alert(data.message || "บันทึกไม่สำเร็จ กรุณาลองใหม่");
+        btn.disabled=false; btn.textContent="บันทึก KPI"; return;
+      }
       document.getElementById('sheet').innerHTML =
         '<div class="ok"><div class="check">✅</div><p>บันทึก KPI เรียบร้อย<br>คะแนนรวม '+data.total+' / 25</p>'
         + '<button class="btn btn-send" onclick="closeOv();location.reload()">เสร็จสิ้น</button></div>';

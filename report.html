@@ -385,6 +385,7 @@ function โปรไฟล์เร็ว_() {
 
   function openOv(w){
     currentWorker = w; selectedIssue = null;
+    รหัสของรอบนี้_(true);   /* 🔴 น้องคนใหม่ = คำขอใหม่ ต้องได้รหัสใหม่ */
     document.getElementById('ovName').textContent = w.name;
     document.getElementById('ovSite').textContent = "โรงงาน: " + w.site;
     document.getElementById('note').value = "";
@@ -412,6 +413,20 @@ function โปรไฟล์เร็ว_() {
     document.getElementById('sendBtn').disabled = !ok;
   }
 
+  /* ═══ ก้อน A · 22 ก.ย. 2026 — รหัสคำขอ (ลอกจาก support.html ทั้งก้อน) ═══
+     🔴 กดซ้ำต้องใช้รหัสเดิม ห้ามสร้างใหม่ทุกครั้งที่กด
+        ไม่งั้นเซิร์ฟเวอร์มองว่าเป็นคนละคำขอ แล้วได้ข้อมูลซ้ำ */
+  var รหัสคำขอ = null;
+  function สุ่มรหัส_(){
+    var s = 'req-', ตัวเลือก = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    for (var i = 0; i < 24; i++) s += ตัวเลือก.charAt(Math.floor(Math.random() * ตัวเลือก.length));
+    return s;
+  }
+  function รหัสของรอบนี้_(เริ่มใหม่){
+    if (เริ่มใหม่ || !รหัสคำขอ) รหัสคำขอ = สุ่มรหัส_();
+    return รหัสคำขอ;
+  }
+
   async function submitReport(){
     if(!selectedIssue) return;
     let issueText = selectedIssue;
@@ -425,14 +440,25 @@ function โปรไฟล์เร็ว_() {
     try{
       const payload = {
         action:"report", userId: profile.userId, reporterName: profile.displayName,
-        card_id: currentWorker.card_id, worker_name: currentWorker.name, site: currentWorker.site,
-        issue: issueText, note: document.getElementById('note').value.trim()
+        card_id: currentWorker.card_id, worker_name: currentWorker.name,
+        /* 🔴 ไม่ส่ง site แล้ว — เซิร์ฟเวอร์อ่านไซต์จากทะเบียนเอง (มติผู้วางแผน 2.2) */
+        issue: issueText, note: document.getElementById('note').value.trim(),
+        req_id: รหัสของรอบนี้_(false)        /* false = กดซ้ำใช้รหัสเดิม */
       };
       const res = await fetch(API_URL, { method:"POST", body: JSON.stringify(payload) });
       const data = await res.json();
-      if(!data.ok){ alert("ส่งไม่สำเร็จ: "+(data.error||"")); btn.disabled=false; btn.textContent="ส่งรายงาน"; return; }
+      if(!data.ok){
+        if (data.error !== 'AUTH_REQUIRED') alert(data.message || "ส่งไม่สำเร็จ กรุณาลองใหม่");
+        btn.disabled=false; btn.textContent="ส่งรายงาน"; return;
+      }
       document.querySelector('.sheet').innerHTML =
-        '<div class="ok"><div class="check">✅</div><p>ส่งรายงานเรียบร้อย<br>แอดมินได้รับแจ้งเตือนแล้ว</p>'
+        /* 🔴 ของเดิมเขียนว่า "แอดมินได้รับแจ้งเตือนแล้ว" ทั้งที่ตอนนั้นยังไม่รู้ผลการส่ง
+           ตอนนี้เซิร์ฟเวอร์คืนสถานะการแจ้งทีมมาจริง ⇒ พูดตามที่รู้
+           ⚠️ "ส่งออกไปแล้ว" ยังไม่เท่ากับ "ถึงเครื่องผู้รับแล้ว" — ห้ามเขียนเกินนี้ */
+        '<div class="ok"><div class="check">✅</div><p>บันทึกรายงานเรียบร้อย' + (data.ref ? ' #'+data.ref : '') + '<br>'
+        + (data['แจ้งทีม'] === 'OK' ? 'ส่งแจ้งทีมออกไปแล้ว'
+           : data['แจ้งทีม'] === 'FAIL' ? '⚠️ ส่งแจ้งทีมไม่ออก — ทีมจะเห็นจากหน้าสรุป'
+           : 'กำลังแจ้งทีม') + '</p>'
         + '<button class="btn btn-send" onclick="closeOv();location.reload()">เสร็จสิ้น</button></div>';
     }catch(e){ alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="ส่งรายงาน"; }
   }
