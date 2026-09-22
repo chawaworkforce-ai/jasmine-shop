@@ -21,6 +21,7 @@
   .chip{ flex:1 1 45%; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; }
   .chip .n{ font-size:24px; font-weight:700; } .chip .l{ font-size:12px; color:var(--muted); margin-top:2px; }
   .chip.r .n{ color:#d65; } .chip.s .n{ color:#2f7d7d; } .chip.f .n{ color:#2f7d55; } .chip.k .n{ color:var(--gold); }
+  .chip.c .n{ color:#a3322b; } .chip.o .n{ color:#2a7d9b; } .chip.m .n{ color:#8a5a00; } .chip.a .n{ color:#256544; }
   h3{ font-size:14px; margin:18px 0 8px; color:var(--ink); }
   .row{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; font-size:14px; }
   .row .c{ color:var(--muted); font-weight:700; }
@@ -260,7 +261,13 @@ function โปรไฟล์เร็ว_() {
           แก้: คำสั่งอ่าน (ลองใหม่ได้) = 20 วินาที ให้รอบสองมีเวลาจบจริง
                คำสั่งเขียน (ลองใหม่ไม่ได้) = 8 วินาทีเท่าเดิม เพราะยิงครั้งเดียว ไม่ต้องเผื่อรอบสอง
           ⚠️ ต้องประกาศหลัง ลองใหม่ได้ เท่านั้น (ถ้าสลับลำดับ = undefined = ทั้งไฟล์พัง) */
-    var เพดานรวม_ = ลองใหม่ได้ ? 20000 : 8000;
+    var เพดานรวม_ = 20000;   /* 🔴 แก้รอบ 2 · 21 ก.ย. 2026 20:40 — คำสั่งเขียนก็ 20 วินาทีด้วย
+       เหตุ: 20:23 น. น้องส่งร้องทุกข์จริง หน้าเว็บขึ้น "ส่งแล้ว แต่ยังไม่รู้ผล"
+             แต่เครื่องผู้รับ "ได้รับข้อความจริง" ⇒ ส่งสำเร็จ แต่หน้าเว็บตัดสายก่อนได้คำตอบ
+       เดิมคิดว่าคำสั่งเขียนควรเพดานสั้นเพื่อไม่ให้น้องรอนาน — คิดผิด
+       เพราะตัวตัดเวลา "ไม่ได้หยุดเซิร์ฟเวอร์" มันแค่ทำให้เราไม่รู้ผล
+       และคำสั่งเขียน "ไม่ยิงซ้ำอยู่แล้ว" (ลองใหม่ได้ = false) ⇒ รอนานขึ้นไม่มีความเสี่ยงของซ้ำเลย
+       ⇒ รอ 12 วินาทีแล้วได้คำตอบจริง ดีกว่าตัดที่ 8 แล้วบอกน้องว่า "ไม่รู้ผล ไปตามแอดมิน" */
     var เส้นตาย_ = Date.now() + เพดานรวม_;
     function เหลือเวลา_() { return เส้นตาย_ - Date.now(); }
     function ยิงมีเพดาน_() {
@@ -366,6 +373,7 @@ function โปรไฟล์เร็ว_() {
     let h='<div class="chips">'
       + chip('r',c.reports,'รีพอตค้าง') + chip('s',c.support,'ซัพพอตค้าง')
       + chip('f',c.referrals,'แนะนำคนใหม่') + chip('k',c.kpiPending,'KPI ยังขาด (ไซต์)') + '</div>';
+    h+=สดHTML_();
     h+='<h3>น้องต่อไซต์</h3>';
     if(!D.workersBySite.length) h+='<div class="empty">ยังไม่มีข้อมูล</div>';
     else D.workersBySite.forEach(s=> h+='<div class="row"><span>'+esc(s.site)+'</span><span class="c">'+s.count+'</span></div>');
@@ -375,6 +383,34 @@ function โปรไฟล์เร็ว_() {
     return h;
   }
   function chip(k,n,l){ return '<div class="chip '+k+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+
+  /* 🔴 S2 ต่อให้จบ · 21 ก.ย. 2026 20:40
+     ปัญหา: เซิร์ฟเวอร์ส่งก้อนสด 4 ตัวมาให้ตั้งแต่รุ่น 38 แต่หน้านี้ไม่เคยหยิบมาแสดงเลย
+            เจ้าของเปิดจอจริง 19:50 แล้วไม่เห็นตัวเลขชุดนี้ ⇒ ผู้ลงมือทำ S2 เสร็จแค่ครึ่งเดียว
+     กติกาการแสดงผล: ค่าเป็น null แปลว่า "อ่านแท็บนั้นไม่ได้" ⇒ ต้องโชว์ขีด ห้ามโชว์ 0
+     เพราะ 0 แปลว่า "ไม่มีงานค้าง" ซึ่งเป็นคนละเรื่องกับ "ไม่รู้" */
+  function สดHTML_(){
+    var ส = D['ก้อนสด'];
+    if(!ส) return '';
+    function n_(v){ return (v===null || v===undefined) ? '—' : v; }
+    var ปก = Array.isArray(ส['ประกาศล่าสุด']) ? ส['ประกาศล่าสุด'].length : '—';
+    var h = '<h3>ข้อมูลสด</h3><div class="chips">'
+      + chip('c', n_(ส['เคสค้าง']),      'เคสค้าง')
+      + chip('o', n_(ส['ออร์เดอร์ใหม่']), 'ออร์เดอร์ใหม่')
+      + chip('m', n_(ส['ยังไม่จับคู่']),  'ยังไม่จับคู่')
+      + chip('a', ปก,                    'ประกาศล่าสุด')
+      + '</div>';
+    if(Array.isArray(ส['ประกาศล่าสุด']) && ส['ประกาศล่าสุด'].length){
+      h += ส['ประกาศล่าสุด'].map(function(p){
+        var ผู้รับ = (p['ผู้รับ']===null || p['ผู้รับ']===undefined) ? '' : String(p['ผู้รับ']);
+        return '<div class="row"><span>'+esc(p['ข้อความ']||'-')+'</span><span class="c">'+esc(ผู้รับ)+'</span></div>';
+      }).join('');
+    }
+    if(Array.isArray(ส['อ่านไม่ได้']) && ส['อ่านไม่ได้'].length){
+      h += '<div class="empty">อ่านไม่ได้: '+esc(ส['อ่านไม่ได้'].join(' · '))+'</div>';
+    }
+    return h;
+  }
 
   function listHTML(arr, sheet, map){
     if(!arr.length) return '<div class="empty">ไม่มีงานค้าง 🎉</div>';
