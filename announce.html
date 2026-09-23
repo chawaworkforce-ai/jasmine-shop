@@ -161,12 +161,14 @@ function โปรไฟล์เร็ว_() {
 
   function หน้าคำตอบเพี้ยน_(เขียน, รหัส, คำสั่ง, ต้นข้อความ) {
     if (เขียน) {
+      /* 🔴 ก2 · 24 ก.ย. 2026 (มติผู้วางแผนรอบ 49) — ส่งแล้วไม่ได้คำตอบ ให้เหลือข้อความ "ยังไม่ทราบผล" ชุดเดียว
+         ห้ามบอกว่าสำเร็จหรือไม่สำเร็จโดยไม่มีหลักฐาน ⇒ เลิกใช้หัว "ส่งแล้ว แต่ยังไม่รู้ผล" (คำว่า "ส่งแล้ว" อ่านเหมือนสำเร็จ)
+         หน้านี้แอดมินใช้อย่างเดียว ⇒ ตัดบรรทัดพม่าเดิมที่แปลว่า "ส่งแล้ว" ออก (ไม่แต่งคำพม่าใหม่) */
       จอ_('<div style="font-size:56px">⚠️</div>' +
-        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ส่งแล้ว แต่ยังไม่รู้ผล</div>' +
+        '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ยังไม่ทราบผล</div>' +
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
-        'Sent, but result unknown. Do NOT send again.<br>' +
-        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        'Result unknown. Do NOT send again.</div>' +
         '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
         'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
@@ -359,7 +361,14 @@ function โปรไฟล์เร็ว_() {
       if(!res.ok){ alert("ไม่สำเร็จ: "+res.error); btn.disabled=false; btn.textContent="ส่งประกาศ"; return; }
       document.getElementById('wrap').innerHTML='<div class="done"><div class="c">✅</div><p>ส่งแล้ว '+res.sent+' คน</p>'
         + '<button class="btn" onclick="location.reload()">ส่งอีกประกาศ</button></div>';
-    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="ส่งประกาศ"; }
+    }catch(e){
+      /* 🔴 ก2 · 24 ก.ย. 2026 — หมดเวลา หรือคำตอบไม่ใช่ JSON: ตัวห่อ D1 ขึ้นจอ "ยังไม่ทราบผล" ไปแล้ว
+         เดิม: ขึ้นกล่อง "ผิดพลาด: …" ซ้อนทับ + เปิดปุ่มให้กดส่งใหม่ ⇒ คนเข้าใจว่าไม่ได้ส่ง แล้วกดซ้ำ
+               (คำสั่ง announce ยังไม่มีตัวกันซ้ำฝั่งเซิร์ฟเวอร์ ⇒ กดซ้ำ = ประกาศถึงน้องซ้ำ)
+         ใหม่: มีจอนั้นอยู่ = เหลือข้อความเดียว · ปุ่มคงปิดไว้และบอกว่ายังไม่ทราบผล · กรณีอื่นทำเหมือนเดิมทุกอย่าง */
+      if (document.getElementById('_d1จอ')) { btn.textContent = "ยังไม่ทราบผล — อย่ากดส่งซ้ำ"; return; }
+      alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="ส่งประกาศ";
+    }
   }
 
   main();
