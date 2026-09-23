@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<script>
+/* สวิตช์ปิดหน้า — แบบเดียวกับหน้าอื่นใน repo (S4-4) · อ่าน flags.json ไม่ได้ = เปิดตามปกติ
+   ชื่อหน้านี้ในสวิตช์ = translate-test */
+(function () {
+  try {
+    if (!window.fetch || !window.AbortController) return;
+    var ชื่อหน้า = (location.pathname.split('/').pop() || '').replace(/\.html$/i, '') || 'index';
+    var ตัวตัด = new AbortController();
+    var นาฬิกา = setTimeout(function () { ตัวตัด.abort(); }, 3000);
+    fetch('flags.json?ts=' + Date.now(), { cache: 'no-store', signal: ตัวตัด.signal })
+      .then(function (r) { clearTimeout(นาฬิกา); return r.ok ? r.json() : null; })
+      .then(function (ธง) {
+        if (ธง && String(ธง[ชื่อหน้า] == null ? '' : ธง[ชื่อหน้า]).trim().toLowerCase() === 'off') {
+          location.replace('maintenance.html?p=' + encodeURIComponent(ชื่อหน้า));
+        }
+      })
+      .catch(function () { clearTimeout(นาฬิกา); });
+  } catch (e) { }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ผู้ช่วยแปล (ทดสอบ)</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --green:#2f7d55; --green-d:#246343; --ink:#1f2a26; --muted:#76837d; --line:#e2e9e5; --bg:#f2f6f4; --paper:#fff; --warn:#8a5a00; --err:#a3262a; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Sarabun","Noto Sans Thai","Noto Sans Myanmar","Padauk","Myanmar Text",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:linear-gradient(135deg,var(--green),var(--green-d)); color:#fff; padding:18px 16px; }
+  header h1{ font-size:19px; margin:0; font-weight:700; }
+  header .tag{ display:inline-block; font-size:11.5px; font-weight:600; background:rgba(255,255,255,.2); border-radius:999px; padding:2px 9px; margin-left:6px; vertical-align:middle; }
+  header p{ font-size:12.5px; margin:8px 0 0; opacity:.92; line-height:1.5; }
+  #status{ padding:34px 18px; text-align:center; color:var(--muted); }
+  main{ padding:14px 16px 28px; max-width:620px; margin:0 auto; }
+  .dirs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .dir{ flex:1 1 30%; min-width:98px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink); border-radius:12px; padding:10px 6px; font-size:14px; font-weight:600; font-family:inherit; }
+  .dir.on{ border-color:var(--green); background:#e8f3ec; color:var(--green-d); }
+  .dir:disabled{ opacity:.55; }
+  textarea{ width:100%; min-height:150px; border:1.5px solid var(--line); border-radius:12px; padding:12px; font-size:16px; line-height:1.55; font-family:inherit; background:var(--paper); resize:vertical; }
+  textarea:focus{ outline:none; border-color:var(--green); }
+  .count{ text-align:right; font-size:12px; color:var(--muted); margin:4px 2px 10px; }
+  .btn{ width:100%; border:0; border-radius:12px; background:var(--green); color:#fff; font-size:16px; font-weight:700; padding:14px; font-family:inherit; }
+  .btn:disabled{ background:#9fb8aa; }
+  .msg{ margin-top:12px; border-radius:10px; padding:11px 12px; font-size:14px; line-height:1.5; background:#fff7e6; color:var(--warn); }
+  .msg.err{ background:#fdecec; color:var(--err); }
+  .card{ margin-top:16px; background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:14px; }
+  .lbl{ font-size:12.5px; color:var(--muted); margin:2px 0 6px; font-weight:600; }
+  .txt{ white-space:pre-wrap; word-break:break-word; font-size:15.5px; line-height:1.6; background:#f7faf8; border-radius:10px; padding:10px 11px; margin-bottom:12px; -webkit-user-select:text; user-select:text; }
+  .txt.dst{ background:#eef6f1; font-size:16.5px; }
+  .meta{ font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:12px; }
+  .badge{ display:inline-block; background:#fff1d6; color:var(--warn); border-radius:999px; padding:1px 9px; font-weight:700; margin-right:4px; }
+  .btn2{ width:100%; border:1.5px solid var(--green); background:var(--paper); color:var(--green-d); border-radius:12px; font-size:15px; font-weight:700; padding:11px; font-family:inherit; }
+  .hint{ text-align:center; font-size:12.5px; color:var(--green-d); margin-top:8px; }
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ผู้ช่วยแปล <span class="tag">ต้นแบบ · ระบบทดสอบ</span></h1>
+  <p>วางข้อความ เลือกทิศทาง แล้วกด "แปล" · หน้านี้ไม่เก็บข้อความ และไม่ส่งไลน์หาใคร</p>
+</header>
+<div id="status">กำลังเปิด…</div>
+<main id="wrap" hidden>
+  <div class="dirs" id="dirs">
+    <button type="button" class="dir on" data-from="my" data-to="th">พม่า → ไทย</button>
+    <button type="button" class="dir" data-from="th" data-to="my">ไทย → พม่า</button>
+    <button type="button" class="dir" data-from="en" data-to="my">อังกฤษ → พม่า</button>
+  </div>
+  <textarea id="src" maxlength="2000" placeholder="วางข้อความที่นี่"></textarea>
+  <div class="count"><span id="n">0</span> / 2,000 ตัวอักษร</div>
+  <button type="button" id="go" class="btn">แปล</button>
+  <div id="msg" class="msg" hidden></div>
+  <section id="out" class="card" hidden>
+    <div class="lbl">ต้นฉบับที่ส่งแปล (<span id="oFrom"></span>)</div>
+    <div id="oSrc" class="txt"></div>
+    <div class="lbl">คำแปล (<span id="oTo"></span>)</div>
+    <div id="oDst" class="txt dst"></div>
+    <div class="meta"><span class="badge">แปลด้วยเครื่อง</span>อาจคลาดเคลื่อน ตรวจก่อนใช้ · บริการ: <span id="oProv"></span> · <span id="oMs"></span></div>
+    <button type="button" id="copy" class="btn2">คัดลอกคำแปล</button>
+    <div id="copied" class="hint" hidden></div>
+  </section>
+</main>
+<script>
+(function () {
+  var LIFF_ID = "2010242926-nreePSO4";
+  /* 🔴 บานทดสอบของโปรเจกต์ "Jasmine แปล ทดสอบ" — ไม่ใช่ /exec ของ Jasmine Ops ของจริง */
+  var API_URL = "https://script.google.com/macros/s/AKfycbxl_n5PYB-pvYCURbXTahcWrrNbR-StFGdD_n4ET7aXXCyjZ9lq1mam6UJxsvT8VKy3Hg/exec";
+  var เพดาน_ = 20000;            // รอคำตอบนานสุด 20 วินาที ครบแล้วตัดทิ้ง ไม่ลองซ้ำเอง
+  var ยาวสุด_ = 2000;
+  var ชื่อภาษา = { my: 'พม่า', th: 'ไทย', en: 'อังกฤษ' };
+  var ทิศ = { from: 'my', to: 'th' };
+  var รอผล = false, ลำดับ = 0;
+  function el(id) { return document.getElementById(id); }
+
+  function แจ้ง(ข้อความ, แบบ) {
+    var m = el('msg');
+    m.textContent = ข้อความ || '';
+    m.className = 'msg' + (แบบ ? ' ' + แบบ : '');
+    m.hidden = !ข้อความ;
+  }
+
+  function ปุ่มรอ(รอ) {
+    var b = el('go');
+    b.disabled = รอ;
+    b.textContent = รอ ? 'กำลังแปล… (รอได้ถึง 20 วินาที)' : 'แปล';
+    var ds = el('dirs').querySelectorAll('.dir');
+    for (var i = 0; i < ds.length; i++) ds[i].disabled = รอ;
+  }
+
+  function ข้อความผิดพลาด_(j) {
+    switch (j && j.error) {
+      case 'AUTH_REQUIRED': return 'ยืนยันตัวตนไม่ผ่าน · ปิดหน้านี้แล้วเปิดใหม่จากไลน์';
+      case 'NOT_TRANSLATOR': return 'บัญชีนี้ยังไม่มีสิทธิ์ใช้ผู้ช่วยแปล · แจ้งผู้ดูแลพร้อมรหัสท้าย ' + String(j.you || '');
+      case 'BAD_DIRECTION': return 'ทิศทางแปลนี้ยังไม่เปิดใช้';
+      case 'EMPTY': return 'ยังไม่ได้วางข้อความ';
+      case 'TOO_LONG': return 'ข้อความยาวเกิน ' + String(j.max || ยาวสุด_) + ' ตัวอักษร';
+      case 'PROVIDER_FAILED': return 'บริการแปลขัดข้อง (' + String(j.provider || '') + ') · กดแปลใหม่ได้เมื่อพร้อม';
+      default: return 'ยังไม่ได้รับผลแปล · กดแปลใหม่ได้เมื่อพร้อม';
+    }
+  }
+
+  async function แปล() {
+    if (รอผล) return;                                   // กดหนึ่งครั้ง = เรียกหนึ่งครั้ง
+    var text = el('src').value;
+    if (!text.trim()) { แจ้ง('ยังไม่ได้วางข้อความ'); return; }
+    if (text.length > ยาวสุด_) { แจ้ง('ข้อความยาวเกิน ' + ยาวสุด_ + ' ตัวอักษร'); return; }
+    var ตั๋ว = null;
+    try { ตั๋ว = liff.getIDToken(); } catch (e) { ตั๋ว = null; }
+    if (!ตั๋ว) { แจ้ง('ยืนยันตัวตนไม่ได้ · ปิดหน้านี้แล้วเปิดใหม่จากไลน์', 'err'); return; }
+
+    var ส่ง = { from: ทิศ.from, to: ทิศ.to, text: text };   // ภาพถ่ายของคำขอนี้ ใช้แสดงผลคู่กับคำตอบ
+    var reqId = 'tr' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    var เลขนี้ = ++ลำดับ;
+    รอผล = true; ปุ่มรอ(true); แจ้ง(''); el('out').hidden = true; el('copied').hidden = true;
+
+    var ตัวตัด = new AbortController();
+    var นาฬิกา = setTimeout(function () { ตัวตัด.abort(); }, เพดาน_);
+    var j = null;
+    try {
+      var res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'translate_text', idToken: ตั๋ว, from: ส่ง.from, to: ส่ง.to, text: ส่ง.text, reqId: reqId }),
+        signal: ตัวตัด.signal
+      });
+      var ดิบ = await res.text();
+      try { j = JSON.parse(ดิบ); } catch (e) { j = null; }
+    } catch (e) { j = null; }
+    clearTimeout(นาฬิกา);
+    if (เลขนี้ !== ลำดับ) return;                        // คำตอบของคำขอเก่า ไม่ใช้
+    รอผล = false; ปุ่มรอ(false);
+
+    if (!j || (j.reqId && j.reqId !== reqId)) { แจ้ง('ยังไม่ได้รับผลแปล · กดแปลใหม่ได้เมื่อพร้อม', 'err'); return; }
+    if (!j.ok) { แจ้ง(ข้อความผิดพลาด_(j), 'err'); return; }
+
+    el('oFrom').textContent = ชื่อภาษา[ส่ง.from] || ส่ง.from;
+    el('oTo').textContent = ชื่อภาษา[ส่ง.to] || ส่ง.to;
+    el('oSrc').textContent = ส่ง.text;
+    el('oDst').textContent = String(j.translated || '');
+    el('oProv').textContent = String(j.provider || '-');
+    el('oMs').textContent = 'หลังบ้านใช้ ' + (Number(j.ms || 0) / 1000).toFixed(1) + ' วินาที';
+    el('out').hidden = false;
+  }
+
+  function เลือกทิศ(ev) {
+    var b = ev.target.closest('.dir');
+    if (!b || รอผล) return;
+    var ds = el('dirs').querySelectorAll('.dir');
+    for (var i = 0; i < ds.length; i++) ds[i].classList.toggle('on', ds[i] === b);
+    ทิศ = { from: b.getAttribute('data-from'), to: b.getAttribute('data-to') };
+  }
+
+  async function คัดลอก() {
+    var t = el('oDst').textContent || '';
+    var h = el('copied');
+    var ได้ = false;
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(t); ได้ = true; } } catch (e) { ได้ = false; }
+    if (!ได้) {
+      var ta = document.createElement('textarea');
+      ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      try { ta.setSelectionRange(0, t.length); } catch (e) { }
+      try { ได้ = document.execCommand('copy'); } catch (e) { ได้ = false; }
+      document.body.removeChild(ta);
+    }
+    h.textContent = ได้ ? 'คัดลอกคำแปลแล้ว' : 'คัดลอกอัตโนมัติไม่ได้ · กดค้างที่คำแปลเพื่อคัดลอกเอง';
+    h.hidden = false;
+  }
+
+  async function main() {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      el('status').hidden = true;
+      el('wrap').hidden = false;
+    } catch (e) {
+      el('status').textContent = 'กรุณาเปิดหน้านี้ในแอป LINE';
+    }
+  }
+
+  el('dirs').addEventListener('click', เลือกทิศ);
+  el('go').addEventListener('click', แปล);
+  el('copy').addEventListener('click', คัดลอก);
+  el('src').addEventListener('input', function () { el('n').textContent = String(el('src').value.length); });
+  main();
+})();
+</script>
+</body>
+</html>
