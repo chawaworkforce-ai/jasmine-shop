@@ -287,6 +287,10 @@ function โปรไฟล์เร็ว_() {
         return res.text().then(function (txt) {
           var j = null, ดี = false;
           try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          /* รอบ 50 (ทางส่งเพี้ยนของ Google · ผลยิง /exec 24 ก.ย. 8/112): บางครั้งได้คำตอบของ doGet
+             ({ok:true,msg:'Jasmine Ops API'}) แทนผลของคำสั่ง ⇒ ไม่ใช่ผลของคำสั่งนี้ นับเหมือนคำตอบไม่ใช่ JSON
+             คำสั่งอ่าน = ลองใหม่ 1 ครั้งตามเดิม · คำสั่งเขียน = จอ "ยังไม่รู้ผล" ไม่ยิงซ้ำเอง */
+          if (ดี && j && j.msg === 'Jasmine Ops API') { ดี = false; j = null; }
           return { res: res, txt: txt, j: j, ดี: ดี };
         }, function () {
           return { res: res, txt: '', j: null, ดี: false };
@@ -377,17 +381,56 @@ function โปรไฟล์เร็ว_() {
     const payload={ action:"grievance", category:CATS[cat][0], message:msg };
     if(mode==="named"){ payload.anonymous=false; payload.userId=userId; payload.display_name=displayName; }
     else { payload.anonymous=true; const se=document.getElementById('site'); if(se&&se.value) payload.site=se.value; } // ไม่ส่ง userId
+    payload.req_id = ก3_เลขคำขอ_('grievance', payload);   /* ก3 รอบ 50: เนื้อเดิม = เลขเดิม */
     const btn=document.getElementById('send'); btn.disabled=true; btn.textContent="Sending…";
     try{
       const res=await (await fetch(API_URL,{method:"POST",body:JSON.stringify(payload)})).json();
       /* 🔴 21 ก.ย. 2026 — เอา alert ออก: ตัวห่อ D1 ขึ้นจอเต็มหน้า 3 ภาษาให้อยู่แล้ว
          ของเดิมเด้งป๊อปอัปข้อความดิบภาษาอังกฤษซ้อนขึ้นมา ผิดกติกา "ห้ามข้อความดิบถึงน้อง" */
       if(!res.ok){ btn.disabled=false; btn.textContent="Send / ပို့မည်"; return; }
+      /* ก3 รอบ 50: ok แต่ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ ⇒ ยังไม่ทราบผล · คงเลขคำขอไว้ (กดส่งเนื้อเดิมอีกครั้ง = ไม่ซ้ำ) */
+      if(!ก3_สำเร็จจริง_(res)){ btn.disabled=false; btn.textContent="Send / ပို့မည်"; return; }
+      ก3_ล้าง_('grievance');
       document.getElementById('wrap').innerHTML='<div class="done"><div class="c">🤍</div><h2>Sent to P\'Mai</h2>'
         +'<p>Thank you for telling us. P\'Mai will take care of it.<br>ပြောပြတဲ့အတွက် ကျေးဇူးတင်ပါတယ်။ P\'Mai က ဂရုစိုက်ပါမည်။</p></div>';
     }catch(e){ /* จอแจ้งเหตุเป็นหน้าที่ของตัวห่อ D1 ที่นี่แค่ปลดปุ่มให้กดใหม่ได้ */
       btn.disabled=false; btn.textContent="Send / ပို့မည်"; }
   }
+
+  /* ── ก3 รอบ 50 (24 ก.ย. 2026): เลขคำขอกันส่งซ้ำ ──
+     ผลครั้งก่อนยังไม่ทราบ (หมดเวลา / คำตอบเพี้ยน) แล้วกดส่งเนื้อเดิมอีกครั้ง = ใช้เลขเดิม ⇒ เซิร์ฟเวอร์คืนผลเดิม ไม่บันทึก ไม่แจ้งซ้ำ
+     จำในเครื่อง (ต่อคำสั่ง) เฉพาะ "เลขย่อของเนื้อหา" (ไม่เก็บตัวข้อความ) + เลขคำขอ · อายุ 24 ชม.
+     สำเร็จแล้วล้างทิ้ง ⇒ ครั้งถัดไปได้เลขใหม่ · เปลี่ยนเนื้อหา = เลขใหม่เอง · เครื่องที่เก็บค่าไม่ได้ = จำในหน้านี้อย่างเดียว */
+  var ก3_จำในหน้า_ = {};
+  function ก3_ย่อ_(s) {
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return s.length + '-' + h.toString(16);
+  }
+  function ก3_สุ่ม_() {
+    var ab = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', s = '', a = null;
+    try { a = new Uint32Array(24); crypto.getRandomValues(a); } catch (e) { a = null; }
+    for (var i = 0; i < 24; i++) s += ab.charAt((a ? a[i] : Math.floor(Math.random() * 4294967296)) % ab.length);
+    return s;
+  }
+  function ก3_อ่าน_(k) {
+    try { var v = localStorage.getItem(k); if (v) return JSON.parse(v); } catch (e) {}
+    return ก3_จำในหน้า_[k] || null;
+  }
+  function ก3_เขียน_(k, v) {
+    ก3_จำในหน้า_[k] = v;
+    try { if (v) localStorage.setItem(k, JSON.stringify(v)); else localStorage.removeItem(k); } catch (e) {}
+  }
+  function ก3_เลขคำขอ_(คำสั่ง, เนื้อหา) {
+    var k = 'ก3:' + คำสั่ง, f = ก3_ย่อ_(JSON.stringify(เนื้อหา)), เดิม = ก3_อ่าน_(k);
+    if (เดิม && เดิม.f === f && เดิม.r && (Date.now() - (เดิม.t || 0)) < 86400000) return เดิม.r;
+    var r = ก3_สุ่ม_();
+    ก3_เขียน_(k, { f: f, r: r, t: Date.now() });
+    return r;
+  }
+  function ก3_ล้าง_(คำสั่ง) { ก3_เขียน_('ก3:' + คำสั่ง, null); }
+  /* คำตอบสำเร็จจริงของ 3 คำสั่งนี้ (เซิร์ฟเวอร์รอบ 50) มีช่อง ref เสมอ · ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ = ยังไม่ทราบผล */
+  function ก3_สำเร็จจริง_(j) { return !!(j && j.ok === true && typeof j.ref === 'string'); }
 
   main();
 </script>
