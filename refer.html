@@ -290,6 +290,10 @@ function โปรไฟล์เร็ว_() {
         return res.text().then(function (txt) {
           var j = null, ดี = false;
           try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          /* รอบ 50 (ทางส่งเพี้ยนของ Google · ผลยิง /exec 24 ก.ย. 8/112): บางครั้งได้คำตอบของ doGet
+             ({ok:true,msg:'Jasmine Ops API'}) แทนผลของคำสั่ง ⇒ ไม่ใช่ผลของคำสั่งนี้ นับเหมือนคำตอบไม่ใช่ JSON
+             คำสั่งอ่าน = ลองใหม่ 1 ครั้งตามเดิม · คำสั่งเขียน = จอ "ยังไม่รู้ผล" ไม่ยิงซ้ำเอง */
+          if (ดี && j && j.msg === 'Jasmine Ops API') { ดี = false; j = null; }
           return { res: res, txt: txt, j: j, ดี: ดี };
         }, function () {
           return { res: res, txt: '', j: null, ดี: false };
@@ -403,11 +407,21 @@ function โปรไฟล์เร็ว_() {
         experience:document.getElementById('f_exp').value.trim(),
         ref_name:document.getElementById('f_refname').value.trim(),
         ref_phone:document.getElementById('f_refphone').value.trim(),
-        photo:photoData, photo_mime:'image/jpeg'
+        photo:photoData, photo_mime:'image/jpeg',
+        /* ก3 รอบ 50: เนื้อเดิมทุกช่อง = เลขคำขอเดิม */
+        req_id: ก3_เลขคำขอ_('refer_worker', [name, document.getElementById('f_phone').value.trim(),
+          document.getElementById('f_loc').value.trim(), permit, document.getElementById('f_exp').value.trim(),
+          document.getElementById('f_refname').value.trim(), document.getElementById('f_refphone').value.trim(), photoData])
       })})).json();
       if(!data.ok){ alert("Failed: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      /* ก3 รอบ 50: ok แต่ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ ⇒ ยังไม่ทราบผล · คงเลขคำขอไว้ */
+      if(!ก3_สำเร็จจริง_(data)){ btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      ก3_ล้าง_('refer_worker');
       done();
-    }catch(e){ alert("Error: "+(e.message||e)); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
+    }catch(e){
+      /* ก3 รอบ 50 (แบบ ก2): ตัวห่อ D1 ขึ้นจอ "ยังไม่รู้ผล" แล้ว = ไม่เด้งกล่องซ้อน · เลขคำขอยังเก็บไว้ */
+      if (document.getElementById('_d1จอ')) { btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      alert("Error: "+(e.message||e)); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
   }
 
   async function sendBroker(){
@@ -419,11 +433,20 @@ function โปรไฟล์เร็ว_() {
         action:"refer_broker", userId:userId,
         broker_name:name, broker_phone:document.getElementById('b_phone').value.trim(),
         ref_name:document.getElementById('b_refname').value.trim(),
-        ref_phone:document.getElementById('b_refphone').value.trim()
+        ref_phone:document.getElementById('b_refphone').value.trim(),
+        /* ก3 รอบ 50: เนื้อเดิมทุกช่อง = เลขคำขอเดิม */
+        req_id: ก3_เลขคำขอ_('refer_broker', [name, document.getElementById('b_phone').value.trim(),
+          document.getElementById('b_refname').value.trim(), document.getElementById('b_refphone').value.trim()])
       })})).json();
       if(!data.ok){ alert("Failed: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      /* ก3 รอบ 50: ok แต่ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ ⇒ ยังไม่ทราบผล · คงเลขคำขอไว้ */
+      if(!ก3_สำเร็จจริง_(data)){ btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      ก3_ล้าง_('refer_broker');
       done();
-    }catch(e){ alert("Error: "+(e.message||e)); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
+    }catch(e){
+      /* ก3 รอบ 50 (แบบ ก2): ตัวห่อ D1 ขึ้นจอ "ยังไม่รู้ผล" แล้ว = ไม่เด้งกล่องซ้อน · เลขคำขอยังเก็บไว้ */
+      if (document.getElementById('_d1จอ')) { btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      alert("Error: "+(e.message||e)); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
   }
 
   function done(){
@@ -431,6 +454,41 @@ function โปรไฟล์เร็ว_() {
       '<div class="done"><div class="c">✅</div><p>Thank you! We received it.<br>ကျေးဇူးတင်ပါသည်။ လက်ခံရရှိပါပြီ။</p>'
       + '<button class="btn b-send" onclick="landing()">Refer another / နောက်တစ်ယောက် ထပ်ပို့ရန်</button></div>';
   }
+
+  /* ── ก3 รอบ 50 (24 ก.ย. 2026): เลขคำขอกันส่งซ้ำ ──
+     ผลครั้งก่อนยังไม่ทราบ (หมดเวลา / คำตอบเพี้ยน) แล้วกดส่งเนื้อเดิมอีกครั้ง = ใช้เลขเดิม ⇒ เซิร์ฟเวอร์คืนผลเดิม ไม่บันทึก ไม่แจ้งซ้ำ
+     จำในเครื่อง (ต่อคำสั่ง) เฉพาะ "เลขย่อของเนื้อหา" (ไม่เก็บตัวข้อความ) + เลขคำขอ · อายุ 24 ชม.
+     สำเร็จแล้วล้างทิ้ง ⇒ ครั้งถัดไปได้เลขใหม่ · เปลี่ยนเนื้อหา = เลขใหม่เอง · เครื่องที่เก็บค่าไม่ได้ = จำในหน้านี้อย่างเดียว */
+  var ก3_จำในหน้า_ = {};
+  function ก3_ย่อ_(s) {
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return s.length + '-' + h.toString(16);
+  }
+  function ก3_สุ่ม_() {
+    var ab = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', s = '', a = null;
+    try { a = new Uint32Array(24); crypto.getRandomValues(a); } catch (e) { a = null; }
+    for (var i = 0; i < 24; i++) s += ab.charAt((a ? a[i] : Math.floor(Math.random() * 4294967296)) % ab.length);
+    return s;
+  }
+  function ก3_อ่าน_(k) {
+    try { var v = localStorage.getItem(k); if (v) return JSON.parse(v); } catch (e) {}
+    return ก3_จำในหน้า_[k] || null;
+  }
+  function ก3_เขียน_(k, v) {
+    ก3_จำในหน้า_[k] = v;
+    try { if (v) localStorage.setItem(k, JSON.stringify(v)); else localStorage.removeItem(k); } catch (e) {}
+  }
+  function ก3_เลขคำขอ_(คำสั่ง, เนื้อหา) {
+    var k = 'ก3:' + คำสั่ง, f = ก3_ย่อ_(JSON.stringify(เนื้อหา)), เดิม = ก3_อ่าน_(k);
+    if (เดิม && เดิม.f === f && เดิม.r && (Date.now() - (เดิม.t || 0)) < 86400000) return เดิม.r;
+    var r = ก3_สุ่ม_();
+    ก3_เขียน_(k, { f: f, r: r, t: Date.now() });
+    return r;
+  }
+  function ก3_ล้าง_(คำสั่ง) { ก3_เขียน_('ก3:' + คำสั่ง, null); }
+  /* คำตอบสำเร็จจริงของ 3 คำสั่งนี้ (เซิร์ฟเวอร์รอบ 50) มีช่อง ref เสมอ · ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ = ยังไม่ทราบผล */
+  function ก3_สำเร็จจริง_(j) { return !!(j && j.ok === true && typeof j.ref === 'string'); }
 
   main();
 </script>
