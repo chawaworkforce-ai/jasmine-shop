@@ -262,6 +262,10 @@ function โปรไฟล์เร็ว_() {
         return res.text().then(function (txt) {
           var j = null, ดี = false;
           try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          /* รอบ 50 (ทางส่งเพี้ยนของ Google · ผลยิง /exec 24 ก.ย. 8/112): บางครั้งได้คำตอบของ doGet
+             ({ok:true,msg:'Jasmine Ops API'}) แทนผลของคำสั่ง ⇒ ไม่ใช่ผลของคำสั่งนี้ นับเหมือนคำตอบไม่ใช่ JSON
+             คำสั่งอ่าน = ลองใหม่ 1 ครั้งตามเดิม · คำสั่งเขียน = จอ "ยังไม่รู้ผล" ไม่ยิงซ้ำเอง */
+          if (ดี && j && j.msg === 'Jasmine Ops API') { ดี = false; j = null; }
           return { res: res, txt: txt, j: j, ดี: ดี };
         }, function () {
           return { res: res, txt: '', j: null, ดี: false };
@@ -354,22 +358,73 @@ function โปรไฟล์เร็ว_() {
     if(!n){ alert("ยังไม่มีผู้รับ (เลือกไซต์ หรือยังไม่มีน้องจับคู่)"); return; }
     if(!confirm("ส่งประกาศถึง "+n+" คน?\n\n"+text)) return;
     const btn=document.getElementById('send'); btn.disabled=true; btn.textContent="กำลังส่ง…";
+    const ปลายทาง = all?'all':Object.keys(picked).filter(k=>picked[k]);
+    /* ก3 รอบ 50: เนื้อเดิม + ปลายทางเดิม = เลขคำขอเดิม (ครั้งก่อนยังไม่ทราบผล กดใหม่/เปิดหน้าใหม่ก็ไม่ส่งซ้ำ) */
+    const เลขคำขอ = ก3_เลขคำขอ_('announce', { sites: ปลายทาง, text: text });
     try{
       const res = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({
-        action:"announce", userId:userId, sites: all?'all':Object.keys(picked).filter(k=>picked[k]), text:text
+        action:"announce", userId:userId, sites: ปลายทาง, text:text, req_id: เลขคำขอ
       })})).json();
-      if(!res.ok){ alert("ไม่สำเร็จ: "+res.error); btn.disabled=false; btn.textContent="ส่งประกาศ"; return; }
-      document.getElementById('wrap').innerHTML='<div class="done"><div class="c">✅</div><p>ส่งแล้ว '+res.sent+' คน</p>'
+      if(!res.ok){
+        if (res.error === 'REQ_ID_REUSED') ก3_ล้าง_('announce');
+        const ข้อความผิด = { BUSY: "ระบบกำลังทำงานอื่นอยู่ ลองกดส่งอีกครั้งในอีกสักครู่", REQ_ID_REUSED: "ข้อความเปลี่ยนจากครั้งก่อน กดส่งอีกครั้งเพื่อส่งเป็นประกาศใหม่" };
+        alert("ไม่สำเร็จ: "+(ข้อความผิด[res.error]||res.error)); btn.disabled=false; btn.textContent="ส่งประกาศ"; return;
+      }
+      /* ok:true แต่ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ ⇒ ยังไม่ทราบผล (คงเลขคำขอไว้ ปุ่มคงปิด) */
+      if(!ก3_สำเร็จจริง_(res)){ btn.textContent = "ยังไม่ทราบผล — อย่ากดส่งซ้ำ"; return; }
+      const ผลส่ง = res['ส่งถึงน้อง'];
+      /* รู้ผลแน่แล้ว (ส่งถึง / LINE ปฏิเสธ / ทางเดิมไม่มีตัวกันซ้ำ) = ล้างเลข · ยังไม่ทราบผลการส่ง = เก็บเลขไว้กันส่งซ้ำ */
+      if (ผลส่ง === 'OK' || ผลส่ง === 'FAIL' || !ผลส่ง) ก3_ล้าง_('announce');
+      const อ้างอิง = res.ref ? '<br><span style="font-size:13px;color:#667">เลขอ้างอิง '+esc(res.ref)+'</span>' : '';
+      let ผลจอ;
+      if (res['ซ้ำคำขอ']) ผลจอ = '<div class="c">✅</div><p>ประกาศนี้ส่งไปแล้วก่อนหน้านี้ — ระบบไม่ส่งซ้ำ'+อ้างอิง+'</p>';
+      else if (ผลส่ง === 'FAIL') ผลจอ = '<div class="c">⚠️</div><p>บันทึกแล้ว แต่ LINE ไม่รับการส่ง — แจ้งผู้ดูแล'+อ้างอิง+'</p>';
+      else if (ผลส่ง && ผลส่ง !== 'OK') ผลจอ = '<div class="c">⚠️</div><p>บันทึกแล้ว แต่ยังไม่ทราบผลการส่งถึงน้อง — แจ้งผู้ดูแลตรวจ อย่าส่งซ้ำ'+อ้างอิง+'</p>';
+      else ผลจอ = '<div class="c">✅</div><p>ส่งแล้ว '+res.sent+' คน'+อ้างอิง+'</p>';
+      document.getElementById('wrap').innerHTML='<div class="done">'+ผลจอ
         + '<button class="btn" onclick="location.reload()">ส่งอีกประกาศ</button></div>';
     }catch(e){
       /* 🔴 ก2 · 24 ก.ย. 2026 — หมดเวลา หรือคำตอบไม่ใช่ JSON: ตัวห่อ D1 ขึ้นจอ "ยังไม่ทราบผล" ไปแล้ว
-         เดิม: ขึ้นกล่อง "ผิดพลาด: …" ซ้อนทับ + เปิดปุ่มให้กดส่งใหม่ ⇒ คนเข้าใจว่าไม่ได้ส่ง แล้วกดซ้ำ
-               (คำสั่ง announce ยังไม่มีตัวกันซ้ำฝั่งเซิร์ฟเวอร์ ⇒ กดซ้ำ = ประกาศถึงน้องซ้ำ)
-         ใหม่: มีจอนั้นอยู่ = เหลือข้อความเดียว · ปุ่มคงปิดไว้และบอกว่ายังไม่ทราบผล · กรณีอื่นทำเหมือนเดิมทุกอย่าง */
+         ใหม่: มีจอนั้นอยู่ = เหลือข้อความเดียว · ปุ่มคงปิดไว้และบอกว่ายังไม่ทราบผล
+         ก3 รอบ 50: เลขคำขอยังเก็บไว้ ⇒ ถ้าเปิดหน้าใหม่แล้วส่งเนื้อเดิม เซิร์ฟเวอร์คืนผลเดิม ไม่ส่งถึงน้องซ้ำ */
       if (document.getElementById('_d1จอ')) { btn.textContent = "ยังไม่ทราบผล — อย่ากดส่งซ้ำ"; return; }
       alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="ส่งประกาศ";
     }
   }
+  /* ── ก3 รอบ 50 (24 ก.ย. 2026): เลขคำขอกันส่งซ้ำ ──
+     ผลครั้งก่อนยังไม่ทราบ (หมดเวลา / คำตอบเพี้ยน) แล้วกดส่งเนื้อเดิมอีกครั้ง = ใช้เลขเดิม ⇒ เซิร์ฟเวอร์คืนผลเดิม ไม่บันทึก ไม่แจ้งซ้ำ
+     จำในเครื่อง (ต่อคำสั่ง) เฉพาะ "เลขย่อของเนื้อหา" (ไม่เก็บตัวข้อความ) + เลขคำขอ · อายุ 24 ชม.
+     สำเร็จแล้วล้างทิ้ง ⇒ ครั้งถัดไปได้เลขใหม่ · เปลี่ยนเนื้อหา = เลขใหม่เอง · เครื่องที่เก็บค่าไม่ได้ = จำในหน้านี้อย่างเดียว */
+  var ก3_จำในหน้า_ = {};
+  function ก3_ย่อ_(s) {
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return s.length + '-' + h.toString(16);
+  }
+  function ก3_สุ่ม_() {
+    var ab = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', s = '', a = null;
+    try { a = new Uint32Array(24); crypto.getRandomValues(a); } catch (e) { a = null; }
+    for (var i = 0; i < 24; i++) s += ab.charAt((a ? a[i] : Math.floor(Math.random() * 4294967296)) % ab.length);
+    return s;
+  }
+  function ก3_อ่าน_(k) {
+    try { var v = localStorage.getItem(k); if (v) return JSON.parse(v); } catch (e) {}
+    return ก3_จำในหน้า_[k] || null;
+  }
+  function ก3_เขียน_(k, v) {
+    ก3_จำในหน้า_[k] = v;
+    try { if (v) localStorage.setItem(k, JSON.stringify(v)); else localStorage.removeItem(k); } catch (e) {}
+  }
+  function ก3_เลขคำขอ_(คำสั่ง, เนื้อหา) {
+    var k = 'ก3:' + คำสั่ง, f = ก3_ย่อ_(JSON.stringify(เนื้อหา)), เดิม = ก3_อ่าน_(k);
+    if (เดิม && เดิม.f === f && เดิม.r && (Date.now() - (เดิม.t || 0)) < 86400000) return เดิม.r;
+    var r = ก3_สุ่ม_();
+    ก3_เขียน_(k, { f: f, r: r, t: Date.now() });
+    return r;
+  }
+  function ก3_ล้าง_(คำสั่ง) { ก3_เขียน_('ก3:' + คำสั่ง, null); }
+  /* คำตอบสำเร็จจริงของ 3 คำสั่งนี้ (เซิร์ฟเวอร์รอบ 50) มีช่อง ref เสมอ · ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ = ยังไม่ทราบผล */
+  function ก3_สำเร็จจริง_(j) { return !!(j && j.ok === true && typeof j.ref === 'string'); }
 
   main();
 </script>
