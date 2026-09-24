@@ -334,7 +334,7 @@ function โปรไฟล์เร็ว_() {
     let h='<div class="card"><h3>ส่งถึงใคร</h3>'
       + '<div class="all '+(all?'on':'')+'" onclick="toggleAll()"><span>'+(all?'☑':'☐')+'</span> น้องทุกคน (จับคู่แล้ว '+T.total+' คน)</div>'
       + '<div class="sites '+(all?'dim':'')+'" id="sites">'
-      + T.sites.map(s=>'<div class="site '+(picked[s.site]?'on':'')+'" onclick="toggleSite(\''+esc(s.site).replace(/'/g,"\\'")+'\')">'+esc(s.site)+' <span class="c">'+s.count+'</span></div>').join('')
+      + T.sites.map(s=>'<div class="site '+(picked[s.site]?'on':'')+'" onclick="toggleSite(\''+esc(s.site).replace(/'/g,"\\'")+'\')">'+esc(s.label||s.site)+' <span class="c">'+s.count+'</span></div>').join('')
       + '</div>'+ (T.sites.length?'':'<div class="note">ยังไม่มีน้องที่จับคู่ LINE — ต้องจับคู่ก่อนถึงส่งได้</div>') +'</div>';
     h+='<div class="card"><h3>ข้อความ</h3>'
       + '<div class="chips">'+PRESETS.map((p,i)=>'<button class="chip" onclick="usePreset('+i+')">'+esc(p[0])+'</button>').join('')+'</div>'
@@ -388,7 +388,7 @@ function โปรไฟล์เร็ว_() {
          ใหม่: มีจอนั้นอยู่ = เหลือข้อความเดียว · ปุ่มคงปิดไว้และบอกว่ายังไม่ทราบผล
          ก3 รอบ 50: เลขคำขอยังเก็บไว้ ⇒ ถ้าเปิดหน้าใหม่แล้วส่งเนื้อเดิม เซิร์ฟเวอร์คืนผลเดิม ไม่ส่งถึงน้องซ้ำ */
       if (document.getElementById('_d1จอ')) { btn.textContent = "ยังไม่ทราบผล — อย่ากดส่งซ้ำ"; return; }
-      alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="ส่งประกาศ";
+      try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("ส่งไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); btn.disabled=false; btn.textContent="ส่งประกาศ";
     }
   }
   /* ── ก3 รอบ 50 (24 ก.ย. 2026): เลขคำขอกันส่งซ้ำ ──
