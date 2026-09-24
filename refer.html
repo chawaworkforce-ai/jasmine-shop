@@ -421,7 +421,7 @@ function โปรไฟล์เร็ว_() {
     }catch(e){
       /* ก3 รอบ 50 (แบบ ก2): ตัวห่อ D1 ขึ้นจอ "ยังไม่รู้ผล" แล้ว = ไม่เด้งกล่องซ้อน · เลขคำขอยังเก็บไว้ */
       if (document.getElementById('_d1จอ')) { btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
-      alert("Error: "+(e.message||e)); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
+      try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("Error — please try again / กรุณาลองใหม่อีกครั้ง"); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
   }
 
   async function sendBroker(){
@@ -446,7 +446,7 @@ function โปรไฟล์เร็ว_() {
     }catch(e){
       /* ก3 รอบ 50 (แบบ ก2): ตัวห่อ D1 ขึ้นจอ "ยังไม่รู้ผล" แล้ว = ไม่เด้งกล่องซ้อน · เลขคำขอยังเก็บไว้ */
       if (document.getElementById('_d1จอ')) { btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
-      alert("Error: "+(e.message||e)); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
+      try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("Error — please try again / กรุณาลองใหม่อีกครั้ง"); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
   }
 
   function done(){
