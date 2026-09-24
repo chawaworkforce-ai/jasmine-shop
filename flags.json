@@ -12,5 +12,7 @@
   "kpi": "on",
   "support": "on",
   "cases": "on",
-  "announce-customer": "on"
+  "announce-customer": "on",
+  "buy-my": "on",
+  "buy-admin": "on"
 }
