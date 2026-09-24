@@ -438,6 +438,10 @@
         return res.text().then(function (txt) {
           var j = null, ดี = false;
           try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          /* รอบ 50 (ทางส่งเพี้ยนของ Google · ผลยิง /exec 24 ก.ย. 8/112): บางครั้งได้คำตอบของ doGet
+             ({ok:true,msg:'Jasmine Ops API'}) แทนผลของคำสั่ง ⇒ ไม่ใช่ผลของคำสั่งนี้ นับเหมือนคำตอบไม่ใช่ JSON
+             คำสั่งอ่าน = ลองใหม่ 1 ครั้งตามเดิม · คำสั่งเขียน = จอ "ยังไม่รู้ผล" ไม่ยิงซ้ำเอง */
+          if (ดี && j && j.msg === 'Jasmine Ops API') { ดี = false; j = null; }
           return { res: res, txt: txt, j: j, ดี: ดี };
         }, function () {
           return { res: res, txt: '', j: null, ดี: false };
