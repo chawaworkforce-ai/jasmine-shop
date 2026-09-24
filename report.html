@@ -293,6 +293,10 @@ function โปรไฟล์เร็ว_() {
         return res.text().then(function (txt) {
           var j = null, ดี = false;
           try { j = JSON.parse(txt); ดี = true; } catch (e) {}
+          /* รอบ 50 (ทางส่งเพี้ยนของ Google · ผลยิง /exec 24 ก.ย. 8/112): บางครั้งได้คำตอบของ doGet
+             ({ok:true,msg:'Jasmine Ops API'}) แทนผลของคำสั่ง ⇒ ไม่ใช่ผลของคำสั่งนี้ นับเหมือนคำตอบไม่ใช่ JSON
+             คำสั่งอ่าน = ลองใหม่ 1 ครั้งตามเดิม · คำสั่งเขียน = จอ "ยังไม่รู้ผล" ไม่ยิงซ้ำเอง */
+          if (ดี && j && j.msg === 'Jasmine Ops API') { ดี = false; j = null; }
           return { res: res, txt: txt, j: j, ดี: ดี };
         }, function () {
           return { res: res, txt: '', j: null, ดี: false };
@@ -344,6 +348,35 @@ function โปรไฟล์เร็ว_() {
   function showError(t){ setStatus("⚠️ "+t); }
   function initials(name){ const p=String(name||'').trim().split(/\s+/); return ((p[0]||'')[0]||'')+((p[1]||'')[0]||''); }
 
+  /* ── ก4 รอบ 50 (24 ก.ย. 2026): รูปน้องผ่านเส้น photos (มติผู้วางแผนรอบ 49 ก4) ──
+     เดิมวาด photo_url จากทะเบียน = ที่อยู่ไดรฟ์ที่เปิดไม่ได้ ⇒ รูปแตก · ใหม่: ขอรูปจากเซิร์ฟเวอร์ด้วยรหัสคน (card_id)
+     เซิร์ฟเวอร์ตรวจสิทธิ์ไซต์เอง (น้องไซต์อื่น = UNAVAILABLE) · จับรูปด้วย card_id ไม่ใช้ลำดับแถว · ไม่แก้ที่อยู่รูปเก่าในทะเบียน
+     ยิงตรงไม่ผ่านตัวห่อ D1 (เติม ?p=photos ท้ายที่อยู่) เพราะรูปโหลดไม่ขึ้นต้องไม่ขึ้นจอเต็มทับรายชื่อ · พลาดทุกกรณี = คงตัวย่อชื่อไว้ */
+  function รูป_กันแท็ก_(s){ return String(s==null?'':s).replace(/[<>&"']/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function โหลดรูปน้อง_(workers){
+    try{
+      const ids = (workers||[]).map(function(w){ return String(w.card_id||''); }).filter(function(x){ return /^[0-9a-f]{24}$/i.test(x); }).slice(0, 200);
+      if(!ids.length) return;
+      let ตั๋ว = null; try { ตั๋ว = liff.getIDToken(); } catch(e) {}
+      if(!ตั๋ว) return;
+      fetch(API_URL + '?p=photos', { method:"POST", body: JSON.stringify({ action:"photos", card_ids: ids, idToken: ตั๋ว }) })
+        .then(function(r){ return r.text(); })
+        .then(function(txt){
+          let j = null; try { j = JSON.parse(txt); } catch(e) { return; }
+          if(!j || j.ok !== true || !Array.isArray(j.photos)) return;
+          j.photos.forEach(function(p){
+            if(!p || p['สถานะ'] !== 'OK' || !p.url || !/^https:\/\//.test(String(p.url))) return;
+            const กล่อง = document.querySelector('.ava[data-card="'+String(p.card_id).toLowerCase()+'"]');
+            if(!กล่อง) return;
+            const img = document.createElement('img'); img.alt = '';
+            img.onerror = function(){ if(img.parentNode) img.parentNode.removeChild(img); กล่อง.textContent = กล่อง.getAttribute('data-ini') || ''; };
+            img.src = String(p.url);
+            กล่อง.textContent = ''; กล่อง.appendChild(img);
+          });
+        })['catch'](function(){});
+    }catch(e){}
+  }
+
   async function main(){
     try{
       await liff.init({ liffId: LIFF_ID });
@@ -370,17 +403,17 @@ function โปรไฟล์เร็ว_() {
     const g = document.getElementById('grid');
     g.style.display='grid';
     g.innerHTML = workers.map(function(w){
-      const ava = w.photo_url
-        ? '<img src="'+w.photo_url+'" alt="">'
-        : initials(w.name);
+      /* ก4 รอบ 50: ไม่วาด photo_url (รูปแตก) · เริ่มที่ตัวย่อชื่อ แล้วรูปจากเส้น photos มาแทนตาม card_id */
+      const ava = รูป_กันแท็ก_(initials(w.name));
       return '<div class="wcard" onclick=\'openOv('+JSON.stringify(w).replace(/'/g,"&#39;")+')\'>'
-           +   '<div class="ava">'+ava+'</div>'
+           +   '<div class="ava" data-card="'+รูป_กันแท็ก_(String(w.card_id||'').toLowerCase())+'" data-ini="'+ava+'">'+ava+'</div>'
            +   '<div class="wbody">'
            +     '<div class="wname">'+w.name+'</div>'
            +     '<div class="wsite">'+w.site+'</div>'
            +   '</div>'
            + '</div>';
     }).join('');
+    โหลดรูปน้อง_(workers);   /* ก4 รอบ 50 */
   }
 
   function openOv(w){
@@ -451,6 +484,9 @@ function โปรไฟล์เร็ว_() {
         if (data.error !== 'AUTH_REQUIRED') alert(data.message || "ส่งไม่สำเร็จ กรุณาลองใหม่");
         btn.disabled=false; btn.textContent="ส่งรายงาน"; return;
       }
+      /* รอบ 50 (เกณฑ์ทางส่งเพี้ยน): ok แต่ไม่มีเลขอ้างอิง/สถานะแจ้งทีมจากเซิร์ฟเวอร์ = ไม่ใช่คำตอบของคำสั่งนี้ ⇒ ยังไม่ทราบผล
+         ไม่ขึ้นจอส่งแล้ว · กดใหม่ = เซิร์ฟเวอร์กันซ้ำรายวันจากเนื้องานอยู่แล้ว (ก้อน A) */
+      if(data.ref === undefined && data['แจ้งทีม'] === undefined){ btn.disabled=false; btn.textContent="ส่งรายงาน"; return; }
       document.querySelector('.sheet').innerHTML =
         /* 🔴 ของเดิมเขียนว่า "แอดมินได้รับแจ้งเตือนแล้ว" ทั้งที่ตอนนั้นยังไม่รู้ผลการส่ง
            ตอนนี้เซิร์ฟเวอร์คืนสถานะการแจ้งทีมมาจริง ⇒ พูดตามที่รู้
