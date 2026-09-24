@@ -25,7 +25,7 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Jasmine Shop</title>
+<title>Jasmine · Buy for Me</title>
 <style>
   :root{
     --bg:#f6f5f0; --card:#ffffff; --ink:#23291f; --muted:#7c8473;
@@ -93,6 +93,15 @@
   .success .again{margin-top:14px;border:0;background:var(--brand);color:#fff;
     border-radius:12px;padding:12px 24px;font-weight:700;cursor:pointer}
   .note{font-size:12px;color:var(--muted);margin-top:8px}
+  /* ฝากซื้อเฟส 1 (23 ก.ย. 2026) — แถบบอกรอบส่ง + เพดานชิ้น */
+  .buyinfo{margin:0 16px 4px;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid var(--line);
+    font-size:13px;line-height:1.6;color:var(--ink);display:none}
+  .buyinfo b{color:var(--brand-d)}
+  .buyinfo .lim{color:var(--muted)}
+  .buyinfo .lim.hit{color:var(--danger);font-weight:700}
+  .success .dates{font-size:14px;margin:8px 0;line-height:1.7}
+  .success .mine{margin-top:10px;border:1px solid var(--brand);background:#fff;color:var(--brand-d);
+    border-radius:12px;padding:11px 20px;font-weight:700;cursor:pointer;display:block;width:100%}
   #debug{margin:16px;padding:10px;border-radius:10px;background:#1f241b;color:#9fe39f;
     font:12px/1.5 monospace;white-space:pre-wrap;display:none}
 
@@ -112,7 +121,7 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
 </script>
 
   <header>
-    <div class="brand"><span class="dot">🌼</span><span>Jasmine Shop</span></div>
+    <div class="brand"><span class="dot">🌼</span><span id="brandName">Jasmine · Buy for Me</span></div>
     <div class="lang">
       <button data-lang="my" class="on">မြန်မာ</button>
       <button data-lang="en">EN</button>
@@ -121,6 +130,13 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
 
   <div class="userbar" id="userbar" style="display:none">
     <img id="uPic" alt=""><span id="uName"></span>
+  </div>
+
+  <div class="buyinfo" id="buyinfo">
+    <div id="biWhen"></div>
+    <div id="biDate"></div>
+    <div id="biCancel"></div>
+    <div class="lim" id="biLimit"></div>
   </div>
 
   <div class="errbox" id="errbox"></div>
@@ -137,8 +153,10 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
     <h2 id="okTitle"></h2>
     <div class="oid" id="okId"></div>
     <ul id="okItems"></ul>
+    <div class="dates" id="okDates"></div>
     <div id="okNote" class="note"></div>
     <button class="again" id="againBtn"></button>
+    <button class="mine" id="mineBtn"></button>
   </div>
 
   <div class="cartbar" id="cartbar">
@@ -168,19 +186,35 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
           left:'ကျန်',outOfStock:'ကုန်သွားပြီ',
           sent:'အော်ဒါအချက်အလက်ကို LINE chat သို့ ပို့ပြီးပါပြီ',
           notSent:'အော်ဒါ သိမ်းပြီးပါပြီ။ ဆိုင်မှ လက်ခံရရှိပါပြီ။',
-          loginNeed:'LINE login သို့ ပြန်ညွှန်းနေသည်...'},
+          loginNeed:'LINE login သို့ ပြန်ညွှန်းနေသည်...',
+          /* ฝากซื้อเฟส 1 — รอล่าม (ไฟล์ 40 A1-6 ฉบับแก้ + ไฟล์ 41 · F-25 จากไฟล์ 40) ว่าง = ใช้อังกฤษแทน */
+          brand:'', k1_1:'', k1_2:'', k1_3:'', k1_4:'', k1_5:'', k1_6:'', k1_7:'', k1_8:'', f25:''},
       en:{open:'Opening shop...',loadErr:'Failed to load products',empty:'No products yet',
           add:'Add',confirm:'Confirm order',items:'items',baht:'฿',sending:'Saving...',
           okTitle:'Order placed',orderNo:'Order No.',again:'Order more',
           left:'left',outOfStock:'Out of stock',
           sent:'Order summary sent to your LINE chat',
           notSent:'Order saved. The shop has received it.',
-          loginNeed:'Redirecting to LINE login...'}
+          loginNeed:'Redirecting to LINE login...',
+          brand:'Jasmine · Buy for Me',
+          k1_1:'Items will be delivered on the next payday visit',
+          k1_2:'Delivery date: {date}',
+          k1_3:'You can cancel until {date}',
+          k1_4:'Up to {n} items per order',
+          k1_5:'This service is not open for your site yet',
+          k1_6:'Your account cannot use this service right now. Please call the team.',
+          k1_7:'View my orders',
+          k1_8:'No reply yet. Please check "My orders" before ordering again.',
+          f25:'Your account is not linked yet. Please call the team.'}
     };
 
     var lang='my', products=[], cart={}, profile=null;
+    var buy=null;          /* ฝากซื้อเฟส 1: {max_items, round, cancel_until} จากหลังบ้าน */
+    var reqId=null;        /* เลขคำขอของตะกร้านี้ — ส่งซ้ำหลังเน็ตหลุด หลังบ้านคืนออเดอร์เดิม ไม่สร้างซ้ำ */
     function $(id){ return document.getElementById(id); }
-    function t(k){ return (I18N[lang] && I18N[lang][k]) || I18N.my[k] || k; }
+    function t(k){ return (I18N[lang] && I18N[lang][k]) || I18N.my[k] || I18N.en[k] || k; }   /* ฝากซื้อเฟส 1: พม่ายังไม่มา → อังกฤษ */
+    function tv(k,v){ var s=t(k); Object.keys(v||{}).forEach(function(n){ s=s.split('{'+n+'}').join(String(v[n])); }); return s; }
+    function วันเลข(s){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(s||'')); return m ? Number(m[3])+'/'+Number(m[2])+'/'+m[1] : String(s||''); }
     function dbg(m){ if(!DEBUG) return; var b=$('debug'); b.style.display='block'; b.textContent+=m+'\n'; }
 
     function showError(msg){
@@ -262,16 +296,41 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
         });
     }
 
-    function loadProducts(){
+    /* 🔴 ก8 (มติผู้วางแผนรอบ 49 · 24 ก.ย. 2026) — เปิดหน้าครั้งแรกเคยขึ้น "Unexpected token '<'" เพราะ Google ตอบหน้า HTML แทน JSON
+       ของใหม่: คำสั่งอ่าน (โหลดสินค้า) ลองใหม่อัตโนมัติ 1 ครั้ง เฉพาะตอนยิงไม่ออกหรือคำตอบไม่ใช่ JSON
+       · คำตอบ JSON ที่บอกว่าไม่สำเร็จ = คำตอบจริง ไม่ลองซ้ำ · คำสั่งสั่งซื้อไม่ลองซ้ำเอง (น้องกดใหม่ = ใช้เลขคำขอเดิม) */
+    function loadProducts(){ อ่านสินค้า_(1); }
+    function อ่านสินค้า_(ครั้ง){
       fetch(API_URL + '?action=products')
-        .then(function(r){ return r.json(); })
+        .then(function(r){ return r.text(); })
+        .then(function(txt){ try { return JSON.parse(txt); } catch(e){ return { __ไม่ใช่JSON: true }; } },
+              function(){ return { __ยิงไม่ออก: true }; })
         .then(function(res){
+          if(res.__ไม่ใช่JSON || res.__ยิงไม่ออก){
+            if(ครั้ง < 2){ dbg('products retry'); setTimeout(function(){ อ่านสินค้า_(ครั้ง + 1); }, 1200); return; }
+            showError(t('loadErr')); return;
+          }
           if(!res || !res.ok){ showError(t('loadErr')+' : '+(res && res.error)); return; }
           products = res.products || [];
+          buy = res.buy || null;
           $('loading').style.display='none';
+          renderBuyInfo();
           renderGrid();
         })
-        .catch(function(err){ showError(t('loadErr')+' : '+err); });
+        .catch(function(err){ showError(t('loadErr')+' : '+err); });   /* พังตอนวาดหน้า (ไม่ใช่เรื่องเน็ต) = ไม่ลองซ้ำ บอกตรง ๆ แบบเดิม */
+    }
+
+    /* ฝากซื้อเฟส 1 — แถบบอกวันส่งของ/ยกเลิกได้ถึง/เพดานชิ้น (ค่าจริงคิดที่หลังบ้าน) */
+    function renderBuyInfo(){
+      var box=$('buyinfo');
+      if(!buy){ box.style.display='none'; return; }
+      $('biWhen').textContent = t('k1_1');
+      $('biDate').textContent = tv('k1_2',{date:วันเลข(buy.round)});
+      $('biCancel').textContent = tv('k1_3',{date:วันเลข(buy.cancel_until)});
+      var lim=$('biLimit'); lim.textContent = tv('k1_4',{n:buy.max_items});
+      lim.className = 'lim' + (cartSummary().count>=buy.max_items ? ' hit' : '');
+      $('brandName').textContent = t('brand');
+      box.style.display='block';
     }
 
     function renderGrid(){
@@ -322,11 +381,17 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
     function setQty(id,q){
       var p=prodById(id);
       var max=(p && p.stock!==null && p.stock!==undefined)?p.stock:Infinity;
+      if(buy && buy.max_items){                                    /* ฝากซื้อเฟส 1: เพดานชิ้นรวมทั้งตะกร้า */
+        var อื่น=cartSummary().count-(cart[id]||0);
+        max=Math.min(max, Math.max(0, buy.max_items-อื่น));
+      }
       q=Math.max(0,Math.min(q,max));
       if(q===0) delete cart[id]; else cart[id]=q;
+      reqId=null;                                                  /* ตะกร้าเปลี่ยน = คำขอใหม่ */
       var el=document.querySelector('.stepper[data-id="'+cssEsc(id)+'"]');
       if(el && p) renderStepper(el,p);
       updateCartBar();
+      renderBuyInfo();
     }
 
     function cartSummary(){
@@ -356,17 +421,43 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
       var tk = null;
       try { tk = liff.getIDToken(); } catch(e) {}
       if(!tk){ showError('Please open the shop from the LINE menu'); btn.disabled=false; btn.textContent=t('confirm'); return; }
-      fetch(API_URL, { method:'POST', body: JSON.stringify({ idToken:tk, profile:profile, items:items }) })
+      /* ฝากซื้อเฟส 1: เลขคำขอ + เพดานรอ 20 วินาที · ไม่ยิงซ้ำเอง
+         เน็ตหลุดแล้วน้องกดใหม่ = เลขคำขอเดิม ⇒ หลังบ้านคืนออเดอร์เดิม ไม่ได้ของ 2 เท่า */
+      if(!reqId){ reqId = 'w-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10); }
+      var ตัด = window.AbortController ? new AbortController() : null;
+      var นาฬิกา = ตัด ? setTimeout(function(){ ตัด.abort(); }, 20000) : null;
+      $('errbox').style.display='none';
+      fetch(API_URL, { method:'POST', body: JSON.stringify({ idToken:tk, profile:profile, items:items, action:'place_order', req_id:reqId }),
+                       signal: ตัด ? ตัด.signal : undefined })
         .then(function(r){ return r.json(); })
         .then(function(res){
+          if(นาฬิกา) clearTimeout(นาฬิกา);
           btn.disabled=false; btn.textContent=t('confirm');
-          if(!res || !res.ok){ showError('Cannot save order: '+(res && res.error)); return; }
+          if(!res || !res.ok){ showOrderError(res); return; }
+          /* รอบ 50 (ทดสอบผ่าน /exec 24 ก.ย.): บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลการสั่ง
+             ⇒ ไม่มีเลขออร์เดอร์ = ยังไม่ทราบผล · ห้ามขึ้นจอสำเร็จ ห้ามล้างตะกร้า · เก็บเลขคำขอเดิม (กดใหม่ = ได้ออร์เดอร์เดิม ไม่ซ้ำ) */
+          if(typeof res.orderId !== 'string' || !res.orderId || !Array.isArray(res.items)){ showError(t('k1_8')); return; }
           onOrderSuccess(res);
         })
         .catch(function(err){
+          if(นาฬิกา) clearTimeout(นาฬิกา);
           btn.disabled=false; btn.textContent=t('confirm');
-          showError('Cannot save order: '+err);
+          showError(t('k1_8'));                                    /* ไม่รู้ผล — ให้ดูรายการก่อน กดซ้ำได้อย่างปลอดภัย */
         });
+    }
+
+    /* ฝากซื้อเฟส 1 — แปลรหัสจากหลังบ้านเป็นข้อความที่น้องอ่านได้ */
+    function showOrderError(res){
+      var e = String((res && res.error) || '');
+      if(e==='NOT_REGISTERED') return showError(t('f25'));
+      if(e==='NOT_ALLOWED' || e==='DUPLICATE_LINK') return showError(t('k1_6'));
+      if(e==='SITE_NOT_OPEN') return showError(t('k1_5'));
+      if(e==='TOO_MANY_ITEMS') return showError(tv('k1_4',{n:(res.max_items || (buy && buy.max_items) || 5)}));
+      if(e.indexOf('NOT_ENOUGH_STOCK')===0 || e.indexOf('PRODUCT_ON_HOLD')===0){ showError(t('outOfStock')); loadProducts(); return; }   /* รอบ 50: สินค้าที่พักตรวจยอด = ชั่วคราวสั่งไม่ได้ */
+      if(e==='SERVICE_NOT_OPEN') return showError(t('k1_5'));                     /* รอบ 50: ยังไม่เปิดบริการ (รอฝั่งเงินเดือนพร้อม) */
+      if(e==='ORDER_NOT_SETTLED' || e==='ORDER_ON_HOLD') return showError(t('k1_8'));   /* รอบ 50: บันทึกแล้วแต่ยังไม่เสร็จ = ยังไม่ทราบผล · เลขคำขอเดิมยังเก็บไว้ */
+      if(e==='NO_TICKET' || e==='BAD_TICKET') return showError('Please open the shop from the LINE menu');
+      showError('Cannot save order: '+e);
     }
 
     function onOrderSuccess(res){
@@ -375,8 +466,12 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
       $('cartbar').classList.remove('show');
       $('okTitle').textContent=t('okTitle');
       $('okId').textContent=t('orderNo')+' : '+res.orderId;
+      reqId=null;                                                  /* สั่งสำเร็จ = ตะกร้าใหม่ใช้เลขใหม่ */
+      $('okDates').textContent = res.round ? (tv('k1_2',{date:วันเลข(res.round)}) + '\n' + tv('k1_3',{date:วันเลข(res.cancel_until)})) : '';
+      $('okDates').style.whiteSpace='pre-line';
+      $('mineBtn').textContent=t('k1_7');
       var ul=$('okItems'); ul.innerHTML='';
-      var lines=['🌼 Jasmine Shop', t('orderNo')+' '+res.orderId];
+      var lines=['🌼 Jasmine', t('orderNo')+' '+res.orderId];
       res.items.forEach(function(it){
         var li=document.createElement('li');
         li.innerHTML='<span>'+escHtml(it.name)+' x'+it.qty+'</span><span>'+it.subtotal+' '+t('baht')+'</span>';
@@ -405,8 +500,8 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
           lang=b.getAttribute('data-lang');
           btns.forEach(function(x){ x.classList.remove('on'); });
           b.classList.add('on');
-          renderGrid(); updateCartBar();
-          $('againBtn').textContent=t('again');
+          renderGrid(); updateCartBar(); renderBuyInfo();
+          $('againBtn').textContent=t('again'); $('mineBtn').textContent=t('k1_7');
         };
       });
       $('confirmBtn').onclick=confirmOrder;
@@ -416,6 +511,7 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
         $('okNote').textContent='';
         window.scrollTo(0,0);
       };
+      $('mineBtn').onclick=function(){ location.href='buy-my.html'; };   /* ฝากซื้อเฟส 1: รายการฝากซื้อของฉัน */
       $('againBtn').textContent=t('again');
     }
 
