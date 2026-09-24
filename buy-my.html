@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>
+/* สวิตช์ปิดหน้า (S4-4) — ปิดหน้านี้ได้ด้วย flags.json ช่อง "buy-my": "off" · อ่านไม่ได้ = เปิดตามปกติ */
+(function () {
+  try {
+    if (!window.fetch || !window.AbortController) return;
+    var ชื่อหน้า = (location.pathname.split('/').pop() || '').replace(/\.html$/i, '') || 'index';
+    var ตัวตัด = new AbortController();
+    var นาฬิกา = setTimeout(function () { ตัวตัด.abort(); }, 3000);
+    fetch('flags.json?ts=' + Date.now(), { cache: 'no-store', signal: ตัวตัด.signal })
+      .then(function (r) { clearTimeout(นาฬิกา); return r.ok ? r.json() : null; })
+      .then(function (ธง) {
+        if (ธง && String(ธง[ชื่อหน้า] == null ? '' : ธง[ชื่อหน้า]).trim().toLowerCase() === 'off') {
+          location.replace('maintenance.html?p=' + encodeURIComponent(ชื่อหน้า));
+        }
+      })
+      .catch(function () { clearTimeout(นาฬิกา); });
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>My orders</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  /* สีชุดเดียวกับ my.html (เรื่องของฉัน) */
+  :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5;
+         --ok:#2f7d55; --bad:#b3402f; --warn:#9a6b00; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Myanmar","Padauk",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--blue); color:#fff; padding:18px 16px; position:sticky; top:0; z-index:5; }
+  header h1{ font-size:18px; margin:0; font-weight:700; }
+  .wrap{ padding:14px 14px 28px; max-width:560px; margin:0 auto; }
+  #status{ text-align:center; color:var(--muted); padding:26px 8px; font-size:14px; white-space:pre-wrap; line-height:1.7; }
+  #status.bad{ color:var(--bad); }
+  .sum{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:12px; display:flex; justify-content:space-between; font-size:14px; line-height:1.7; }
+  .sum b{ font-size:17px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px; line-height:1.7; }
+  .top{ display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+  .oid{ font-weight:700; font-size:14px; } .at{ color:var(--muted); font-size:12px; }
+  .st{ font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; background:#eef2f0; color:var(--muted); }
+  .st.wait{ background:#fff3d6; color:var(--warn); } .st.go{ background:#e6f1f7; color:var(--blue-d); }
+  .st.done{ background:#e8f4ec; color:var(--ok); } .st.bad{ background:#fbe9e6; color:var(--bad); }
+  ul{ list-style:none; padding:0; margin:8px 0; font-size:14px; }
+  li{ display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px dashed var(--line); }
+  .line{ font-size:13px; color:var(--muted); }
+  .total{ font-weight:800; text-align:right; font-size:15px; }
+  button{ font-family:inherit; }
+  .acts{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .acts button{ flex:1 1 45%; border:0; border-radius:12px; padding:12px; font-size:15px; font-weight:700; cursor:pointer; line-height:1.5; }
+  .acts button:disabled{ opacity:.45; }
+  .b-ok{ background:var(--ok); color:#fff; } .b-no{ background:#fbe9e6; color:var(--bad); } .b-back{ background:#eef2f0; color:var(--ink); }
+  .rc{ background:#f8fafb; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:10px; }
+  .msg{ font-size:13px; margin-top:8px; white-space:pre-wrap; } .msg.ok{ color:var(--ok); } .msg.bad{ color:var(--bad); }
+  .back{ display:block; width:100%; text-align:center; background:#fff; border:1px solid var(--line); border-radius:14px; padding:13px;
+         font-size:15px; font-weight:700; color:var(--blue-d); text-decoration:none; margin-top:4px; }
+</style>
+</head>
+<body>
+<header><h1 id="t_title">🛍️ My orders</h1></header>
+<div class="wrap">
+  <div id="status"></div>
+  <div id="sum" class="sum" style="display:none"><span id="t_sum"></span><b id="sumv"></b></div>
+  <div id="list"></div>
+  <a class="back" href="#" id="t_back">← Back</a>
+</div>
+<script>
+/* ══ buy-my.html · รายการฝากซื้อของฉัน · ฝากซื้อเฟส 1 · 23 ก.ย. 2026 ══
+   เปิดจากการ์ดในหน้า "เรื่องของฉัน" (my.html) และจากหน้าสั่งสำเร็จ
+   · น้องเห็นเฉพาะของตัวเอง — เซิร์ฟเวอร์หาจากรหัสที่ LINE ยืนยัน ไม่ใช่จากหน้านี้
+   · 1 กด = 1 คำขอ · ปุ่มปิดระหว่างรอ · ไม่ยิงซ้ำเอง · รอสูงสุด 20 วินาที
+   · ข้อความทุกช่องใส่ด้วย textContent · ไม่เก็บอะไรในเครื่อง
+   · ข้อความ: รหัส K2-/K1- = ใบล่ามไฟล์ 41 · รหัสอื่น = ไฟล์ 40 (ใช้ของเดิม ไม่แปลใหม่)
+     ช่อง my ว่าง = ยังรอล่าม ⇒ หน้าขึ้นอังกฤษแทน (ตัวกันจอว่างแบบเดียวกับ my.html) */
+var T = {
+  'K2-1':  { th: 'รายการฝากซื้อของฉัน', en: 'My orders', my: '' },
+  'K2-2':  { th: 'ยังไม่มีรายการฝากซื้อ', en: 'No orders yet', my: '' },
+  'K2-3':  { th: 'รอส่ง', en: 'Waiting for delivery', my: '' },
+  'K2-4':  { th: 'ส่งแล้วบางส่วน', en: 'Partly delivered', my: '' },
+  'K2-5':  { th: 'ส่งแล้ว รอยืนยัน', en: 'Delivered – please confirm', my: '' },
+  'K2-6':  { th: 'ได้รับแล้ว', en: 'Received', my: '' },
+  'K2-7':  { th: 'ยกเลิกแล้ว', en: 'Cancelled', my: '' },
+  'K2-8':  { th: 'ทีมยกเลิกให้', en: 'Cancelled by the team', my: '' },
+  'K2-9':  { th: 'รอทีมตรวจสอบ', en: 'Being checked by the team', my: '' },
+  'K2-10': { th: 'ยกเลิกรายการนี้', en: 'Cancel this order', my: '' },
+  'K2-11': { th: 'ต้องการยกเลิกรายการนี้ใช่ไหม', en: 'Do you want to cancel this order?', my: '' },
+  'K2-12': { th: 'เลยกำหนดยกเลิกแล้ว', en: 'The cancellation deadline has passed', my: '' },
+  'K2-13': { th: 'ได้รับของครบแล้ว', en: 'I received all items', my: '' },
+  'K2-14': { th: 'ของไม่ครบ / ไม่ได้สั่ง', en: 'Items missing / not my order', my: '' },
+  'K2-15': { th: 'บันทึกแล้ว ขอบคุณ', en: 'Saved. Thank you.', my: '' },
+  'K2-16': { th: 'ทีม Jasmine จะติดต่อกลับ', en: 'The Jasmine team will contact you.', my: '' },
+  /* 🔴 K2-17 แก้ถ้อยคำตามมติผู้วางแผนรอบ 49 (24 ก.ย.): นับเฉพาะใบที่น้องกดยืนยันแล้ว ⇒ "ยอดของที่ยืนยันรับแล้ว" ไม่ใช่ "ยอดยังไม่หัก"
+     ⚠️ ใบล่ามไฟล์ 41 ส่งไปด้วยคำเดิม "ยอดของที่ได้รับแล้ว" — มีใบแก้ส่งตามล่าม · คำพม่าที่ได้คืนต้องเป็นฉบับแก้ */
+  'K2-17': { th: 'ยอดของที่ยืนยันรับแล้ว', en: 'Total of items you confirmed receiving', my: '' },
+  'K1-2':  { th: 'วันส่งของรอบนี้: {date}', en: 'Delivery date: {date}', my: '' },
+  'K1-3':  { th: 'ยกเลิกได้ถึง {date}', en: 'You can cancel until {date}', my: '' },
+  'A4-4':  { th: 'กลับ', en: 'Back', my: '' },
+  'E-8':   { th: 'กำลังบันทึก…', en: 'Saving...', my: '' },
+  'F-29':  { th: 'กำลังเชื่อมต่อไลน์… อีกสักครู่ปุ่มจะกดได้', en: 'Connecting to LINE… the buttons will turn on in a moment.', my: '' },
+  'F-27':  { th: 'กรุณาเปิดหน้านี้จากเมนูในไลน์ ไม่ใช่จากลิงก์เว็บ', en: 'Please open this page from the LINE menu, not from a web link.', my: '' },
+  'G-3':   { th: 'ตอนนี้โหลดไม่ได้ กรุณาลองใหม่', en: 'Cannot load right now. Please try again.', my: '' }
+};
+
+(function () {
+  'use strict';
+  var LIFF_ID = '2010242926-nreePSO4';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbxn_hBzAy512R8msX-qXd4y1G_o4DFu78PZwENZRmQlt5R3Ns1bprUN3PeYxWMMrzv9ew/exec';
+  var รอสูงสุด = 20000;
+
+  function t(code, v) {
+    var x = T[code] || {}; var s = x.my || x.en || code;
+    if (v) Object.keys(v).forEach(function (k) { s = s.split('{' + k + '}').join(String(v[k])); });
+    return s;
+  }
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }
+  function บาท(n) { return (Number(n) || 0).toLocaleString('en-US') + ' ฿'; }
+  function วันไทยเป็นเลข(s) {   /* 2026-10-05 → 5/10/2026 (ตัวเลขล้วน ไม่ต้องแปลชื่อเดือน) */
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? Number(m[3]) + '/' + Number(m[2]) + '/' + m[1] : String(s || '');
+  }
+  function สถานะ(txt, bad) { var s = $('status'); s.textContent = txt || ''; s.className = bad ? 'bad' : ''; s.style.display = txt ? 'block' : 'none'; }
+
+  document.documentElement.lang = T['K2-1'].my ? 'my' : 'en';
+  document.title = t('K2-1');
+  $('t_title').textContent = '🛍️ ' + t('K2-1');
+  $('t_back').textContent = '← ' + t('A4-4');
+  $('t_sum').textContent = t('K2-17');
+  $('t_back').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (history.length > 1) { history.back(); return; }
+    try { if (window.liff && liff.isInClient && liff.isInClient()) liff.closeWindow(); } catch (err) {}
+  });
+
+  var ชื่อของ = {};   /* id → ชื่อพม่า/อังกฤษ จากหน้าสินค้า (ในออเดอร์เก็บแค่ชื่อไทย) */
+  function ชื่อ(it) { var p = ชื่อของ[it.id]; return (p && (p.name_my || p.name_en)) || it.name || it.id; }
+
+  function ยิง(body) {
+    var tk = null;
+    try { tk = liff.getIDToken(); } catch (e) {}
+    if (!tk) return Promise.resolve({ ok: false, error: 'NO_TICKET' });
+    body.idToken = tk;
+    var ตัด = window.AbortController ? new AbortController() : null;
+    var นาฬิกา = ตัด ? setTimeout(function () { ตัด.abort(); }, รอสูงสุด) : null;
+    return fetch(API_URL, { method: 'POST', body: JSON.stringify(body), credentials: 'omit', signal: ตัด ? ตัด.signal : undefined })
+      .then(function (r) { return r.text(); })
+      .then(function (x) {
+        if (นาฬิกา) clearTimeout(นาฬิกา);
+        var j; try { j = JSON.parse(x); } catch (e) { return { ok: false, error: 'NOT_JSON' }; }
+        /* รอบ 50 (ทดสอบผ่าน /exec 24 ก.ย.): บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลคำสั่งนี้ ⇒ ถือว่ายังไม่รู้ผล ห้ามขึ้นว่าสำเร็จ */
+        if (j && (j.products !== undefined || /API is running/.test(String(j.msg || '')))) return { ok: false, error: 'NOT_JSON' };
+        return j;
+      })
+      .catch(function () { if (นาฬิกา) clearTimeout(นาฬิกา); return { ok: false, error: 'TIMEOUT' }; });
+  }
+
+  function ป้ายออเดอร์(o) {
+    var rs = (o.receipts || []).filter(function (r) { return r.confirm_status !== 'VOID'; });
+    if (o.status === 'CANCELLED') return ['K2-7', ''];
+    if (o.status === 'CLEARED') return ['K2-8', ''];
+    if (o.status === 'HOLD') return ['K2-9', 'bad'];   /* รอบ 50: พักตรวจยอด = รอทีมตรวจสอบ (ใช้คำเดิมในไฟล์ 41 ไม่ต้องแปลใหม่) */
+    if (rs.some(function (r) { return r.confirm_status === 'DISPUTED'; })) return ['K2-9', 'bad'];
+    if (rs.some(function (r) { return r.confirm_status === 'WAIT'; })) return ['K2-5', 'wait'];
+    if (o.status === 'PARTIAL') return ['K2-4', 'go'];
+    if (o.status === 'PARTIAL_CLOSED') return ['K2-4', 'go', 'K2-8'];   /* รอบ 50: ส่งแล้วบางส่วน + ทีมยกเลิกส่วนที่เหลือ */
+    if (o.status === 'DELIVERED') return ['K2-6', 'done'];
+    return ['K2-3', 'go'];
+  }
+
+  function วาด(res) {
+    var box = $('list'); box.textContent = '';
+    $('sum').style.display = 'flex';
+    $('sumv').textContent = บาท(res.received_total);
+    if (!res.orders.length) { box.appendChild(el('div', 'card', t('K2-2'))); return; }
+    res.orders.forEach(function (o) {
+      var c = el('div', 'card');
+      var top = el('div', 'top');
+      var left = el('div'); left.appendChild(el('div', 'oid', o.order_id)); left.appendChild(el('div', 'at', o.at));
+      var p = ป้ายออเดอร์(o);
+      top.appendChild(left); top.appendChild(el('span', 'st ' + p[1], t(p[0])));
+      c.appendChild(top);
+      if (p[2]) c.appendChild(el('div', 'line', t(p[2])));
+      var ul = el('ul');
+      o.items.forEach(function (it) { var li = el('li'); li.appendChild(el('span', null, ชื่อ(it) + ' x' + it.qty)); li.appendChild(el('span', null, บาท(it.subtotal))); ul.appendChild(li); });
+      c.appendChild(ul);
+      c.appendChild(el('div', 'total', บาท(o.total)));
+      if (o.status === 'NEW' || o.status === 'PARTIAL') c.appendChild(el('div', 'line', t('K1-2', { date: วันไทยเป็นเลข(o.round) })));
+      var msg = el('div', 'msg');
+      if (o.can_cancel) {
+        c.appendChild(el('div', 'line', t('K1-3', { date: วันไทยเป็นเลข(o.cancel_until) })));
+        var acts = el('div', 'acts');
+        var bCancel = el('button', 'b-no', t('K2-10')); bCancel.type = 'button';
+        bCancel.onclick = function () { ถามก่อนยกเลิก(c, acts, msg, o); };
+        acts.appendChild(bCancel); c.appendChild(acts);
+      }
+      (o.receipts || []).forEach(function (rc) {
+        if (rc.confirm_status === 'VOID') return;
+        var b = el('div', 'rc');
+        var hd = el('div', 'top'); hd.appendChild(el('span', 'oid', '🧾 ' + rc.receipt_no));
+        hd.appendChild(el('span', 'st ' + ({ WAIT: 'wait', CONFIRMED: 'done', DISPUTED: 'bad' }[rc.confirm_status] || ''),
+          t({ WAIT: 'K2-5', CONFIRMED: 'K2-6', DISPUTED: 'K2-9' }[rc.confirm_status] || 'K2-5')));
+        b.appendChild(hd);
+        var u2 = el('ul');
+        (rc.items || []).forEach(function (it) { var li = el('li'); li.appendChild(el('span', null, ชื่อ(it) + ' x' + it.qty)); li.appendChild(el('span', null, บาท(it.subtotal))); u2.appendChild(li); });
+        b.appendChild(u2); b.appendChild(el('div', 'total', บาท(rc.amount)));
+        if (rc.confirm_status === 'WAIT') {
+          var a2 = el('div', 'acts'), m2 = el('div', 'msg');
+          var bOk = el('button', 'b-ok', t('K2-13')); bOk.type = 'button';
+          var bNo = el('button', 'b-no', t('K2-14')); bNo.type = 'button';
+          bOk.onclick = function () { ตอบใบ([bOk, bNo], m2, 'confirm_receipt', rc.receipt_no, 'K2-15'); };
+          bNo.onclick = function () { ตอบใบ([bOk, bNo], m2, 'dispute_receipt', rc.receipt_no, 'K2-16'); };
+          a2.appendChild(bOk); a2.appendChild(bNo); b.appendChild(a2); b.appendChild(m2);
+        }
+        c.appendChild(b);
+      });
+      c.appendChild(msg);
+      box.appendChild(c);
+    });
+  }
+
+  function ถามก่อนยกเลิก(card, acts, msg, o) {
+    acts.textContent = '';
+    msg.className = 'msg'; msg.textContent = t('K2-11');
+    var bYes = el('button', 'b-no', t('K2-10')); bYes.type = 'button';
+    var bBack = el('button', 'b-back', t('A4-4')); bBack.type = 'button';
+    bBack.onclick = function () { โหลด(); };
+    bYes.onclick = function () {
+      bYes.disabled = true; bBack.disabled = true;
+      msg.textContent = t('E-8');
+      ยิง({ action: 'cancel_order', order_id: o.order_id }).then(function (r) {
+        if (r.ok) { msg.className = 'msg ok'; msg.textContent = t('K2-7'); setTimeout(โหลด, 900); return; }
+        bBack.disabled = false;
+        msg.className = 'msg bad';
+        msg.textContent = r.error === 'CANCEL_CLOSED' ? t('K2-12') : t('G-3');
+        if (r.error !== 'CANCEL_CLOSED') bYes.disabled = false;
+      });
+    };
+    acts.appendChild(bYes); acts.appendChild(bBack);
+  }
+
+  function ตอบใบ(ปุ่ม, msg, action, no, ข้อความสำเร็จ) {
+    ปุ่ม.forEach(function (x) { x.disabled = true; });
+    msg.className = 'msg'; msg.textContent = t('E-8');
+    ยิง({ action: action, receipt_no: no }).then(function (r) {
+      if (r.ok) { msg.className = 'msg ok'; msg.textContent = t(ข้อความสำเร็จ); setTimeout(โหลด, 1200); return; }
+      ปุ่ม.forEach(function (x) { x.disabled = false; });
+      msg.className = 'msg bad'; msg.textContent = t('G-3');
+    });
+  }
+
+  function โหลด() {
+    สถานะ(t('F-29'));
+    var สินค้า = fetch(API_URL + '?action=products', { credentials: 'omit' }).then(function (r) { return r.json(); })
+      .then(function (p) { (p && p.products || []).forEach(function (x) { ชื่อของ[x.id] = x; }); }).catch(function () {});
+    Promise.all([ยิง({ action: 'my_orders' }), สินค้า]).then(function (rs) {
+      var r = rs[0];
+      if (!r.ok) { สถานะ(r.error === 'NO_TICKET' || r.error === 'BAD_TICKET' ? t('F-27') : t('G-3'), true); return; }
+      สถานะ('');
+      วาด(r);
+    });
+  }
+
+  if (typeof liff === 'undefined') { สถานะ(t('G-3'), true); return; }
+  สถานะ(t('F-29'));
+  liff.init({ liffId: LIFF_ID }).then(function () {
+    if (!liff.isLoggedIn() && !liff.isInClient()) { liff.login(); return; }
+    โหลด();
+  }).catch(function () { สถานะ(t('G-3'), true); });
+})();
+</script>
+</body>
+</html>
