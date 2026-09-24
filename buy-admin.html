@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<script>
+/* สวิตช์ปิดหน้า (S4-4) — ปิดหน้านี้ได้ด้วย flags.json ช่อง "buy-admin": "off" · อ่านไม่ได้ = เปิดตามปกติ */
+(function () {
+  try {
+    if (!window.fetch || !window.AbortController) return;
+    var ชื่อหน้า = (location.pathname.split('/').pop() || '').replace(/\.html$/i, '') || 'index';
+    var ตัวตัด = new AbortController();
+    var นาฬิกา = setTimeout(function () { ตัวตัด.abort(); }, 3000);
+    fetch('flags.json?ts=' + Date.now(), { cache: 'no-store', signal: ตัวตัด.signal })
+      .then(function (r) { clearTimeout(นาฬิกา); return r.ok ? r.json() : null; })
+      .then(function (ธง) {
+        if (ธง && String(ธง[ชื่อหน้า] == null ? '' : ธง[ชื่อหน้า]).trim().toLowerCase() === 'off') {
+          location.replace('maintenance.html?p=' + encodeURIComponent(ชื่อหน้า));
+        }
+      })
+      .catch(function () { clearTimeout(นาฬิกา); });
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>จัดการฝากซื้อ/รับของ</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{ --slate:#2b3440; --ink:#1f2630; --muted:#7a8694; --line:#e4e8ed; --bg:#f3f5f7;
+         --ok:#2f7d55; --warn:#9a6b00; --bad:#b3402f; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--slate); color:#fff; padding:16px; }
+  header h1{ font-size:18px; margin:0; } header p{ font-size:12px; margin:3px 0 0; opacity:.8; }
+  .wrap{ padding:12px; max-width:640px; margin:0 auto; }
+  #status{ padding:18px 8px; text-align:center; color:var(--muted); font-size:14px; white-space:pre-wrap; }
+  #status.bad{ color:var(--bad); }
+  .bar{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+  .bar select, .bar button{ font-size:14px; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:#fff; font-family:inherit; }
+  .bar select{ flex:1; }
+  .chips{ display:flex; gap:8px; margin-bottom:12px; }
+  .chip{ flex:1; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; cursor:pointer; }
+  .chip .n{ font-size:22px; font-weight:700; } .chip .l{ font-size:12px; color:var(--muted); }
+  .chip.a .n{ color:var(--warn); } .chip.b .n{ color:var(--bad); } .chip.c .n{ color:#2a7d9b; }
+  .list{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px 12px; margin-bottom:12px; font-size:13px; display:none; }
+  .list div{ padding:5px 0; border-bottom:1px dashed var(--line); }
+  h2{ font-size:15px; margin:16px 2px 8px; display:flex; justify-content:space-between; }
+  .person{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .person .top{ display:flex; justify-content:space-between; font-weight:700; font-size:14px; }
+  .order{ border-top:1px solid var(--line); margin-top:10px; padding-top:10px; }
+  .oid{ font-size:13px; font-weight:700; display:flex; justify-content:space-between; gap:6px; align-items:center; }
+  .st{ font-size:11px; font-weight:700; padding:3px 8px; border-radius:8px; white-space:nowrap; background:#eef2f5; }
+  .st.NEW{ background:#fff3d6; color:var(--warn); } .st.PARTIAL{ background:#e6f1f7; color:#2a7d9b; }
+  .st.DELIVERED{ background:#e8f4ec; color:var(--ok); } .st.CANCELLED,.st.CLEARED{ background:#f1f1f1; color:#888; }
+  .st.PARTIAL_CLOSED{ background:#eef0f6; color:#55607a; } .st.HOLD{ background:#fde8e8; color:#b3261e; }   /* รอบ 50 */
+  .hold{ background:#fdecec; border:1px solid #f3b8b3; color:#8c1d18; border-radius:10px; padding:8px 10px; margin:6px 0; font-size:13px; line-height:1.5; white-space:pre-line; }
+  .why{ display:flex; gap:12px; flex-wrap:wrap; font-size:13px; margin:6px 0; } .why label{ display:flex; gap:4px; align-items:center; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+  td,th{ padding:4px 2px; text-align:left; border-bottom:1px dashed var(--line); }
+  th{ color:var(--muted); font-weight:600; font-size:12px; }
+  td.n, th.n{ text-align:right; }
+  input.q{ width:52px; padding:6px; font-size:14px; border:1px solid var(--line); border-radius:8px; text-align:right; }
+  input.t{ width:100%; padding:8px; font-size:14px; border:1px solid var(--line); border-radius:8px; margin-top:6px; font-family:inherit; }
+  .acts{ display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .acts button{ flex:1 1 40%; border:0; border-radius:10px; padding:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .acts button:disabled{ opacity:.45; cursor:default; }
+  .b-go{ background:var(--ok); color:#fff; } .b-no{ background:#f4e3e0; color:var(--bad); } .b-mid{ background:#e6f1f7; color:#1f5f76; }
+  .rc{ background:#f8fafb; border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin-top:8px; font-size:13px; }
+  .rc .h{ display:flex; justify-content:space-between; font-weight:700; }
+  .muted{ color:var(--muted); font-size:12px; }
+  .msg{ font-size:13px; margin-top:6px; white-space:pre-wrap; }
+  .msg.ok{ color:var(--ok); } .msg.bad{ color:var(--bad); }
+  .empty{ text-align:center; color:var(--muted); padding:24px 8px; font-size:14px; }
+</style>
+</head>
+<body>
+<header><h1>🛍️ จัดการฝากซื้อ/รับของ</h1><p id="hsub">สำหรับแอดมิน · ข้อมูลจากระบบฝากซื้อสินค้า</p></header>
+<div class="wrap">
+  <div id="status">กำลังเชื่อมต่อไลน์…</div>
+  <div id="main" style="display:none">
+    <div class="bar">
+      <select id="round" aria-label="รอบส่ง"></select>
+      <button id="reload" type="button">โหลดใหม่</button>
+    </div>
+    <div class="chips">
+      <div class="chip a" data-k="ready_for_loan"><div class="n" id="c-ready">–</div><div class="l">ยืนยันแล้ว รอลงหนี้</div></div>
+      <div class="chip c" data-k="wait_over_3_days"><div class="n" id="c-wait">–</div><div class="l">น้องยังไม่ยืนยัน เกิน 3 วัน</div></div>
+      <div class="chip b" data-k="disputed"><div class="n" id="c-disp">–</div><div class="l">น้องแจ้งปัญหา</div></div>
+    </div>
+    <div class="list" id="pendlist"></div>
+    <div id="sites"></div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  /* ══ buy-admin.html · ฝากซื้อเฟส 1 · 23 ก.ย. 2026 ══
+     หลักที่ยึด (ตรงกับกติกาผู้วางแผน):
+     · ตัวตน/สิทธิ์ตรวจที่เซิร์ฟเวอร์ (ตั๋ว LINE + AdminUsers) หน้านี้ไม่ใช่ด่าน
+     · 1 กด = 1 คำขอ · ปุ่มถูกปิดระหว่างรอ · ไม่ยิงซ้ำเอง · รอสูงสุด 20 วินาที
+     · คำสั่งเขียนมีเลขคำขอ (req_id) — กดซ้ำหลังเน็ตหลุด เซิร์ฟเวอร์คืนของเดิม ไม่สร้างใบซ้ำ
+     · ข้อความทุกช่องใส่ด้วย textContent ไม่ใช้ innerHTML กับข้อมูลจากชีต
+     · ไม่เก็บอะไรในเครื่อง */
+  var LIFF_ID = '2010242926-nreePSO4';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbxn_hBzAy512R8msX-qXd4y1G_o4DFu78PZwENZRmQlt5R3Ns1bprUN3PeYxWMMrzv9ew/exec';
+  var รอสูงสุด = 20000;
+
+  var สถานะไทย = { NEW: 'รอส่ง', PARTIAL: 'ส่งบางส่วน', DELIVERED: 'ส่งครบ', CANCELLED: 'น้องยกเลิก', CLEARED: 'ล้างแล้ว',
+    PARTIAL_CLOSED: 'ส่งบางส่วน · ปิดส่วนที่เหลือแล้ว', HOLD: 'พักตรวจยอด' };   /* รอบ 50 */
+  var ชนิดล้างไทย = { NO_STOCK: 'ของไม่มีจริง (ไม่คืนสต็อก)', OTHER: 'เหตุอื่น (คืนสต็อกส่วนที่ยังไม่ส่ง)' };
+  var ใบไทย = { WAIT: 'รอน้องยืนยัน', CONFIRMED: 'น้องยืนยันแล้ว', DISPUTED: 'น้องแจ้งปัญหา', VOID: 'ยกเลิกใบนี้แล้ว' };
+  var ผิดไทย = {
+    NOT_ADMIN: 'บัญชีนี้ไม่ใช่แอดมิน', NO_TICKET: 'กรุณาเปิดหน้านี้จากไลน์', BAD_TICKET: 'ตั๋วไลน์หมดอายุ ปิดแล้วเปิดใหม่จากไลน์',
+    REASON_REQUIRED: 'ต้องใส่เหตุผล', OVER_DELIVERY: 'ใส่จำนวนเกินที่เหลือ', ITEM_NOT_IN_ORDER: 'มีของที่ไม่ได้อยู่ในออเดอร์',
+    EMPTY_DELIVERY: 'ยังไม่ได้ใส่จำนวน', CANNOT_DELIVER: 'ออเดอร์นี้ส่งของไม่ได้แล้ว', CANNOT_CLEAR: 'ล้าง/ปิดไม่ได้ในสถานะนี้',
+    NOT_OPERATOR: 'บัญชีนี้ดูได้อย่างเดียว — ผู้ทำรายการฝากซื้อคือคุณแอ้วและเจ้าของ',
+    REASON_TYPE_REQUIRED: 'เลือกก่อนว่าล้างเพราะของไม่มีจริง หรือเหตุอื่น',
+    NOT_CONFIRMED: 'น้องยังไม่ยืนยันรับของ — ยังลงหนี้ไม่ได้', AMOUNT_MISMATCH: 'ยอดไม่ตรงกับใบรับของ',
+    ALREADY_LOANED: 'ใบนี้ลงหนี้ไปแล้วด้วยเลขอื่น', LOAN_REF_USED: 'เลขรายการหนี้นี้ใช้กับใบอื่นไปแล้ว',
+    LOAN_REF_REQUIRED: 'ต้องใส่เลขรายการหนี้', LOAN_AMOUNT_REQUIRED: 'ต้องใส่ยอด', RECEIPT_NOT_FOUND: 'ไม่พบใบรับของ', ORDER_NOT_FOUND: 'ไม่พบออเดอร์'
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }
+  function บาท(n) { return (Number(n) || 0).toLocaleString('th-TH') + ' ฿'; }
+  function เลขคำขอ() {
+    var a = new Uint8Array(12); (window.crypto || window.msCrypto).getRandomValues(a);
+    return 'adm-' + Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function แปลผิด(r) {
+    if (!r) return 'ไม่ได้รับคำตอบ';
+    var e = String(r.error || '');
+    var t = ผิดไทย[e] || ('ทำไม่สำเร็จ (' + e + ')');
+    if (e === 'OVER_DELIVERY' && r.remaining != null) t += ' — เหลือ ' + r.remaining + ' ชิ้น';
+    if (e === 'AMOUNT_MISMATCH' && r.expected != null) t += ' — ใบนี้ ' + บาท(r.expected);
+    if (e === 'ALREADY_LOANED' && r.loan_ref) t += ' — ' + r.loan_ref;
+    if (e === 'LOAN_REF_USED' && r.receipt_no) t += ' — ' + r.receipt_no;
+    return t;
+  }
+
+  /* ── ยิงคำขอ: ครั้งเดียว · มีเพดานเวลา · ไม่ลองซ้ำเอง ── */
+  function ยิง(body) {
+    var tk = null;
+    try { tk = liff.getIDToken(); } catch (e) {}
+    if (!tk) return Promise.resolve({ ok: false, error: 'NO_TICKET' });
+    body.idToken = tk;
+    var ตัด = window.AbortController ? new AbortController() : null;
+    var นาฬิกา = ตัด ? setTimeout(function () { ตัด.abort(); }, รอสูงสุด) : null;
+    return fetch(API_URL, { method: 'POST', body: JSON.stringify(body), credentials: 'omit', signal: ตัด ? ตัด.signal : undefined })
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        if (นาฬิกา) clearTimeout(นาฬิกา);
+        var j; try { j = JSON.parse(t); } catch (e) { return { ok: false, error: 'NOT_JSON' }; }
+        /* รอบ 50 (ทดสอบผ่าน /exec 24 ก.ย.): บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลคำสั่งนี้ ⇒ ถือว่ายังไม่รู้ผล ห้ามขึ้นว่าสำเร็จ */
+        if (j && (j.products !== undefined || /API is running/.test(String(j.msg || '')))) return { ok: false, error: 'NOT_JSON' };
+        return j;
+      })
+      .catch(function (e) { if (นาฬิกา) clearTimeout(นาฬิกา); return { ok: false, error: 'TIMEOUT', timeout: true }; });
+  }
+  function ยังไม่รู้ผล(r) { return r && (r.error === 'TIMEOUT' || r.error === 'NOT_JSON'); }
+
+  function สถานะ(t, bad) { var s = $('status'); s.textContent = t || ''; s.className = bad ? 'bad' : ''; s.style.display = t ? 'block' : 'none'; }
+
+  var รอบที่เลือก = '';
+  var ทำรายการได้ = false;   /* รอบ 50: เซิร์ฟเวอร์บอกว่าบัญชีนี้เป็นผู้ทำรายการไหม (ด่านจริงอยู่ที่เซิร์ฟเวอร์ หน้านี้แค่ซ่อนปุ่ม) */
+
+  function โหลด() {
+    สถานะ('กำลังโหลด…');
+    $('reload').disabled = true;
+    return Promise.all([ยิง({ action: 'admin_round', round: รอบที่เลือก }), ยิง({ action: 'admin_pending' })]).then(function (rs) {
+      $('reload').disabled = false;
+      var rd = rs[0], pd = rs[1];
+      if (!rd.ok) { สถานะ(ยังไม่รู้ผล(rd) ? 'ยังไม่ได้รับคำตอบ — กด "โหลดใหม่"' : แปลผิด(rd), true); $('main').style.display = rd.error === 'NOT_ADMIN' ? 'none' : 'block'; return; }
+      สถานะ('');
+      $('main').style.display = 'block';
+      ทำรายการได้ = rd.can_operate === true;
+      $('hsub').textContent = 'แอดมิน: ' + (rd.admin || '-') + ' · รอบส่ง ' + rd.round + (ทำรายการได้ ? '' : ' · ดูได้อย่างเดียว');
+      วาดรอบ(rd);
+      วาดตกค้าง(pd);
+      วาดไซต์(rd);
+    });
+  }
+
+  function วาดรอบ(rd) {
+    var sel = $('round'); sel.textContent = '';
+    var ทั้งหมด = (rd.rounds || []).slice();
+    if (ทั้งหมด.indexOf(rd.round) < 0) ทั้งหมด.push(rd.round);
+    ทั้งหมด.sort().reverse().forEach(function (r) {
+      var o = el('option', null, 'ส่งวันที่ ' + r); o.value = r; if (r === rd.round) o.selected = true; sel.appendChild(o);
+    });
+  }
+
+  var ตกค้างล่าสุด = null;
+  function วาดตกค้าง(pd) {
+    ตกค้างล่าสุด = pd && pd.ok ? pd : null;
+    $('c-ready').textContent = ตกค้างล่าสุด ? pd.ready_for_loan.length : '?';
+    $('c-wait').textContent = ตกค้างล่าสุด ? pd.wait_over_3_days.length : '?';
+    $('c-disp').textContent = ตกค้างล่าสุด ? pd.disputed.length : '?';
+    $('pendlist').style.display = 'none';
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (c) {
+    c.addEventListener('click', function () {
+      var box = $('pendlist');
+      if (!ตกค้างล่าสุด) return;
+      var rows = ตกค้างล่าสุด[c.getAttribute('data-k')] || [];
+      box.textContent = '';
+      if (!rows.length) box.appendChild(el('div', 'muted', 'ไม่มีรายการ'));
+      rows.forEach(function (x) { box.appendChild(el('div', null, x.receipt_no + ' · ' + x.site + ' · ' + (x.worker_name || '-') + ' · ' + บาท(x.amount) + ' · ส่ง ' + x.round)); });
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    });
+  });
+
+  function วาดไซต์(rd) {
+    var box = $('sites'); box.textContent = '';
+    if (!rd.sites || !rd.sites.length) { box.appendChild(el('div', 'empty', 'ยังไม่มีคำฝากซื้อในรอบนี้')); return; }
+    rd.sites.forEach(function (s) {
+      var h = el('h2'); h.appendChild(el('span', null, '📍 ' + s.site)); h.appendChild(el('span', null, บาท(s.total))); box.appendChild(h);
+      s.people.forEach(function (p) {
+        var card = el('div', 'person');
+        var top = el('div', 'top'); top.appendChild(el('span', null, p.name || '(ไม่มีชื่อ)')); top.appendChild(el('span', null, บาท(p.total)));
+        card.appendChild(top);
+        card.appendChild(el('div', 'muted', 'การ์ด …' + String(p.card_id || '').slice(-6)));
+        p.orders.forEach(function (o) { card.appendChild(วาดออเดอร์(o)); });
+        box.appendChild(card);
+      });
+    });
+  }
+
+  function วาดออเดอร์(o) {
+    var w = el('div', 'order');
+    var head = el('div', 'oid'); head.appendChild(el('span', null, o.order_id + ' · ' + บาท(o.total)));
+    head.appendChild(el('span', 'st ' + o.status, สถานะไทย[o.status] || o.status)); w.appendChild(head);
+    if (o.status === 'CLEARED' || o.status === 'PARTIAL_CLOSED') {
+      w.appendChild(el('div', 'muted', (o.status === 'CLEARED' ? 'ล้างโดย ' : 'ปิดส่วนค้างโดย ') + (o.cleared_by || '-') + ' · ' + (o.clear_reason || '') +
+        (o.clear_type ? ' · ' + (ชนิดล้างไทย[o.clear_type] || o.clear_type) : '')));
+    }
+    if (o.status === 'HOLD') {
+      w.appendChild(el('div', 'hold', '⚠️ พักตรวจยอด — บันทึกออเดอร์แล้วแต่ตัดสต็อกไม่ครบ และยอดตอนนี้ไม่ตรงกับที่ควรเป็น\n' +
+        'สินค้าในออเดอร์นี้ถูกพักไม่ให้สั่งเพิ่ม · ตรวจนับของจริงแล้วแก้แท็บ Products ให้ถูกก่อน แล้วค่อยกดล้างข้างล่าง (ระบบไม่แตะสต็อกให้)'));
+    }
+
+    var tb = el('table'), tr = el('tr');
+    ['ของ', 'สั่ง', 'ส่งแล้ว', 'เหลือ', 'ส่งรอบนี้'].forEach(function (x, i) { tr.appendChild(el('th', i ? 'n' : null, x)); });
+    tb.appendChild(tr);
+    var ช่อง = [];
+    var ส่งได้ = ทำรายการได้ && (o.status === 'NEW' || o.status === 'PARTIAL');
+    o.items.forEach(function (it) {
+      var r = el('tr');
+      r.appendChild(el('td', null, it.name + ' (' + บาท(it.price) + ')'));
+      r.appendChild(el('td', 'n', it.qty)); r.appendChild(el('td', 'n', it.delivered));
+      r.appendChild(el('td', 'n', it.closed ? '0 (ปิด ' + it.closed + ')' : it.remaining));
+      var td = el('td', 'n');
+      if (ส่งได้ && it.remaining > 0) {
+        var inp = el('input', 'q'); inp.type = 'number'; inp.min = '0'; inp.max = String(it.remaining); inp.value = String(it.remaining); inp.inputMode = 'numeric';
+        inp.setAttribute('aria-label', 'จำนวนที่ส่ง ' + it.name);
+        ช่อง.push({ id: it.id, inp: inp, max: it.remaining }); td.appendChild(inp);
+      } else td.textContent = '–';
+      r.appendChild(td); tb.appendChild(r);
+    });
+    w.appendChild(tb);
+
+    var msg = el('div', 'msg');
+    var acts = el('div', 'acts');
+    var ปุ่มทั้งหมด = [];
+    if (ส่งได้) {
+      var bSend = el('button', 'b-go', '✅ บันทึกส่งของ'); bSend.type = 'button';
+      var reqส่ง = เลขคำขอ();   // เลขเดียวต่อการกดครั้งนี้ — กดซ้ำหลังเน็ตหลุดจะได้ใบเดิม
+      bSend.onclick = function () {
+        var items = [], ผิด = '';
+        ช่อง.forEach(function (c) { var q = Math.floor(Number(c.inp.value) || 0); if (q < 0 || q > c.max) ผิด = 'จำนวนต้องอยู่ระหว่าง 0 ถึง ' + c.max; if (q > 0) items.push({ id: c.id, qty: q }); });
+        if (ผิด) { msg.className = 'msg bad'; msg.textContent = ผิด; return; }
+        if (!items.length) { msg.className = 'msg bad'; msg.textContent = 'ยังไม่ได้ใส่จำนวน'; return; }
+        กดแล้วรอ(ปุ่มทั้งหมด, msg, { action: 'admin_record_delivery', req_id: reqส่ง, order_id: o.order_id, items: items }, function (r) {
+          return 'บันทึกแล้ว ใบรับของ ' + r.receipt_no + ' · ' + บาท(r.amount) + (r.duplicate ? ' (ใบเดิม)' : '') +
+            (r.worker_notified === false ? '\n⚠️ ส่งไลน์ถึงน้องไม่สำเร็จ — แจ้งน้องให้กดยืนยันเอง' : '');
+        });
+      };
+      acts.appendChild(bSend); ปุ่มทั้งหมด.push(bSend);
+    }
+    /* รอบ 50 — ล้าง/ปิดส่วนค้าง: รอส่ง = ล้างทั้งออเดอร์ · ส่งบางส่วน = ปิดเฉพาะที่ยังไม่ส่ง · พักตรวจยอด = ล้างหลังแก้สต็อกแล้ว
+       ต้องเลือกชนิดเหตุผล (ข้อเลือก 1 มติรอบ 49): ของไม่มีจริง = ไม่คืนสต็อก · เหตุอื่น = คืนสต็อกส่วนที่ยังไม่ส่ง */
+    var ล้างได้ = ทำรายการได้ && (o.status === 'NEW' || o.status === 'PARTIAL' || o.status === 'HOLD');
+    if (ล้างได้) {
+      var ป้ายล้าง = o.status === 'PARTIAL' ? '🧹 ปิดส่วนที่ยังไม่ส่ง' : (o.status === 'HOLD' ? '🧹 ล้างออเดอร์ที่พัก' : '🧹 ล้างออเดอร์');
+      var bClear = el('button', 'b-no', ป้ายล้าง); bClear.type = 'button';
+      var why = el('input', 't'); why.placeholder = o.status === 'HOLD' ? 'บันทึกผลตรวจนับ เช่น นับจริงเหลือ 9' : 'เหตุผล เช่น ของหมด'; why.maxLength = 200;
+      var กลุ่ม = 'why-' + o.order_id;
+      var ชนิด = el('div', 'why');
+      ['NO_STOCK', 'OTHER'].forEach(function (k) {
+        var lb = el('label'); var rb = el('input'); rb.type = 'radio'; rb.name = กลุ่ม; rb.value = k;
+        lb.appendChild(rb); lb.appendChild(el('span', null, o.status === 'HOLD' ? (k === 'NO_STOCK' ? 'ของไม่มีจริง' : 'เหตุอื่น') : ชนิดล้างไทย[k]));
+        ชนิด.appendChild(lb);
+      });
+      bClear.onclick = function () {
+        var เลือก = ชนิด.querySelector('input:checked');
+        if (!เลือก) { msg.className = 'msg bad'; msg.textContent = 'เลือกก่อนว่าล้างเพราะของไม่มีจริง หรือเหตุอื่น'; return; }
+        if (!why.value.trim()) { msg.className = 'msg bad'; msg.textContent = 'ใส่เหตุผลก่อน'; why.focus(); return; }
+        กดแล้วรอ(ปุ่มทั้งหมด, msg, { action: 'admin_clear_order', order_id: o.order_id, reason: why.value.trim(), reason_type: เลือก.value }, function (r) {
+          var คืน = (r.returned || []).map(function (x) { return x.id + ' +' + x.qty; }).join(', ');
+          if (r.status === 'PARTIAL_CLOSED') return 'ปิดส่วนที่ยังไม่ส่งแล้ว · ของที่ส่งแล้ว ใบรับของ และเลขหนี้ยังอยู่ครบ · ' + (คืน ? 'คืนสต็อก ' + คืน : 'ไม่คืนสต็อก') + ' · อย่าลืมแจ้งน้องเอง';
+          return 'ล้างแล้ว · บันทึกว่า ' + (r.by || 'คุณ') + ' เป็นคนกด · ' + (o.status === 'HOLD' ? 'สต็อกไม่ถูกแตะ' : (คืน ? 'คืนสต็อก ' + คืน : 'ไม่คืนสต็อก')) + ' · อย่าลืมแจ้งน้องเอง';
+        });
+      };
+      acts.appendChild(bClear); ปุ่มทั้งหมด.push(bClear);
+      w.appendChild(acts); w.appendChild(ชนิด); w.appendChild(why);
+    } else if (ส่งได้) {
+      w.appendChild(acts);
+    }
+    (o.receipts || []).forEach(function (rc) { w.appendChild(วาดใบรับ(rc)); });
+    w.appendChild(msg);
+    return w;
+  }
+
+  function วาดใบรับ(rc) {
+    var b = el('div', 'rc');
+    var h = el('div', 'h'); h.appendChild(el('span', null, '🧾 ' + rc.receipt_no + ' · ' + บาท(rc.amount)));
+    h.appendChild(el('span', null, rc.loan_ref ? 'ลงหนี้แล้ว' : (ใบไทย[rc.confirm_status] || rc.confirm_status))); b.appendChild(h);
+    b.appendChild(el('div', 'muted', (rc.items || []).map(function (it) { return it.name + ' x' + it.qty; }).join(' · ') + ' · บันทึกโดย ' + (rc.recorded_by || '-')));
+    if (rc.loan_ref) { b.appendChild(el('div', 'muted', 'เลขรายการหนี้: ' + rc.loan_ref)); return b; }
+    var msg = el('div', 'msg');
+    var acts = el('div', 'acts');
+    var bCopy = el('button', 'b-mid', '📋 คัดลอกเลขใบรับของ'); bCopy.type = 'button';
+    bCopy.onclick = function () { คัดลอก(rc.receipt_no, msg); };
+    acts.appendChild(bCopy);
+    if (ทำรายการได้ && rc.confirm_status === 'CONFIRMED') {
+      var ref = el('input', 't'); ref.placeholder = 'เลขรายการหนี้จากระบบกู้ยืม'; ref.maxLength = 60;
+      var amt = el('input', 't'); amt.type = 'number'; amt.value = String(rc.amount); amt.inputMode = 'decimal'; amt.setAttribute('aria-label', 'ยอดที่ลงหนี้');
+      var bLoan = el('button', 'b-go', '💾 บันทึกเลขรายการหนี้'); bLoan.type = 'button';
+      bLoan.onclick = function () {
+        if (!ref.value.trim()) { msg.className = 'msg bad'; msg.textContent = 'ใส่เลขรายการหนี้ก่อน'; ref.focus(); return; }
+        กดแล้วรอ([bLoan], msg, { action: 'admin_record_loan', receipt_no: rc.receipt_no, loan_ref: ref.value.trim(), loan_amount: Number(amt.value) }, function (r) {
+          return 'บันทึกแล้ว · ' + r.loan_ref + (r.already ? ' (ของเดิม)' : '');
+        });
+      };
+      b.appendChild(ref); b.appendChild(amt); acts.appendChild(bLoan);
+    }
+    if (ทำรายการได้ && rc.confirm_status !== 'VOID') {
+      var why = el('input', 't'); why.placeholder = 'เหตุผลถ้าจะยกเลิกใบนี้'; why.maxLength = 200;
+      var bVoid = el('button', 'b-no', '✖ ยกเลิกใบนี้'); bVoid.type = 'button';
+      bVoid.onclick = function () {
+        if (!why.value.trim()) { msg.className = 'msg bad'; msg.textContent = 'ใส่เหตุผลก่อนยกเลิกใบ'; why.focus(); return; }
+        กดแล้วรอ([bVoid], msg, { action: 'admin_void_receipt', receipt_no: rc.receipt_no, reason: why.value.trim() }, function () {
+          return 'ยกเลิกใบนี้แล้ว (ประวัติยังอยู่) · ของในใบนี้กลับเป็น "ยังไม่ส่ง"';
+        });
+      };
+      acts.appendChild(bVoid); b.appendChild(why);
+    }
+    b.appendChild(acts); b.appendChild(msg);
+    return b;
+  }
+
+  function กดแล้วรอ(ปุ่ม, msg, body, ข้อความสำเร็จ) {
+    ปุ่ม.forEach(function (x) { x.disabled = true; });
+    msg.className = 'msg'; msg.textContent = 'กำลังบันทึก…';
+    ยิง(body).then(function (r) {
+      if (r.ok) {
+        msg.className = 'msg ok'; msg.textContent = ข้อความสำเร็จ(r) + '\nกำลังโหลดใหม่…';
+        setTimeout(โหลด, 900);
+        return;
+      }
+      ปุ่ม.forEach(function (x) { x.disabled = false; });
+      msg.className = 'msg bad';
+      msg.textContent = ยังไม่รู้ผล(r) ? 'ยังไม่ได้รับคำตอบ — กด "โหลดใหม่" ดูก่อนว่าบันทึกแล้วหรือยัง แล้วค่อยกดซ้ำ' : แปลผิด(r);
+    });
+  }
+
+  function คัดลอก(ข้อความ, msg) {
+    function สำเร็จ() { msg.className = 'msg ok'; msg.textContent = 'คัดลอกแล้ว: ' + ข้อความ; }
+    function สำรอง() {
+      try {
+        var t = document.createElement('textarea'); t.value = ข้อความ; t.setAttribute('readonly', '');
+        t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select();
+        var ok = document.execCommand('copy'); document.body.removeChild(t);
+        if (ok) สำเร็จ(); else { msg.className = 'msg'; msg.textContent = 'คัดลอกเองได้: ' + ข้อความ; }
+      } catch (e) { msg.className = 'msg'; msg.textContent = 'คัดลอกเองได้: ' + ข้อความ; }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ข้อความ).then(สำเร็จ, สำรอง); else สำรอง();
+  }
+
+  $('reload').onclick = โหลด;
+  $('round').onchange = function () { รอบที่เลือก = this.value; โหลด(); };
+
+  if (typeof liff === 'undefined') { สถานะ('โหลดไลน์ไม่สำเร็จ — ปิดแล้วเปิดใหม่จากไลน์', true); return; }
+  liff.init({ liffId: LIFF_ID }).then(function () {
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    โหลด();
+  }).catch(function (e) { สถานะ('เชื่อมต่อไลน์ไม่สำเร็จ: ' + (e && e.message ? e.message : e), true); });
+})();
+</script>
+</body>
+</html>
