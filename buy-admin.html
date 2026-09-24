@@ -70,6 +70,9 @@
   .msg{ font-size:13px; margin-top:6px; white-space:pre-wrap; }
   .msg.ok{ color:var(--ok); } .msg.bad{ color:var(--bad); }
   .empty{ text-align:center; color:var(--muted); padding:24px 8px; font-size:14px; }
+  .exp{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:12px; font-size:13px; }   /* รุ่น 18 PAY-10 */
+  .exp textarea{ width:100%; height:90px; margin-top:6px; font-size:11px; border:1px solid var(--line); border-radius:8px; padding:6px; font-family:monospace; }
+  .test{ font-size:11px; font-weight:700; padding:2px 6px; border-radius:8px; background:#f1e8fb; color:#6b3fa0; margin-left:4px; }   /* รุ่น 18 ป้ายทดสอบ */
 </style>
 </head>
 <body>
@@ -80,6 +83,10 @@
     <div class="bar">
       <select id="round" aria-label="รอบส่ง"></select>
       <button id="reload" type="button">โหลดใหม่</button>
+    </div>
+    <div class="exp" id="exp" style="display:none">   <!-- รุ่น 18 PAY-10: เฉพาะผู้ทำรายการ (ด่านจริงอยู่ที่เซิร์ฟเวอร์) -->
+      <div class="acts"><button id="expBtn" type="button" class="b-mid">⬇️ ส่งออก 6 ช่อง ให้ระบบกู้ยืมกระทบยอด</button></div>
+      <div id="expOut" class="msg"></div>
     </div>
     <div class="chips">
       <div class="chip a" data-k="ready_for_loan"><div class="n" id="c-ready">–</div><div class="l">ยืนยันแล้ว รอลงหนี้</div></div>
@@ -116,7 +123,8 @@
     REASON_TYPE_REQUIRED: 'เลือกก่อนว่าล้างเพราะของไม่มีจริง หรือเหตุอื่น',
     NOT_CONFIRMED: 'น้องยังไม่ยืนยันรับของ — ยังลงหนี้ไม่ได้', AMOUNT_MISMATCH: 'ยอดไม่ตรงกับใบรับของ',
     ALREADY_LOANED: 'ใบนี้ลงหนี้ไปแล้วด้วยเลขอื่น', LOAN_REF_USED: 'เลขรายการหนี้นี้ใช้กับใบอื่นไปแล้ว',
-    LOAN_REF_REQUIRED: 'ต้องใส่เลขรายการหนี้', LOAN_AMOUNT_REQUIRED: 'ต้องใส่ยอด', RECEIPT_NOT_FOUND: 'ไม่พบใบรับของ', ORDER_NOT_FOUND: 'ไม่พบออเดอร์'
+    LOAN_REF_REQUIRED: 'ต้องใส่เลขรายการหนี้', LOAN_AMOUNT_REQUIRED: 'ต้องใส่ยอด', RECEIPT_NOT_FOUND: 'ไม่พบใบรับของ', ORDER_NOT_FOUND: 'ไม่พบออเดอร์',
+    SERVICE_PAUSED: 'ระบบพักการบันทึกชั่วคราว (เจ้าของสั่งพัก) — ดูรายการได้ตามปกติ แต่ยังบันทึกไม่ได้'   /* รุ่น 18 */
   };
 
   function $(id) { return document.getElementById(id); }
@@ -173,6 +181,7 @@
       สถานะ('');
       $('main').style.display = 'block';
       ทำรายการได้ = rd.can_operate === true;
+      $('exp').style.display = ทำรายการได้ ? 'block' : 'none';   /* รุ่น 18 */
       $('hsub').textContent = 'แอดมิน: ' + (rd.admin || '-') + ' · รอบส่ง ' + rd.round + (ทำรายการได้ ? '' : ' · ดูได้อย่างเดียว');
       วาดรอบ(rd);
       วาดตกค้าง(pd);
@@ -227,7 +236,9 @@
 
   function วาดออเดอร์(o) {
     var w = el('div', 'order');
-    var head = el('div', 'oid'); head.appendChild(el('span', null, o.order_id + ' · ' + บาท(o.total)));
+    var head = el('div', 'oid'); var ชื่อหัว = el('span', null, o.order_id + ' · ' + บาท(o.total));
+    if (o.is_test) ชื่อหัว.appendChild(el('span', 'test', '🧪 ทดสอบ'));   /* รุ่น 18: สั่งตอนประตูปิด หรือเจ้าของรับรองว่าเป็นทดสอบ */
+    head.appendChild(ชื่อหัว);
     head.appendChild(el('span', 'st ' + o.status, สถานะไทย[o.status] || o.status)); w.appendChild(head);
     if (o.status === 'CLEARED' || o.status === 'PARTIAL_CLOSED') {
       w.appendChild(el('div', 'muted', (o.status === 'CLEARED' ? 'ล้างโดย ' : 'ปิดส่วนค้างโดย ') + (o.cleared_by || '-') + ' · ' + (o.clear_reason || '') +
@@ -321,6 +332,11 @@
     var bCopy = el('button', 'b-mid', '📋 คัดลอกเลขใบรับของ'); bCopy.type = 'button';
     bCopy.onclick = function () { คัดลอก(rc.receipt_no, msg); };
     acts.appendChild(bCopy);
+    if (rc.card_id) {   /* รุ่น 18 PAY-5: รหัสการ์ดเต็มจากใบรับของนั้น · 6 ตัวท้ายไว้ช่วยอ่าน · ไม่ให้พิมพ์เอง */
+      var bCard = el('button', 'b-mid', '📋 คัดลอกรหัสการ์ด …' + String(rc.card_id).slice(-6)); bCard.type = 'button';
+      bCard.onclick = function () { คัดลอก(String(rc.card_id), msg, 'รหัสการ์ดเต็ม (…' + String(rc.card_id).slice(-6) + ')'); };
+      acts.appendChild(bCard);
+    }
     if (ทำรายการได้ && rc.confirm_status === 'CONFIRMED') {
       var ref = el('input', 't'); ref.placeholder = 'เลขรายการหนี้จากระบบกู้ยืม'; ref.maxLength = 60;
       var amt = el('input', 't'); amt.type = 'number'; amt.value = String(rc.amount); amt.inputMode = 'decimal'; amt.setAttribute('aria-label', 'ยอดที่ลงหนี้');
@@ -363,8 +379,8 @@
     });
   }
 
-  function คัดลอก(ข้อความ, msg) {
-    function สำเร็จ() { msg.className = 'msg ok'; msg.textContent = 'คัดลอกแล้ว: ' + ข้อความ; }
+  function คัดลอก(ข้อความ, msg, ป้าย) {   /* รุ่น 18: ป้าย = ข้อความที่โชว์แทน (ข้อมูลยาว/รหัสเต็ม) */
+    function สำเร็จ() { msg.className = 'msg ok'; msg.textContent = 'คัดลอกแล้ว: ' + (ป้าย || ข้อความ); }
     function สำรอง() {
       try {
         var t = document.createElement('textarea'); t.value = ข้อความ; t.setAttribute('readonly', '');
@@ -375,6 +391,52 @@
     }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ข้อความ).then(สำเร็จ, สำรอง); else สำรอง();
   }
+
+  /* ── รุ่น 18 PAY-10: ส่งออก 6 ช่อง (คำสั่งอ่านอย่างเดียว · ผู้ทำรายการเท่านั้น · ตรวจรูปคำตอบของคำสั่งนี้) ── */
+  $('expBtn').onclick = function () {
+    var b = this, out = $('expOut');
+    b.disabled = true; out.className = 'msg'; out.textContent = 'กำลังส่งออก…';
+    Array.prototype.slice.call($('exp').querySelectorAll('.expres')).forEach(function (x) { x.parentNode.removeChild(x); });
+    ยิง({ action: 'admin_export_receipts' }).then(function (r) {
+      b.disabled = false;
+      if (!r.ok) { out.className = 'msg bad'; out.textContent = ยังไม่รู้ผล(r) ? 'ยังไม่ได้รับคำตอบ — กดใหม่ได้ (คำสั่งนี้อ่านอย่างเดียว ไม่บันทึกอะไร)' : แปลผิด(r); return; }
+      if (r.kind !== 'jasmine-buy-receipts' || !Array.isArray(r.columns) || !Array.isArray(r.rows) || !Array.isArray(r.test_rows)) {
+        out.className = 'msg bad'; out.textContent = 'คำตอบไม่ใช่ข้อมูลส่งออก — กดใหม่ได้'; return;
+      }
+      if (r.headers_ok !== true) { out.className = 'msg bad'; out.textContent = 'หัวคอลัมน์แท็บใบรับของไม่ครบ (' + (r.missing_headers || []).join(', ') + ') — ยังไม่ส่งออก ให้แจ้งผู้ลงมือ'; return; }
+      var ข้อมูล = { kind: r.kind, format_version: r.format_version, exported_at: r.exported_at, timezone: r.timezone, exported_by: r.exported_by,
+        source_tab: r.source_tab, columns: r.columns, count: r.count, rows: r.rows, test_count: r.test_count, test_rows: r.test_rows };
+      var ข้อความ = JSON.stringify(ข้อมูล);
+      out.className = 'msg ok';
+      out.textContent = 'ส่งออกแล้ว ' + r.exported_at + ' · ใช้จริง ' + r.count + ' ใบ · ทดสอบ (แยกไว้ ไม่ใช้กระทบยอดจริง) ' + r.test_count + ' ใบ' +
+        (r.tab_exists ? '' : '\nยังไม่มีแท็บใบรับของ = ยังไม่เคยบันทึกส่งของ (ไม่ใช่ข้อมูลหาย)');
+      var กล่อง = el('div', 'expres');
+      var acts = el('div', 'acts'), msg2 = el('div', 'msg');
+      var bc = el('button', 'b-mid', '📋 คัดลอกข้อมูลส่งออก'); bc.type = 'button';
+      bc.onclick = function () { คัดลอก(ข้อความ, msg2, 'ข้อมูลส่งออก ' + r.count + ' ใบ (' + r.exported_at + ')'); };
+      var ชื่อไฟล์ = 'jasmine-receipts-' + String(r.exported_at).replace(/[^0-9]/g, '').slice(0, 14) + '-n' + r.count + '-t' + r.test_count + '.json';
+      var bf = el('button', 'b-mid', '💾 บันทึกเป็นไฟล์'); bf.type = 'button';
+      bf.onclick = function () {
+        try {
+          var blob = new Blob([ข้อความ], { type: 'application/json' });
+          var f = (typeof File === 'function') ? new File([blob], ชื่อไฟล์, { type: 'application/json' }) : null;
+          if (f && navigator.canShare && navigator.canShare({ files: [f] }) && navigator.share) {
+            navigator.share({ files: [f], title: ชื่อไฟล์ }).then(function () { msg2.className = 'msg ok'; msg2.textContent = 'ส่งไฟล์แล้ว: ' + ชื่อไฟล์; },
+              function () { msg2.className = 'msg'; msg2.textContent = 'ยกเลิกการส่งไฟล์ — ใช้ปุ่มคัดลอกแทนได้'; });
+            return;
+          }
+          var u = URL.createObjectURL(blob), a2 = document.createElement('a');
+          a2.href = u; a2.download = ชื่อไฟล์; document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+          setTimeout(function () { URL.revokeObjectURL(u); }, 5000);
+          msg2.className = 'msg'; msg2.textContent = 'สั่งบันทึกไฟล์ ' + ชื่อไฟล์ + ' แล้ว — ถ้าไม่เห็นไฟล์ ใช้ปุ่มคัดลอกแทน';
+        } catch (e) { msg2.className = 'msg bad'; msg2.textContent = 'บันทึกไฟล์ไม่ได้บนเครื่องนี้ — ใช้ปุ่มคัดลอกแทน'; }
+      };
+      acts.appendChild(bc); acts.appendChild(bf); กล่อง.appendChild(acts);
+      var ta = el('textarea'); ta.readOnly = true; ta.value = ข้อความ; ta.setAttribute('aria-label', 'ข้อมูลส่งออก (กดค้างเพื่อเลือกทั้งหมดได้)');
+      กล่อง.appendChild(ta); กล่อง.appendChild(msg2);
+      $('exp').appendChild(กล่อง);
+    });
+  };
 
   $('reload').onclick = โหลด;
   $('round').onchange = function () { รอบที่เลือก = this.value; โหลด(); };
