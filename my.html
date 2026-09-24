@@ -60,6 +60,12 @@
 
   <div class="wrap">
 
+    <!-- ฝากซื้อเฟส 1 (23 ก.ย. 2026) — ชั้น 1 ของสเปก 3.5 · เป็นลิงก์ธรรมดา หน้านี้ยังไม่เรียกหลังบ้านเหมือนเดิม -->
+    <a class="card" href="buy-my.html" id="t_buy">
+      <p class="ctitle"><span>🛍️</span><span id="t_buy_1">My orders</span></p>
+      <p class="cmy" id="t_buy_2"></p>
+    </a>
+
     <div class="card soon">
       <p class="ctitle"><span>🧾</span><span id="t_pay_1">Payslip and loan statement</span>
          <span class="pill">SOON</span></p>
@@ -99,6 +105,9 @@ var T = {
             my:'' },
   'A4-4': { en:'Back',
             th:'กลับ',
+            my:'' },
+  'K2-1': { en:'My orders',                 /* ไฟล์ 41 · ฝากซื้อเฟส 1 */
+            th:'รายการฝากซื้อของฉัน',
             my:'' }
 };
 
@@ -123,6 +132,8 @@ var T = {
   document.getElementById('t_score_2').textContent = รอง_('A4-3');
 
   document.getElementById('t_back').textContent = '← ' + หลัก_('A4-4');
+  document.getElementById('t_buy_1').textContent = หลัก_('K2-1');
+  document.getElementById('t_buy_2').textContent = รอง_('K2-1');
 })();
 
 /* ปุ่มกลับ: ถ้ามีหน้าก่อนหน้าให้ถอยกลับ ถ้าไม่มี (เปิดจากเมนูตรง ๆ) ให้ปิดหน้าต่าง LIFF
