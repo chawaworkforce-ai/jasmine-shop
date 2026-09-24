@@ -503,7 +503,7 @@ function โปรไฟล์เร็ว_() {
                 : data['แจ้งทีม'] === 'FAIL' ? '⚠️ ส่งแจ้งทีมไม่ออก — ทีมจะเห็นจากหน้าสรุป'
                 : 'กำลังแจ้งทีม')) + '</p>'
         + '<button class="btn btn-send" onclick="closeOv();location.reload()">เสร็จสิ้น</button></div>';
-    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="ส่งรายงาน"; }
+    }catch(e){ try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("ส่งไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); btn.disabled=false; btn.textContent="ส่งรายงาน"; }
   }
 
   main();
