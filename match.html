@@ -426,7 +426,7 @@ function โปรไฟล์เร็ว_() {
       loadedMatched = false;
       closeOv(); render();
       alert("✅ ผูกแล้ว: "+w.name);
-    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); }
+    }catch(e){ try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("ทำรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); }
   }
 
   async function unlink(m){
@@ -437,7 +437,7 @@ function โปรไฟล์เร็ว_() {
       matched = matched.filter(function(x){ return x.card_id !== m.card_id; });
       render();
       alert("✅ เลิกจับคู่แล้ว: "+m.name+"\n(สลับไปแท็บ 'ยังไม่จับคู่' เพื่อจับใหม่ได้)");
-    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); }
+    }catch(e){ try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("ทำรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); }
   }
 
   main();
