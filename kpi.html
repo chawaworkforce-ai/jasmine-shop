@@ -268,7 +268,10 @@ function โปรไฟล์เร็ว_() {
     if (ตั๋ว) ก้อน.idToken = ตั๋ว;
 
     var opt = { method: 'POST', body: JSON.stringify(ก้อน) };
-    if (o) { for (var k in o) if (k !== 'method' && k !== 'body') opt[k] = o[k]; }
+    if (o) { for (var k in o) if (k !== 'method' && k !== 'body' && k !== 'd1Quiet') opt[k] = o[k]; }
+    /* รอบ 52: คำสั่งอ่านที่เป็นข้อมูลประกอบ (ส่ง d1Quiet มา) ลองใหม่ตามเดิม แต่พลาดแล้วไม่ขึ้นจอเต็มทับทั้งหน้า
+       หน้าที่เรียกจัดการเอง (ซ่อนกล่อง) · คำสั่งเขียนไม่ใช้ตัวนี้ */
+    var เงียบ = !!(o && o.d1Quiet) && !!คำสั่งอ่าน_[ก้อน.action];
 
     /* รายการขาว: ลองใหม่ได้เฉพาะคำสั่งที่เรารู้แน่ว่าอ่านอย่างเดียว */
     var ลองใหม่ได้ = !!คำสั่งอ่าน_[ก้อน.action];
@@ -331,7 +334,7 @@ function โปรไฟล์เร็ว_() {
     var งาน = ยิงแล้วอ่าน_()['catch'](function (e) {
       /* ยิงไม่ออก หรือหมดเวลา: ลองใหม่เฉพาะคำสั่งอ่าน และเฉพาะเมื่อยังเหลือเวลาในเพดาน 8 วินาที */
       if (!ลองใหม่ได้ || เหลือเวลา_() <= 300) {
-        หน้าคำตอบเพี้ยน_(เขียน, 0, ก้อน.action, 'หมดเวลารอ หรือยิงไม่ออก');
+        if (!เงียบ) หน้าคำตอบเพี้ยน_(เขียน, 0, ก้อน.action, 'หมดเวลารอ หรือยิงไม่ออก');
         throw e;
       }
       return รอ_(Math.min(1500, Math.max(0, เหลือเวลา_() - 500))).then(ยิงแล้วอ่าน_);
@@ -345,7 +348,7 @@ function โปรไฟล์เร็ว_() {
 
     return งาน.then(function (r) {
       if (!r.ดี) {
-        หน้าคำตอบเพี้ยน_(เขียน, r.res ? r.res.status : 0, ก้อน.action, r.txt);
+        if (!เงียบ) หน้าคำตอบเพี้ยน_(เขียน, r.res ? r.res.status : 0, ก้อน.action, r.txt);
       } else if (r.j && r.j.ok === false && r.j.error === 'AUTH_REQUIRED') {
         หน้าเข้าใหม่_(!ตั๋ว);
       }
@@ -448,7 +451,7 @@ function โปรไฟล์เร็ว_() {
     const box = document.getElementById('reps');
     box.style.display='block'; box.className='reps'; box.innerHTML='กำลังโหลดประวัติรีพอต…';
     try{
-      const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({ action:"worker_reports", userId: profile.userId, card_id: cardId }) });
+      const res = await fetch(API_URL, { method:"POST", d1Quiet: true, body: JSON.stringify({ action:"worker_reports", userId: profile.userId, card_id: cardId }) });   /* รอบ 52: ข้อมูลประกอบ */
       const data = await res.json();
       if(!data.ok){ box.style.display='none'; return; }
       if(data.count===0){ box.className='reps none'; box.innerHTML='✅ ไม่มีรีพอตเดือนนี้'; return; }
@@ -518,7 +521,7 @@ function โปรไฟล์เร็ว_() {
       document.getElementById('sheet').innerHTML =
         '<div class="ok"><div class="check">✅</div><p>บันทึก KPI เรียบร้อย<br>คะแนนรวม '+data.total+' / 25</p>'
         + '<button class="btn btn-send" onclick="closeOv();location.reload()">เสร็จสิ้น</button></div>';
-    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); btn.disabled=false; btn.textContent="บันทึก KPI"; }
+    }catch(e){ try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); btn.disabled=false; btn.textContent="บันทึก KPI"; }
   }
 
   main();
