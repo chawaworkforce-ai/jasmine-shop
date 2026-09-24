@@ -444,7 +444,7 @@ function โปรไฟล์เร็ว_() {
       if(status==='เสร็จ'){ D[key]=D[key].filter(x=>x.id!==id); card.remove(); }
       else { if(item) item.status='กำลังทำ'; tab(cur); }
       setBadges();
-    }catch(e){ alert("ผิดพลาด: "+(e.message||e)); card.style.opacity=1; }
+    }catch(e){ try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("ทำรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); card.style.opacity=1; }
   }
 
   main();
