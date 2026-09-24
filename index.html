@@ -455,6 +455,7 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
       if(e==='TOO_MANY_ITEMS') return showError(tv('k1_4',{n:(res.max_items || (buy && buy.max_items) || 5)}));
       if(e.indexOf('NOT_ENOUGH_STOCK')===0 || e.indexOf('PRODUCT_ON_HOLD')===0){ showError(t('outOfStock')); loadProducts(); return; }   /* รอบ 50: สินค้าที่พักตรวจยอด = ชั่วคราวสั่งไม่ได้ */
       if(e==='SERVICE_NOT_OPEN') return showError(t('k1_5'));                     /* รอบ 50: ยังไม่เปิดบริการ (รอฝั่งเงินเดือนพร้อม) */
+      if(e==='SERVICE_PAUSED') return showError(t('k1_5'));                       /* รุ่น 18: เจ้าของสั่งพักคำสั่งเขียน — ใช้ข้อความที่แปลแล้ว ไม่แต่งคำใหม่ · ตะกร้า+เลขคำขอเดิมยังอยู่ */
       if(e==='ORDER_NOT_SETTLED' || e==='ORDER_ON_HOLD') return showError(t('k1_8'));   /* รอบ 50: บันทึกแล้วแต่ยังไม่เสร็จ = ยังไม่ทราบผล · เลขคำขอเดิมยังเก็บไว้ */
       if(e==='NO_TICKET' || e==='BAD_TICKET') return showError('Please open the shop from the LINE menu');
       showError('Cannot save order: '+e);
@@ -473,10 +474,14 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
       var ul=$('okItems'); ul.innerHTML='';
       var lines=['🌼 Jasmine', t('orderNo')+' '+res.orderId];
       res.items.forEach(function(it){
+        /* รุ่น 18 (มติรอบ 50 ★3): ชื่อตามภาษาที่น้องเลือก · ไม่มีคำแปลหรือหาสินค้าไม่เจอ = ชื่อจากคำตอบของออร์เดอร์/รหัสสินค้า
+           จำนวน ราคา ยอด = ค่าของออร์เดอร์ที่หลังบ้านยืนยัน (ไม่คิดใหม่จากรายการสินค้าตอนนี้) */
+        var p=prodById(it.id), แปล=p ? (lang==='en' ? (p.name_en||p.name_my) : (p.name_my||p.name_en)) : '';
+        var nm=แปล || it.name || it.id;
         var li=document.createElement('li');
-        li.innerHTML='<span>'+escHtml(it.name)+' x'+it.qty+'</span><span>'+it.subtotal+' '+t('baht')+'</span>';
+        li.innerHTML='<span>'+escHtml(nm)+' x'+it.qty+'</span><span>'+it.subtotal+' '+t('baht')+'</span>';
         ul.appendChild(li);
-        lines.push('• '+it.name+' x'+it.qty+' = '+it.subtotal+t('baht'));
+        lines.push('• '+nm+' x'+it.qty+' = '+it.subtotal+t('baht'));
       });
       var liT=document.createElement('li');
       liT.innerHTML='<b>'+t('items')+'</b><b>'+res.total+' '+t('baht')+'</b>';
