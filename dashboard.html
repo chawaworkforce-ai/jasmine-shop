@@ -380,8 +380,10 @@ function โปรไฟล์เร็ว_() {
       + chip('f',c.referrals,'แนะนำคนใหม่') + chip('k',c.kpiPending,'KPI ยังขาด (ไซต์)') + '</div>';
     h+=สดHTML_();
     h+='<h3>น้องต่อไซต์</h3>';
-    if(!D.workersBySite.length) h+='<div class="empty">ยังไม่มีข้อมูล</div>';
-    else D.workersBySite.forEach(s=> h+='<div class="row"><span>'+esc(s.site)+'</span><span class="c">'+s.count+'</span></div>');
+    const ไซต์จริง=D.workersBySite.filter(s=>!s.group), กลุ่มคน=D.workersBySite.filter(s=>s.group);   /* 🆕 รอบ 52 (มติรอบ 51 ข้อ 5) กลุ่ม ออก/รอลงงาน แยกจากไซต์จริง */
+    if(!ไซต์จริง.length) h+='<div class="empty">ยังไม่มีข้อมูล</div>';
+    else ไซต์จริง.forEach(s=> h+='<div class="row"><span>'+esc(s.site)+'</span><span class="c">'+s.count+'</span></div>');
+    if(กลุ่มคน.length){ h+='<h3>กลุ่มคน (ไม่ใช่ไซต์ · ไม่ต้องส่ง KPI)</h3>'; กลุ่มคน.forEach(s=> h+='<div class="row"><span>'+esc(s.label||s.site)+'</span><span class="c">'+s.count+'</span></div>'); }
     h+='<h3>KPI ยังไม่ส่งเดือนนี้</h3>';
     if(!D.kpiPending.length) h+='<div class="empty">ส่งครบทุกไซต์แล้ว 🎉</div>';
     else h+='<div>'+D.kpiPending.map(s=>'<span class="pill">'+esc(s)+'</span>').join('')+'</div>';
