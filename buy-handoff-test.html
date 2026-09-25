@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:,">
+<title>🧪 ทดสอบส่งข้อมูลไประบบกู้ยืม (ข้อมูลปลอม)</title>
+<!--
+  🧪 หน้าทดสอบฝั่ง Shop — มติผู้วางแผนรอบ 53 ★1.1 · ร่างข้อตกลงไฟล์ 42 (payroll) + ไฟล์ 50 (Shop)
+  พิสูจน์เส้นทางเล็กสุด: หน้าบนที่มาเดียวกับหน้า buy-admin จริง (https://chawaworkforce-ai.github.io) เปิดหน้าทดสอบของระบบกู้ยืม
+  ด้วย window.open แล้วคุยกันด้วย postMessage ที่ตรวจที่มาแบบตรงตัว · ส่ง 1 ชุด → รับถูกชุด → รับเลขหนี้กลับ → ตรวจครบ → ปิดแล้วเปิดทำต่อได้
+  🔴 ข้อมูลปลอมทั้งหมด (เลขใบ รบ-990101-… · การ์ดปลอม c1–c3) · ไม่เรียกระบบ Shop ใด ๆ · ไม่บันทึกอะไรนอกหน้านี้ · ไม่เปิดหน้าระบบกู้ยืมจริง
+  ขั้น 0 (ไม่บังคับ) ใช้ LIFF เดิมเพื่อดูว่าล็อกอินไลน์ใน Chrome ได้ไหม — ไม่เรียกระบบ Shop
+-->
+<style>
+  :root { --bg:#0f1419; --card:#1b232c; --line:#2f3b47; --ink:#f2f5f7; --dim:#a9b6c2; --ok:#35c46a; --bad:#ff6b6b; --warn:#ffc44d; --go:#2e8b57; --mid:#3b5b7a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:20px/1.5 system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif; }
+  .banner { position:sticky; top:0; z-index:9; background:#8a3b12; color:#fff; padding:10px 14px; font-weight:700; text-align:center; }
+  main { max-width:760px; margin:0 auto; padding:12px 14px 60px; }
+  h1 { font-size:24px; margin:14px 0 6px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin:14px 0; }
+  .card h2 { font-size:21px; margin:0 0 8px; }
+  button { font:inherit; width:100%; min-height:58px; border-radius:12px; border:0; margin:6px 0; padding:8px 12px; color:#fff; background:var(--mid); cursor:pointer; }
+  button.go { background:var(--go); font-weight:700; }
+  button.warn { background:#6b4b16; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  label.opt { display:flex; gap:10px; align-items:center; margin:6px 0; }
+  label.opt input { width:26px; height:26px; }
+  select { font:inherit; width:100%; min-height:52px; border-radius:10px; background:#243140; color:var(--ink); border:1px solid var(--line); padding:6px 10px; }
+  .st { border-radius:10px; padding:10px 12px; margin:8px 0; background:#223041; }
+  .st.ok { background:#123d25; } .st.bad { background:#4a1c1c; } .st.warn { background:#46380f; }
+  .small { font-size:16px; color:var(--dim); }
+  pre { white-space:pre-wrap; word-break:break-word; font-size:14px; line-height:1.45; background:#0b1015; border:1px solid var(--line); border-radius:10px; padding:10px; max-height:360px; overflow:auto; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .kv { font-size:17px; } .kv b { color:var(--warn); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="banner">🧪 หน้าทดสอบ — ข้อมูลปลอมทั้งหมด · ไม่เชื่อมระบบ Shop · ไม่บันทึกอะไรจริง</div>
+<main>
+  <h1>ทดสอบส่งข้อมูลจาก Shop ไประบบกู้ยืม</h1>
+  <div class="small">ใช้บนแท็บเล็ตใน <b>Chrome</b> เท่านั้น · หน้านี้คุยกับ "หน้าทดสอบ" ของระบบกู้ยืม ไม่ใช่หน้าระบบกู้ยืมจริง</div>
+  <div id="lineWarn" class="st bad" hidden>⚠️ หน้านี้เปิดอยู่ในไลน์ — ต้องเปิดใน Chrome (ระบบกู้ยืมเก็บข้อมูลไว้ใน Chrome ของแท็บเล็ต)</div>
+
+  <div class="card">
+    <h2>ขั้น 0 · ล็อกอินไลน์ใน Chrome (ไม่บังคับ)</h2>
+    <div class="small">ดูว่าหน้าแอดมินจริงจะเปิดใน Chrome ได้ไหม (ต้องล็อกอินไลน์) — ขั้นนี้ไม่เรียกระบบ Shop</div>
+    <button id="b0" type="button">ตรวจล็อกอินไลน์</button>
+    <div id="s0" class="st">ยังไม่ได้ตรวจ</div>
+  </div>
+
+  <div class="card">
+    <h2>ขั้น 1–3 · ส่งข้อมูลปลอมไปลงหนี้</h2>
+    <label class="small" for="set">ชุดข้อมูลปลอม</label>
+    <select id="set">
+      <option value="basic3">3 ใบ (ลงหนี้ได้ทั้ง 3)</option>
+      <option value="mixed">ปนใบ: 3 ใบลงได้ + ใบรอยืนยัน · ใบลงหนี้แล้ว · ใบยกเลิก · ใบทดสอบ</option>
+      <option value="big30">30 ใบ</option>
+    </select>
+    <label class="opt"><input id="slow" type="checkbox"> จำลองบันทึกช้า (2 วินาทีต่อใบ)</label>
+    <label class="opt"><input id="fail1" type="checkbox"> จำลองบันทึกไม่สำเร็จ 1 ใบ (ครั้งแรกเท่านั้น)</label>
+    <button id="b1" class="go" type="button">① เปิดระบบกู้ยืม (หน้าทดสอบ)</button>
+    <button id="b2" class="go" type="button" disabled>② ส่งไปลงหนี้</button>
+    <div id="s1" class="st">ยังไม่ได้เปิดระบบกู้ยืม</div>
+    <div id="s2" class="st" hidden></div>
+  </div>
+
+  <div class="card">
+    <h2>สถานะที่หน้านี้จำไว้</h2>
+    <div id="mem" class="kv">—</div>
+    <button id="bReset" class="warn" type="button">ล้างข้อมูลทดสอบในหน้านี้</button>
+  </div>
+
+  <div class="card">
+    <h2>บันทึกการทดสอบ</h2>
+    <button id="bCopy" type="button">📋 คัดลอกบันทึกการทดสอบ</button>
+    <div id="sCopy" class="small"></div>
+    <pre id="log"></pre>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  /* ═════ ค่าคงที่ (แก้ได้ที่นี่ที่เดียว · ห้ามใช้ '*') ═════ */
+  var ที่มากู้ยืม = 'https://jasmine-loan-epxb.pages.dev';                  // origin ตรงตัวของระบบกู้ยืม (ไม่มีพาธ)
+  var หน้ากู้ยืมทดสอบ = ที่มากู้ยืม + '/handoff-test.html?handoff=1';       // หน้าทดสอบของ payroll — ไม่ใช่หน้าระบบจริง
+  var ชื่อหน้าต่าง = 'jasmine-loan-handoff-test';                          // แยกจากชื่อที่ระบบจริงจะใช้
+  var ชุดข้อมูล = 'test';                                                   // หน้าทดสอบส่งได้แต่ชุดทดสอบ
+  var LIFF_ID = '2010242926-nreePSO4';                                     // ขั้น 0 เท่านั้น (LIFF เดียวกับหน้าจริง)
+  var รอพร้อม = 20000, รอรับ = 20000;                                       // มิลลิวินาที
+  var กุญแจจำ = 'jasmine-handoff-test-v1';
+
+  function $(id) { return document.getElementById(id); }
+  var ในไลน์ = /\bLine\//i.test(navigator.userAgent || '');
+  if (ในไลน์) { $('lineWarn').hidden = false; }
+
+  /* ═════ สถานะ (จำในเบราว์เซอร์นี้เท่านั้น · ข้อมูลปลอม) ═════ */
+  var S = โหลด() || { batches: {}, current: null, refs: {}, failedOnce: {}, log: [] };
+  function โหลด() { try { var t = localStorage.getItem(กุญแจจำ); return t ? JSON.parse(t) : null; } catch (e) { return null; } }
+  function จำ() { try { localStorage.setItem(กุญแจจำ, JSON.stringify(S)); } catch (e) {} วาดความจำ(); }
+
+  var คู่ = null, พร้อม = false, นาฬิกาพร้อม = null, นาฬิการับ = null, เฝ้าปิด = null, กำลังบันทึก = false;
+
+  function เวลา() { return new Date().toLocaleTimeString('th-TH', { hour12: false, timeZone: 'Asia/Bangkok' }); }
+  function บันทึก(ทิศ, ข้อความ) {
+    S.log.push(เวลา() + ' ' + ทิศ + ' ' + ข้อความ);
+    if (S.log.length > 300) S.log = S.log.slice(-300);
+    จำ(); $('log').textContent = S.log.join('\n'); $('log').scrollTop = 1e9;
+  }
+  function สถานะ(id, ข้อความ, แบบ) { var el = $(id); el.hidden = false; el.className = 'st' + (แบบ ? ' ' + แบบ : ''); el.textContent = ข้อความ; }
+  function บาท(n) { return '฿' + Number(n).toLocaleString('th-TH'); }
+
+  /* ═════ ข้อมูลส่งออกรูปแบบ 2 แบบปลอม (รูปเดียวกับปุ่ม 📋 คัดลอกข้อมูลส่งออกของ buy-admin รุ่น 19) ═════ */
+  var การ์ด = ['c100000000000000000000c1', 'c200000000000000000000c2', 'c300000000000000000000c3'];
+  function เลขใบ(n) { return 'รบ-990101-' + ('000' + n).slice(-4); }
+  function เวลาไทย() {
+    var p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).formatToParts(new Date());
+    var g = {}; p.forEach(function (x) { g[x.type] = x.value; });
+    return g.year + '-' + g.month + '-' + g.day + ' ' + (g.hour === '24' ? '00' : g.hour) + ':' + g.minute + ':' + g.second;
+  }
+  function ชุดปลอม(แบบ) {
+    var rows = [], test_rows = [];
+    if (แบบ === 'big30') {
+      for (var i = 1; i <= 30; i++) rows.push([เลขใบ(100 + i), การ์ด[(i - 1) % 3], 20 + (i % 7) * 10, 'CONFIRMED', null, null]);
+    } else {
+      rows.push([เลขใบ(1), การ์ด[0], 180, 'CONFIRMED', null, null]);
+      rows.push([เลขใบ(2), การ์ด[1], 40, 'CONFIRMED', null, null]);
+      rows.push([เลขใบ(3), การ์ด[2], 30, 'CONFIRMED', null, null]);
+      if (แบบ === 'mixed') {
+        rows.push([เลขใบ(4), การ์ด[0], 20, 'WAIT', null, null]);                    // น้องยังไม่ยืนยัน = ต้องไม่ลง
+        rows.push([เลขใบ(5), การ์ด[1], 50, 'CONFIRMED', 'L-TEST-0005', 50]);        // ลงหนี้แล้ว = ต้องไม่ลงซ้ำ
+        rows.push([เลขใบ(6), การ์ด[2], 25, 'VOID', null, null]);                    // ยกเลิกใบ = ต้องไม่ลง
+        test_rows.push([เลขใบ(7), การ์ด[2], 40, 'CONFIRMED', null, null]);          // ใบทดสอบ = แยกชุด ต้องไม่ลงในชุดจริง
+      }
+    }
+    return { kind: 'jasmine-buy-receipts', format_version: 2, exported_at: เวลาไทย(), timezone: 'Asia/Bangkok',
+      exported_by: 'หน้าทดสอบ (ปลอม)', source_tab: 'ใบรับของ', complete: true,
+      columns: ['receipt_no', 'card_id', 'amount', 'confirm_status', 'loan_ref', 'loan_amount'],
+      count: rows.length, rows: rows, test_count: test_rows.length, test_rows: test_rows, problem_count: 0, problem_rows: [] };
+  }
+  function ใบที่ลงได้(payload) { return payload.rows.filter(function (r) { return r[3] === 'CONFIRMED' && r[4] == null; }); }
+  function หาแถว(receipt) {
+    var ids = Object.keys(S.batches);
+    for (var i = ids.length - 1; i >= 0; i--) {
+      var rows = S.batches[ids[i]].payload.rows;
+      for (var j = 0; j < rows.length; j++) if (rows[j][0] === receipt) return rows[j];
+    }
+    return null;
+  }
+
+  /* ═════ ขั้น 1 · เปิดหน้าต่าง (ต้องเรียกจากการแตะเท่านั้น ไม่งั้นเบราว์เซอร์กัน) ═════ */
+  function เปิด() {
+    if (ในไลน์) { สถานะ('s1', 'เปิดใน Chrome ก่อน — หน้านี้อยู่ในไลน์', 'bad'); return; }
+    var w = null;
+    try { w = window.open(หน้ากู้ยืมทดสอบ, ชื่อหน้าต่าง); } catch (e) { w = null; }
+    if (!w) { สถานะ('s1', 'เปิดหน้าต่างไม่ได้ (เบราว์เซอร์กันหน้าต่างเด้ง) — แตะ ① อีกครั้ง', 'bad'); บันทึก('✖', 'window.open คืนค่าว่าง'); return; }
+    คู่ = w; พร้อม = false; $('b2').disabled = true;
+    บันทึก('•', 'เปิดหน้าต่างระบบกู้ยืม (หน้าทดสอบ)');
+    สถานะ('s1', 'รอระบบกู้ยืมตอบ… (ไม่เกิน 20 วินาที)');
+    clearTimeout(นาฬิกาพร้อม);
+    นาฬิกาพร้อม = setTimeout(function () {
+      if (!พร้อม) { สถานะ('s1', 'ระบบกู้ยืมไม่ตอบใน 20 วินาที — ทางสำรอง: คัดลอกข้อมูลทั้งชุดครั้งเดียว', 'bad'); บันทึก('✖', 'ไม่ได้ jl-ready ใน 20 วิ'); }
+    }, รอพร้อม);
+    clearInterval(เฝ้าปิด);
+    เฝ้าปิด = setInterval(function () {
+      if (คู่ && คู่.closed) {
+        clearInterval(เฝ้าปิด); คู่ = null; พร้อม = false; $('b2').disabled = true;
+        สถานะ('s1', 'หน้าต่างระบบกู้ยืมถูกปิด — แตะ ① เพื่อเปิดใหม่แล้วทำต่อ (งานที่ค้างยังอยู่)', 'warn');
+        บันทึก('•', 'หน้าต่างระบบกู้ยืมถูกปิด');
+      }
+    }, 1000);
+  }
+
+  function ส่ง(ข้อความ) {
+    if (!คู่ || คู่.closed) { บันทึก('✖', 'ส่งไม่ได้: ไม่มีหน้าต่างระบบกู้ยืม'); return false; }
+    ข้อความ.v = 1; ข้อความ.dataset = ชุดข้อมูล;
+    คู่.postMessage(ข้อความ, ที่มากู้ยืม);            // ระบุปลายทางตรงตัว ถ้าหน้าต่างไปอยู่ที่อื่น เบราว์เซอร์จะไม่ส่ง
+    บันทึก('→', ข้อความ.type + (ข้อความ.batch_id ? ' ' + ข้อความ.batch_id : '') + (ข้อความ.payload ? ' · ' + ข้อความ.payload.count + ' แถว' : ''));
+    return true;
+  }
+
+  /* ═════ ขั้น 2 · ส่งชุด (ชุดที่ยังไม่จบ ส่งซ้ำด้วยเลขชุดเดิม) ═════ */
+  function ปุ่มส่ง() {
+    var b = S.current && S.batches[S.current];
+    var p = b ? b.payload : ชุดปลอม($('set').value);
+    var ลงได้ = ใบที่ลงได้(p);
+    var รวม = ลงได้.reduce(function (a, r) { return a + r[2]; }, 0);
+    $('b2').textContent = '② ส่งไปลงหนี้ ' + ลงได้.length + ' ใบ · รวม ' + บาท(รวม);
+  }
+  function ส่งชุด() {
+    if (!พร้อม) return;
+    var b = S.current && S.batches[S.current];
+    if (!b || b.done) {
+      var id = 'sb-' + เวลาไทย().replace(/[^0-9]/g, '').slice(2) + '-' + Math.random().toString(36).slice(2, 8);
+      b = S.batches[id] = { batch_id: id, sent_at: new Date().toISOString(), set: $('set').value, payload: ชุดปลอม($('set').value), got: null, done: false };
+      S.current = id; จำ();
+    }
+    ส่ง({ type: 'jl-batch', batch_id: b.batch_id, sent_at: b.sent_at, payload: b.payload });
+    สถานะ('s2', 'ส่งชุด ' + b.batch_id + ' แล้ว — รอระบบกู้ยืมยืนยันว่ารับ…');
+    clearTimeout(นาฬิการับ);
+    นาฬิการับ = setTimeout(function () {
+      if (!S.batches[b.batch_id].got) { สถานะ('s2', 'ระบบกู้ยืมยังไม่ยืนยันว่ารับชุดนี้ใน 20 วินาที — แตะ ② อีกครั้งได้ (เลขชุดเดิม ไม่เพิ่มหนี้)', 'warn'); บันทึก('✖', 'ไม่ได้ jl-got ใน 20 วิ'); }
+    }, รอรับ);
+  }
+
+  /* ═════ รับข้อความ ═════ */
+  window.addEventListener('message', function (e) {
+    if (e.origin !== ที่มากู้ยืม) { บันทึก('✖', 'ปฏิเสธ: ที่มาไม่ตรง (' + String(e.origin).slice(0, 60) + ')'); return; }
+    if (!คู่ || e.source !== คู่) { บันทึก('✖', 'ปฏิเสธ: ไม่ใช่หน้าต่างที่หน้านี้เปิด'); return; }
+    var m = e.data;
+    if (!m || typeof m !== 'object' || m.v !== 1 || typeof m.type !== 'string') { บันทึก('✖', 'ปฏิเสธ: รูปข้อความไม่ถูก'); return; }
+    if (m.dataset !== ชุดข้อมูล) { บันทึก('✖', 'ปฏิเสธ: ชุดข้อมูลไม่ตรง (' + String(m.dataset) + ')'); return; }
+    บันทึก('←', m.type + (m.batch_id ? ' ' + m.batch_id : ''));
+    if (m.type === 'jl-ready') return รับพร้อม(m);
+    if (m.type === 'jl-got') return รับยืนยันรับ(m);
+    if (m.type === 'jl-refs') return รับเลขหนี้(m);
+    if (m.type === 'jl-done') return รับผลตรวจ(m);
+    บันทึก('✖', 'ไม่รู้จักชนิดข้อความ ' + m.type);
+  });
+
+  function รับพร้อม(m) {
+    พร้อม = true; clearTimeout(นาฬิกาพร้อม);
+    var ค้าง = Number(m.pending_refs) || 0;
+    สถานะ('s1', '✅ ระบบกู้ยืมพร้อม (ชุดทดสอบ)' + (ค้าง ? ' · มีเลขหนี้ค้างส่งกลับ ' + ค้าง + ' ใบ — กำลังขอ' : ''), 'ok');
+    $('b2').disabled = false; ปุ่มส่ง();
+    if (ค้าง) ส่ง({ type: 'jl-pull' });
+  }
+
+  function รับยืนยันรับ(m) {
+    var b = S.batches[m.batch_id];
+    if (!b) { บันทึก('✖', 'jl-got ของชุดที่ไม่รู้จัก'); return; }
+    clearTimeout(นาฬิการับ);
+    if (m.ok === false) { b.got = { ok: false, reason: m.reason, at: เวลา() }; จำ(); สถานะ('s2', '❌ ระบบกู้ยืมไม่รับชุดนี้: ' + (m.reason || 'ไม่ระบุเหตุ') + ' — ไม่มีการลงหนี้', 'bad'); return; }
+    b.got = { ok: true, count: m.count, to_record: m.to_record, at: เวลา() }; จำ();
+    สถานะ('s2', '✅ ระบบกู้ยืมรับชุด ' + m.batch_id + ' แล้ว · จะลงหนี้ ' + m.to_record + ' ใบ — ไปแท็บระบบกู้ยืมแล้วกดลงหนี้ (หน้านี้บันทึกเลขกลับให้เอง)', 'ok');
+  }
+
+  /* ═════ ขั้น 3 · รับเลขหนี้ → ตรวจทีละใบ → บันทึก (จำลอง) → อ่านกลับ → ส่งผลตรวจ ═════ */
+  function รับเลขหนี้(m) {
+    if (!S.batches[m.batch_id]) { บันทึก('✖', 'ปฏิเสธ jl-refs: ชุดที่ไม่รู้จัก'); return; }
+    if (!Array.isArray(m.refs)) { บันทึก('✖', 'ปฏิเสธ jl-refs: ไม่มีรายการ'); return; }
+    ส่ง({ type: 'jl-refs-got', batch_id: m.batch_id, count: m.refs.length });
+    var ใหม่ = [], ผล = { recorded: [], failed: [], conflict: [] };
+    m.refs.forEach(function (x) {
+      var no = x && String(x.receipt_no || ''), แถว = no ? หาแถว(no) : null, เดิม = S.refs[no];
+      var ref = x && typeof x.loan_ref === 'string' ? x.loan_ref.trim() : '';
+      var เหตุ = '';
+      if (!แถว) เหตุ = 'ไม่มีใบนี้ในชุดที่ส่งไป';
+      else if (แถว[3] !== 'CONFIRMED' || แถว[4] != null) เหตุ = 'ใบนี้ไม่ใช่ใบรอลงหนี้';
+      else if (String(x.card_id) !== แถว[1]) เหตุ = 'รหัสการ์ดไม่ตรงใบรับของ';
+      else if (Number(x.loan_amount) !== แถว[2]) เหตุ = 'ยอดหนี้ไม่ตรงยอดใบรับของ';
+      else if (!ref || ref.length > 60) เหตุ = 'เลขรายการหนี้ว่างหรือยาวเกิน';
+      if (เหตุ) { ผล.conflict.push({ receipt_no: no, reason: เหตุ }); S.refs[no] = { state: 'check', reason: เหตุ, at: เวลา() }; return; }
+      if (เดิม && เดิม.state === 'recorded') {
+        if (เดิม.loan_ref === ref) ผล.recorded.push(no);                                 // ของเดิม = ทำซ้ำแล้วผลไม่เพิ่ม
+        else { ผล.conflict.push({ receipt_no: no, reason: 'ใบนี้มีเลขหนี้อื่นอยู่แล้ว', have: เดิม.loan_ref, got: ref }); }
+        return;
+      }
+      ใหม่.push({ no: no, ref: ref, amount: แถว[2], card: แถว[1] });
+    });
+    จำ();
+    บันทึกทีละใบ(m.batch_id, ใหม่, ผล);
+  }
+
+  function บันทึกทีละใบ(batch, รายการ, ผล) {
+    กำลังบันทึก = true;
+    var ช้า = $('slow').checked ? 2000 : 150, ล้ม = $('fail1').checked, i = 0, ทั้งหมด = รายการ.length;
+    function ต่อ() {
+      if (i >= รายการ.length) { กำลังบันทึก = false; return ส่งผลตรวจ(batch, ผล); }
+      var x = รายการ[i++];
+      สถานะ('s2', 'กำลังบันทึกเลขหนี้ (จำลอง) ' + i + '/' + ทั้งหมด + ' …');
+      setTimeout(function () {
+        if (ล้ม && !S.failedOnce.done) {                                  // ล้ม 1 ใบ ครั้งแรกเท่านั้น
+          S.failedOnce.done = true; S.refs[x.no] = { state: 'failed', loan_ref: x.ref, at: เวลา() };
+          ผล.failed.push({ receipt_no: x.no, reason: 'บันทึกไม่สำเร็จ (จำลอง)' });
+          บันทึก('✖', 'บันทึกไม่สำเร็จ (จำลอง) ' + x.no);
+        } else {
+          S.refs[x.no] = { state: 'recorded', loan_ref: x.ref, loan_amount: x.amount, card_id: x.card, at: เวลา() };
+          ผล.recorded.push(x.no);
+        }
+        จำ(); ต่อ();
+      }, ช้า);
+    }
+    ต่อ();
+  }
+
+  function ส่งผลตรวจ(batch, ผล) {
+    /* อ่านกลับ (จำลอง) = สร้างข้อมูลส่งออกใหม่จากทุกชุดที่หน้านี้รู้จัก แล้วเติมเลขหนี้ของใบที่บันทึกแล้ว */
+    var แถว = {}, ทดสอบ = [];
+    Object.keys(S.batches).forEach(function (k) {
+      S.batches[k].payload.rows.forEach(function (r) { แถว[r[0]] = r.slice(); });
+      S.batches[k].payload.test_rows.forEach(function (r) { ทดสอบ.push(r.slice()); });
+    });
+    Object.keys(S.refs).forEach(function (no) {
+      var x = S.refs[no];
+      if (x.state === 'recorded' && แถว[no]) { แถว[no][4] = x.loan_ref; แถว[no][5] = x.loan_amount; }
+    });
+    var rows = Object.keys(แถว).map(function (k) { return แถว[k]; });
+    var payload = { kind: 'jasmine-buy-receipts', format_version: 2, exported_at: เวลาไทย(), timezone: 'Asia/Bangkok', exported_by: 'หน้าทดสอบ (ปลอม)',
+      source_tab: 'ใบรับของ', complete: true, columns: ['receipt_no', 'card_id', 'amount', 'confirm_status', 'loan_ref', 'loan_amount'],
+      count: rows.length, rows: rows, test_count: ทดสอบ.length, test_rows: ทดสอบ, problem_count: 0, problem_rows: [] };
+    ส่ง({ type: 'jl-verify', batch_id: batch, payload: payload, recorded: ผล.recorded, failed: ผล.failed, conflict: ผล.conflict });
+    var ค้าง = ผล.failed.length + ผล.conflict.length, ได้ = ผล.recorded.length;
+    สถานะ('s2', (ค้าง ? '🟡 บันทึกเลขหนี้แล้ว ' + ได้ + ' ใบ · ค้าง ' + ค้าง + ' ใบ' : '✅ บันทึกเลขหนี้ครบ ' + ได้ + '/' + ได้ + ' ใบ') +
+      ' (จำลอง) — ส่งผลให้ระบบกู้ยืมตรวจแล้ว' + (ค้าง ? ' · ใบค้างทำต่อได้: แตะ ① อีกครั้ง' : ''), ค้าง ? 'warn' : 'ok');
+  }
+
+  function รับผลตรวจ(m) {
+    var b = S.batches[m.batch_id];
+    if (b && !m.pending) { b.done = true; }
+    จำ();
+    สถานะ('s1', 'ระบบกู้ยืมตรวจแล้ว: ' + (m.pending ? 'ครบ ' + m.verified + ' ใบ · ค้าง ' + m.pending + ' ใบ' : 'ครบ ' + m.verified + '/' + m.verified + ' ใบ'), m.pending ? 'warn' : 'ok');
+  }
+
+  /* ═════ ขั้น 0 · ล็อกอินไลน์ใน Chrome (LIFF) — ไม่เรียกระบบ Shop ═════ */
+  function โหลดLIFF(ต่อ) {
+    if (window.liff) return ต่อ(true);
+    var s = document.createElement('script'); s.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
+    s.onload = function () { ต่อ(!!window.liff); }; s.onerror = function () { ต่อ(false); };
+    document.head.appendChild(s);
+  }
+  function ตรวจไลน์() {
+    สถานะ('s0', 'กำลังตรวจ…');
+    โหลดLIFF(function (ok) {
+      if (!ok) { สถานะ('s0', '❌ โหลดชุดคำสั่งไลน์ไม่สำเร็จ', 'bad'); บันทึก('✖', 'โหลด LIFF SDK ไม่สำเร็จ'); return; }
+      liff.init({ liffId: LIFF_ID }).then(function () {
+        if (!liff.isLoggedIn()) {
+          try { sessionStorage.setItem('jhs-liff', '1'); } catch (e) {}
+          บันทึก('•', 'ยังไม่ล็อกอินไลน์ → ไปหน้าล็อกอิน');
+          liff.login({ redirectUri: location.origin + location.pathname });
+          return;
+        }
+        try { sessionStorage.removeItem('jhs-liff'); } catch (e) {}
+        var ท้าย = '';
+        try { var d = liff.getDecodedIDToken(); ท้าย = d && d.sub ? String(d.sub).slice(-6) : ''; } catch (e) {}
+        var ที่ = liff.isInClient() ? 'อยู่ในไลน์' : 'อยู่นอกไลน์ (เบราว์เซอร์)';
+        สถานะ('s0', '✅ ล็อกอินไลน์ได้ · บัญชีลงท้าย …' + (ท้าย || '?') + ' · ' + ที่ + ' · ' + liff.getOS(), 'ok');
+        บันทึก('•', 'ล็อกอินไลน์ได้ · บัญชีลงท้าย …' + (ท้าย || '?') + ' · ' + ที่);
+      }).catch(function (err) {
+        สถานะ('s0', '❌ ล็อกอินไลน์ไม่สำเร็จ: ' + (err && err.message ? err.message : err), 'bad');
+        บันทึก('✖', 'liff.init ไม่สำเร็จ: ' + (err && err.message ? err.message : err));
+      });
+    });
+  }
+
+  /* ═════ ส่วนแสดงผล ═════ */
+  function วาดความจำ() {
+    var ids = Object.keys(S.batches), rec = 0, chk = 0, fail = 0;
+    Object.keys(S.refs).forEach(function (k) { var st = S.refs[k].state; if (st === 'recorded') rec++; else if (st === 'check') chk++; else if (st === 'failed') fail++; });
+    var b = S.current && S.batches[S.current];
+    $('mem').innerHTML = 'ชุดล่าสุด: <b>' + (b ? b.batch_id : '—') + '</b>' + (b ? (b.done ? ' · ตรวจครบแล้ว' : ' · ยังไม่จบ') : '') +
+      '<br>ชุดที่เคยส่ง: <b>' + ids.length + '</b> · เลขหนี้ที่บันทึกแล้ว (จำลอง): <b>' + rec + '</b> · ค้าง: <b>' + fail + '</b> · ต้องตรวจ: <b>' + chk + '</b>';
+  }
+  $('b0').onclick = ตรวจไลน์;
+  $('b1').onclick = เปิด;
+  $('b2').onclick = ส่งชุด;
+  $('set').onchange = function () { if (!S.current || S.batches[S.current].done) ปุ่มส่ง(); };
+  $('bReset').onclick = function () {
+    if (กำลังบันทึก) return;
+    S = { batches: {}, current: null, refs: {}, failedOnce: {}, log: [] }; จำ(); $('log').textContent = '';
+    สถานะ('s2', 'ล้างข้อมูลทดสอบในหน้านี้แล้ว (ข้อมูลในระบบกู้ยืมไม่ถูกแตะ)', 'warn');
+  };
+  $('bCopy').onclick = function () {
+    var t = '🧪 บันทึกทดสอบส่งข้อมูล Shop → ระบบกู้ยืม · ' + navigator.userAgent + '\n' + S.log.join('\n');
+    function ok() { $('sCopy').textContent = 'คัดลอกแล้ว ' + S.log.length + ' บรรทัด'; }
+    function สำรอง() { var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) { $('sCopy').textContent = 'คัดลอกไม่ได้ — กดค้างในกล่องบันทึกเพื่อเลือก'; } document.body.removeChild(ta); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, สำรอง); else สำรอง();
+  };
+
+  $('log').textContent = S.log.join('\n');
+  วาดความจำ(); ปุ่มส่ง();
+  var หลังล็อกอิน = false; try { หลังล็อกอิน = sessionStorage.getItem('jhs-liff') === '1'; } catch (e) {}
+  if (หลังล็อกอิน || /[?&](code|liff\.state)=/.test(location.search)) ตรวจไลน์();
+})();
+</script>
+</body>
+</html>
