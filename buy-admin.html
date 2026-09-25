@@ -103,7 +103,7 @@
   /* ══ buy-admin.html · ฝากซื้อเฟส 1 · 23 ก.ย. 2026 ══
      หลักที่ยึด (ตรงกับกติกาผู้วางแผน):
      · ตัวตน/สิทธิ์ตรวจที่เซิร์ฟเวอร์ (ตั๋ว LINE + AdminUsers) หน้านี้ไม่ใช่ด่าน
-     · 1 กด = 1 คำขอ · ปุ่มถูกปิดระหว่างรอ · ไม่ยิงซ้ำเอง · รอสูงสุด 20 วินาที
+     · 1 กด = 1 คำขอ · ปุ่มถูกปิดระหว่างรอ · รอสูงสุด 20 วินาทีต่อครั้ง · รุ่น 19: ส่งคำขอเดิมซ้ำได้ 1 ครั้งเฉพาะคำสั่งที่ทำซ้ำไม่เพิ่มผล (มติรอบ 51)
      · คำสั่งเขียนมีเลขคำขอ (req_id) — กดซ้ำหลังเน็ตหลุด เซิร์ฟเวอร์คืนของเดิม ไม่สร้างใบซ้ำ
      · ข้อความทุกช่องใส่ด้วย textContent ไม่ใช้ innerHTML กับข้อมูลจากชีต
      · ไม่เก็บอะไรในเครื่อง */
@@ -145,26 +145,55 @@
     return t;
   }
 
-  /* ── ยิงคำขอ: ครั้งเดียว · มีเพดานเวลา · ไม่ลองซ้ำเอง ── */
-  function ยิง(body) {
-    var tk = null;
-    try { tk = liff.getIDToken(); } catch (e) {}
-    if (!tk) return Promise.resolve({ ok: false, error: 'NO_TICKET' });
-    body.idToken = tk;
+  /* ── ยิงคำขอ · รุ่น 19 (มติผู้วางแผนรอบ 51 ★S1): ส่งคำขอเดิมซ้ำได้ 1 ครั้ง เฉพาะคำสั่งในรายการนี้ ──
+     ตรวจแล้วว่าทำซ้ำไม่เพิ่มผล: บันทึกส่งของ = เลขคำขอเดิมได้ใบเดิม · ล้าง/ยกเลิกใบ = ทำแล้วตอบว่าทำแล้ว · ลงหนี้เลขเดิมยอดเดิม = ตอบว่ามีแล้ว · คำสั่งอ่าน
+     · เนื้อคำขอสร้างครั้งเดียว (เลขรายการ การกระทำ เลขหนี้ ยอดเดิม) ใช้ทั้ง 2 ครั้ง · ซ้ำเฉพาะ หมดเวลา/เน็ตล้ม/คำตอบผิดรูป · รวมไม่เกิน 1 ครั้ง
+     · คำตอบที่เป็นผลจริง (ok:false พร้อมรหัส) = ไม่ส่งซ้ำ · เพดานรอต่อครั้ง 20 วินาทีเท่าเดิม */
+  var ซ้ำได้ = { admin_round: 1, admin_pending: 1, admin_export_receipts: 1, admin_record_delivery: 1,
+    admin_clear_order: 1, admin_void_receipt: 1, admin_record_loan: 1 };
+  function รูปถูก(action, j) {   /* คำตอบสำเร็จต้องตรงรูปของคำสั่ง (มติรอบ 50 ★1) */
+    switch (action) {
+      case 'admin_round': return Array.isArray(j.sites) && j.round !== undefined;
+      case 'admin_pending': return Array.isArray(j.ready_for_loan) && Array.isArray(j.wait_over_3_days) && Array.isArray(j.disputed);
+      case 'admin_export_receipts': return j.kind === 'jasmine-buy-receipts';
+      case 'admin_record_delivery': return !!j.receipt_no && j.amount != null;
+      case 'admin_clear_order': return !!j.order_id && !!j.status;
+      case 'admin_void_receipt': return !!j.receipt_no && j.confirm_status === 'VOID';
+      case 'admin_record_loan': return !!j.receipt_no && !!j.loan_ref;
+    }
+    return true;
+  }
+  function ยิงครั้งเดียว(action, เนื้อ) {
     var ตัด = window.AbortController ? new AbortController() : null;
     var นาฬิกา = ตัด ? setTimeout(function () { ตัด.abort(); }, รอสูงสุด) : null;
-    return fetch(API_URL, { method: 'POST', body: JSON.stringify(body), credentials: 'omit', signal: ตัด ? ตัด.signal : undefined })
+    return fetch(API_URL, { method: 'POST', body: เนื้อ, credentials: 'omit', signal: ตัด ? ตัด.signal : undefined })
       .then(function (r) { return r.text(); })
       .then(function (t) {
         if (นาฬิกา) clearTimeout(นาฬิกา);
         var j; try { j = JSON.parse(t); } catch (e) { return { ok: false, error: 'NOT_JSON' }; }
-        /* รอบ 50 (ทดสอบผ่าน /exec 24 ก.ย.): บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลคำสั่งนี้ ⇒ ถือว่ายังไม่รู้ผล ห้ามขึ้นว่าสำเร็จ */
-        if (j && (j.products !== undefined || /API is running/.test(String(j.msg || '')))) return { ok: false, error: 'NOT_JSON' };
+        if (!j || typeof j !== 'object') return { ok: false, error: 'NOT_JSON' };
+        /* รอบ 50 (ทดสอบผ่าน /exec 24 ก.ย.): บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลคำสั่งนี้ ⇒ ถือว่ายังไม่รู้ผล */
+        if (j.products !== undefined || /API is running/.test(String(j.msg || ''))) return { ok: false, error: 'NOT_JSON' };
+        if (j.ok === true && !รูปถูก(action, j)) return { ok: false, error: 'NOT_JSON' };
         return j;
       })
       .catch(function (e) { if (นาฬิกา) clearTimeout(นาฬิกา); return { ok: false, error: 'TIMEOUT', timeout: true }; });
   }
+  function ยิง(body, ก่อนครั้งที่สอง) {
+    var tk = null;
+    try { tk = liff.getIDToken(); } catch (e) {}
+    if (!tk) return Promise.resolve({ ok: false, error: 'NO_TICKET' });
+    body.idToken = tk;
+    var เนื้อ = JSON.stringify(body);
+    return ยิงครั้งเดียว(body.action, เนื้อ).then(function (r) {
+      if (!ยังไม่รู้ผล(r) || !ซ้ำได้[body.action]) return r;
+      if (ก่อนครั้งที่สอง) ก่อนครั้งที่สอง();
+      return ยิงครั้งเดียว(body.action, เนื้อ).then(function (r2) { r2.ครั้งที่สอง = true; return r2; });
+    });
+  }
   function ยังไม่รู้ผล(r) { return r && (r.error === 'TIMEOUT' || r.error === 'NOT_JSON'); }
+  var งานเขียนค้าง = 0;   /* รุ่น 19: ระหว่างคำสั่งเขียนยังรอผล ห้ามโหลดใหม่/เปลี่ยนรอบ (กันกดซ้ำด้วยเลขคำขอใหม่) */
+  function ล็อกโหลด() { var ล็อก = งานเขียนค้าง > 0; $('reload').disabled = ล็อก; $('round').disabled = ล็อก; }
 
   function สถานะ(t, bad) { var s = $('status'); s.textContent = t || ''; s.className = bad ? 'bad' : ''; s.style.display = t ? 'block' : 'none'; }
 
@@ -175,7 +204,7 @@
     สถานะ('กำลังโหลด…');
     $('reload').disabled = true;
     return Promise.all([ยิง({ action: 'admin_round', round: รอบที่เลือก }), ยิง({ action: 'admin_pending' })]).then(function (rs) {
-      $('reload').disabled = false;
+      $('reload').disabled = งานเขียนค้าง > 0;
       var rd = rs[0], pd = rs[1];
       if (!rd.ok) { สถานะ(ยังไม่รู้ผล(rd) ? 'ยังไม่ได้รับคำตอบ — กด "โหลดใหม่"' : แปลผิด(rd), true); $('main').style.display = rd.error === 'NOT_ADMIN' ? 'none' : 'block'; return; }
       สถานะ('');
@@ -366,8 +395,10 @@
 
   function กดแล้วรอ(ปุ่ม, msg, body, ข้อความสำเร็จ) {
     ปุ่ม.forEach(function (x) { x.disabled = true; });
+    งานเขียนค้าง++; ล็อกโหลด();
     msg.className = 'msg'; msg.textContent = 'กำลังบันทึก…';
-    ยิง(body).then(function (r) {
+    ยิง(body, function () { msg.textContent = 'ยังไม่ได้รับคำตอบ — กำลังตรวจรายการเดิม…'; }).then(function (r) {
+      งานเขียนค้าง--; ล็อกโหลด();
       if (r.ok) {
         msg.className = 'msg ok'; msg.textContent = ข้อความสำเร็จ(r) + '\nกำลังโหลดใหม่…';
         setTimeout(โหลด, 900);
@@ -375,7 +406,8 @@
       }
       ปุ่ม.forEach(function (x) { x.disabled = false; });
       msg.className = 'msg bad';
-      msg.textContent = ยังไม่รู้ผล(r) ? 'ยังไม่ได้รับคำตอบ — กด "โหลดใหม่" ดูก่อนว่าบันทึกแล้วหรือยัง แล้วค่อยกดซ้ำ' : แปลผิด(r);
+      var ไม่รู้ = ยังไม่รู้ผล(r) || (r.ครั้งที่สอง && !ผิดไทย[String(r.error || '')]);   /* รุ่น 19: ครั้งแรกไม่รู้ผล + ครั้งที่ 2 ได้รหัสแปลก = ยังไม่รู้ผล */
+      msg.textContent = ไม่รู้ ? 'ยังไม่ได้รับคำตอบ — กด "โหลดใหม่" ดูก่อนว่าบันทึกแล้วหรือยัง แล้วค่อยกดซ้ำ' : แปลผิด(r);
     });
   }
 
@@ -392,24 +424,40 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ข้อความ).then(สำเร็จ, สำรอง); else สำรอง();
   }
 
-  /* ── รุ่น 18 PAY-10: ส่งออก 6 ช่อง (คำสั่งอ่านอย่างเดียว · ผู้ทำรายการเท่านั้น · ตรวจรูปคำตอบของคำสั่งนี้) ── */
+  /* ── รุ่น 18 PAY-10: ส่งออก 6 ช่อง (คำสั่งอ่านอย่างเดียว · ผู้ทำรายการเท่านั้น · ตรวจรูปคำตอบของคำสั่งนี้) ──
+     รุ่น 19 (มติรอบ 51 ข้อ 3): รูปแบบ 2 · ไม่พบแท็บ = ยังยืนยันความครบไม่ได้ · มีแถวผิดปกติ = แสดงจำนวน+เหตุ ไม่ให้คัดลอก/บันทึก (ห้ามขึ้นว่าพร้อมใช้กระทบยอด) */
+  var เหตุไทย = { NO_RECEIPT_NO: 'มีข้อมูลแต่ไม่มีเลขใบรับของ', DUPLICATE_RECEIPT_NO: 'เลขใบรับของซ้ำ', NO_ORDER_ID: 'ไม่มีเลขออร์เดอร์',
+    ORDER_NOT_FOUND: 'หาออร์เดอร์ต้นทางไม่พบ', ORDER_AMBIGUOUS: 'ออร์เดอร์ต้นทางซ้ำหลายแถว (กำกวม)' };
   $('expBtn').onclick = function () {
     var b = this, out = $('expOut');
     b.disabled = true; out.className = 'msg'; out.textContent = 'กำลังส่งออก…';
     Array.prototype.slice.call($('exp').querySelectorAll('.expres')).forEach(function (x) { x.parentNode.removeChild(x); });
-    ยิง({ action: 'admin_export_receipts' }).then(function (r) {
+    ยิง({ action: 'admin_export_receipts' }, function () { out.textContent = 'ยังไม่ได้รับคำตอบ — กำลังถามซ้ำ (คำสั่งนี้อ่านอย่างเดียว)…'; }).then(function (r) {
       b.disabled = false;
       if (!r.ok) { out.className = 'msg bad'; out.textContent = ยังไม่รู้ผล(r) ? 'ยังไม่ได้รับคำตอบ — กดใหม่ได้ (คำสั่งนี้อ่านอย่างเดียว ไม่บันทึกอะไร)' : แปลผิด(r); return; }
-      if (r.kind !== 'jasmine-buy-receipts' || !Array.isArray(r.columns) || !Array.isArray(r.rows) || !Array.isArray(r.test_rows)) {
-        out.className = 'msg bad'; out.textContent = 'คำตอบไม่ใช่ข้อมูลส่งออก — กดใหม่ได้'; return;
+      if (r.kind !== 'jasmine-buy-receipts' || r.format_version !== 2 || typeof r.complete !== 'boolean' ||
+          !Array.isArray(r.columns) || !Array.isArray(r.rows) || !Array.isArray(r.test_rows) || !Array.isArray(r.problem_rows)) {
+        out.className = 'msg bad'; out.textContent = 'คำตอบไม่ใช่ข้อมูลส่งออกรูปแบบ 2 — กดใหม่ได้ (ถ้าเป็นซ้ำ แจ้งผู้ลงมือ)'; return;
       }
+      if (r.tab_exists !== true) { out.className = 'msg bad'; out.textContent = 'ไม่พบแท็บใบรับของ — ยังยืนยันความครบไม่ได้ (ยังไม่ส่งออก)'; return; }
       if (r.headers_ok !== true) { out.className = 'msg bad'; out.textContent = 'หัวคอลัมน์แท็บใบรับของไม่ครบ (' + (r.missing_headers || []).join(', ') + ') — ยังไม่ส่งออก ให้แจ้งผู้ลงมือ'; return; }
+      if (r.complete !== true || r.problem_rows.length) {
+        out.className = 'msg bad';
+        out.textContent = '⚠️ ยังใช้กระทบยอดไม่ได้ — พบแถวผิดปกติ ' + r.problem_rows.length + ' แถว (ใช้จริง ' + r.count + ' ใบ · ทดสอบ ' + r.test_count + ' ใบ ยังไม่ส่งออก) · ให้แจ้งผู้ลงมือตรวจชีตก่อน';
+        var กล่องผิด = el('div', 'expres');
+        r.problem_rows.forEach(function (p) {
+          กล่องผิด.appendChild(el('div', null, 'แถว ' + p.sheet_row + ' ในแท็บใบรับของ · ' + (เหตุไทย[p.reason] || p.reason) +
+            ' · ใบ ' + ((p.values && p.values[0]) || '-') + ' · ออร์เดอร์ ' + (p.order_id || '-')));
+        });
+        $('exp').appendChild(กล่องผิด);
+        return;
+      }
       var ข้อมูล = { kind: r.kind, format_version: r.format_version, exported_at: r.exported_at, timezone: r.timezone, exported_by: r.exported_by,
-        source_tab: r.source_tab, columns: r.columns, count: r.count, rows: r.rows, test_count: r.test_count, test_rows: r.test_rows };
+        source_tab: r.source_tab, complete: r.complete, columns: r.columns, count: r.count, rows: r.rows, test_count: r.test_count, test_rows: r.test_rows,
+        problem_count: r.problem_count, problem_rows: r.problem_rows };
       var ข้อความ = JSON.stringify(ข้อมูล);
       out.className = 'msg ok';
-      out.textContent = 'ส่งออกแล้ว ' + r.exported_at + ' · ใช้จริง ' + r.count + ' ใบ · ทดสอบ (แยกไว้ ไม่ใช้กระทบยอดจริง) ' + r.test_count + ' ใบ' +
-        (r.tab_exists ? '' : '\nยังไม่มีแท็บใบรับของ = ยังไม่เคยบันทึกส่งของ (ไม่ใช่ข้อมูลหาย)');
+      out.textContent = 'ส่งออกแล้ว ' + r.exported_at + ' · ครบ ไม่มีแถวผิดปกติ · ใช้จริง ' + r.count + ' ใบ · ทดสอบ (แยกไว้ ไม่ใช้กระทบยอดจริง) ' + r.test_count + ' ใบ';
       var กล่อง = el('div', 'expres');
       var acts = el('div', 'acts'), msg2 = el('div', 'msg');
       var bc = el('button', 'b-mid', '📋 คัดลอกข้อมูลส่งออก'); bc.type = 'button';
