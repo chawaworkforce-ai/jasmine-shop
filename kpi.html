@@ -138,6 +138,80 @@ function โปรไฟล์เร็ว_() {
     customer_home:1, dashboard:1, grievance_stats:1, matched_list:1, matching_data:1,
     my_score:1, photos:1, site_list:1, support_status:1, worker_reports:1, workers:1
   };
+
+  /* 🆕 รอบ 52 (มติผู้วางแผนรอบ 51 ★1 · 25 ก.ย. 2026) — "ส่งคำขอเดิมซ้ำอย่างควบคุม" ไม่เกิน 1 ครั้ง
+     ใช้เฉพาะคำสั่งเขียนในรายการ คำสั่งส่งซ้ำได้_ (หลังบ้าน Jasmine Ops รุ่น 44 ขึ้นไปกันซ้ำด้วยเลขคำขอ + เนื้องาน)
+     · เนื้อคำขอ + เลขคำขอสร้างครั้งเดียวตอนกด · ส่งซ้ำชุดเดิมทุกไบต์ ไม่อ่านค่าจากฟอร์มใหม่
+     · ส่งซ้ำเฉพาะ หมดเวลา / เครือข่ายล้ม / คำตอบผิดรูป · รวมทุกชั้นไม่เกิน 2 คำขอต่อการกด 1 ครั้ง
+     · คำตอบที่เข้าใจแล้ว (สำเร็จที่มีเลขอ้างอิง หรือปฏิเสธที่มีรหัสเหตุ) = ส่งให้หน้าแสดงผลนั้น ไม่ส่งซ้ำ
+       ยกเว้นหลังส่งซ้ำแล้วได้ "ผลชั่วคราว" (BUSY · SERVER_ERROR · UPSTREAM_UNAVAILABLE · ข้อความเครื่อง)
+       = ยังไม่รู้ผลของคำขอแรก ⇒ นับเป็นยังไม่ทราบผล (ไม่บอกว่าไม่สำเร็จ ทั้งที่คำขอแรกอาจบันทึกไปแล้ว)
+     · ระหว่างรอ มีแผ่นบังทั้งจอ + กันแป้นพิมพ์ = กดเพิ่ม/แก้ข้อมูลไม่ได้ · ครั้งที่ 2 บอกว่ากำลังตรวจรายการเดิม
+     · 2 ครั้งยังไม่ทราบผล = หยุด ขึ้นจอยังไม่ทราบผล · หน้าเดิมเก็บเลขเดิมไว้ตามทางเดิม · ไม่มีครั้งที่ 3 อัตโนมัติ
+     · เวลารอต่อครั้ง = เพดานเดิมของหน้านี้ (เพดานรวม_) · ข้ามวัน (เวลาไทย) ก่อนส่งซ้ำ = ไม่ส่งซ้ำ
+     · คำตอบที่มาช้า: แต่ละครั้งปิดได้ครั้งเดียว (ตัดสาย/หมดเวลาแล้ว ของที่มาทีหลังถูกทิ้ง) ⇒ หน้าไม่ประมวลผลซ้ำ
+     · สวิตช์ ops-resend.json อ่านสดตอนจะส่งซ้ำ: "ส่งซ้ำอัตโนมัติ": "on" เท่านั้นที่ส่งซ้ำ · อ่านไม่ได้ = ไม่ส่งซ้ำ
+       🔴 จะถอยหลังบ้าน Jasmine Ops ต่ำกว่ารุ่น 44 ต้องตั้ง "off" ก่อนเสมอ */
+  var คำสั่งส่งซ้ำได้_ = { kpi:1 };
+  var ผลชั่วคราว_ = { BUSY:1, SERVER_ERROR:1, UPSTREAM_UNAVAILABLE:1 };
+  function วันไทย_() {
+    try { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); }
+    catch (e) { return new Date(Date.now() + 25200000).toISOString().slice(0, 10); }
+  }
+  function สวิตช์ส่งซ้ำ_() {
+    return new Promise(function (ตอบ) {
+      var จบ = false, ตัวตัด = null, นาฬิกา = null;
+      function ปิด_(v) { if (!จบ) { จบ = true; try { clearTimeout(นาฬิกา); } catch (e) {} ตอบ(v); } }
+      try { ตัวตัด = window.AbortController ? new AbortController() : null; } catch (e) { ตัวตัด = null; }
+      นาฬิกา = setTimeout(function () { try { if (ตัวตัด) ตัวตัด.abort(); } catch (e) {} ปิด_(false); }, 4000);
+      try {
+        _ยิงเดิม('ops-resend.json?ts=' + Date.now(), ตัวตัด ? { cache: 'no-store', signal: ตัวตัด.signal } : { cache: 'no-store' })
+          .then(function (r) { return (r && r.ok) ? r.json() : null; })
+          .then(function (j) { ปิด_(!!(j && j['ส่งซ้ำอัตโนมัติ'] === 'on')); }, function () { ปิด_(false); });
+      } catch (e) { ปิด_(false); }
+    });
+  }
+  var เวลาแผ่น_ = null;
+  function กันคีย์_(ev) { try { ev.preventDefault(); ev.stopPropagation(); } catch (e) {} }
+  function กันโฟกัส_(ev) { try { var t = ev.target; if (t && t !== document.body && t.blur) t.blur(); } catch (e) {} }
+  function แผ่นรอ_(ขั้น) {
+    var d = document.getElementById('_d1รอ');
+    try { clearTimeout(เวลาแผ่น_); } catch (e) {}
+    if (!ขั้น) {
+      if (d && d.parentNode) d.parentNode.removeChild(d);
+      try { document.removeEventListener('keydown', กันคีย์_, true); document.removeEventListener('focusin', กันโฟกัส_, true); } catch (e) {}
+      return;
+    }
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+    if (!d) {
+      d = document.createElement('div');
+      d.id = '_d1รอ';
+      d.setAttribute('style', 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99990;background:transparent;display:flex;' +
+        'align-items:center;justify-content:center;padding:20px;touch-action:none;' +
+        'font-family:-apple-system,"Segoe UI","Sarabun","Noto Sans Myanmar","Padauk",sans-serif');
+      var กัน = function (ev) { try { ev.preventDefault(); ev.stopPropagation(); } catch (e) {} };
+      d.addEventListener('click', กัน, true);
+      d.addEventListener('touchstart', กัน, true);
+      document.body.appendChild(d);
+      try { document.addEventListener('keydown', กันคีย์_, true); document.addEventListener('focusin', กันโฟกัส_, true); } catch (e) {}
+    }
+    d.innerHTML = '<div id="_d1รอการ์ด" style="background:#fff;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.18);' +
+      'padding:18px 20px;max-width:320px;text-align:center;font-size:15px;line-height:1.6;color:#333;opacity:0">' +
+      (ขั้น === 2
+        ? '<div style="font-size:30px">🔎</div><b>ระบบกำลังตรวจรายการเดิม</b><br>' +
+          '<span style="font-size:13px;color:#666">คำขอแรกยังไม่ได้คำตอบ ระบบส่งคำขอเดิมซ้ำให้ 1 ครั้ง<br>' +
+          'ไม่ต้องกดอะไร รอสักครู่<br>Checking the original request — please wait<br>ခဏစောင့်ပါ…</span>'
+        : '<div style="font-size:30px">⏳</div><b>กำลังส่ง…</b><br>' +
+          '<span style="font-size:13px;color:#666">Sending… please wait<br>ပို့နေသည်…</span>') +
+      '</div>';
+    var แสดง = function () {
+      var x = document.getElementById('_d1รอ'), c = document.getElementById('_d1รอการ์ด');
+      if (x) x.style.background = 'rgba(255,255,255,.6)';
+      if (c) c.style.opacity = '1';
+    };
+    /* ครั้งแรก: บังการกดทันที แต่ค่อยโชว์การ์ดถ้ารอเกิน 0.9 วินาที (คำตอบเร็วตามปกติ = หน้าตาเหมือนเดิม) · ครั้งที่ 2 โชว์ทันที */
+    if (ขั้น === 2) แสดง(); else เวลาแผ่น_ = setTimeout(แสดง, 900);
+  }
   var เตือนแล้ว_ = false;
 
   function หนี_(s) {
@@ -215,7 +289,7 @@ function โปรไฟล์เร็ว_() {
       '</div>';
   }
 
-  function หน้าคำตอบเพี้ยน_(เขียน, รหัส, คำสั่ง, ต้นข้อความ) {
+  function หน้าคำตอบเพี้ยน_(เขียน, รหัส, คำสั่ง, ต้นข้อความ, ส่งซ้ำแล้ว) {
     if (เขียน) {
       จอ_('<div style="font-size:56px">⚠️</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ส่งแล้ว แต่ยังไม่รู้ผล</div>' +
@@ -223,6 +297,10 @@ function โปรไฟล์เร็ว_() {
         '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
         'Sent, but result unknown. Do NOT send again.<br>' +
         'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        (ส่งซ้ำแล้ว ? '<div style="font-size:13px;color:#555;line-height:1.6;margin-top:12px;background:#fff7e0;' +
+          'border-radius:10px;padding:8px 10px">ระบบส่งคำขอเดิมซ้ำให้อัตโนมัติแล้ว 1 ครั้ง ก็ยังไม่ได้คำตอบ<br>' +
+          'ข้อมูลและเลขรายการเดิมยังเก็บไว้ — ตรวจรายการ / แจ้งผู้ดูแลก่อนส่งใหม่<br>' +
+          'Auto-resent once, still no answer. Please check before sending again.</div>' : '') +
         '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
         'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
@@ -276,6 +354,7 @@ function โปรไฟล์เร็ว_() {
     /* รายการขาว: ลองใหม่ได้เฉพาะคำสั่งที่เรารู้แน่ว่าอ่านอย่างเดียว */
     var ลองใหม่ได้ = !!คำสั่งอ่าน_[ก้อน.action];
     var เขียน = !ลองใหม่ได้;
+    var ส่งซ้ำได้ = เขียน && Object.prototype.hasOwnProperty.call(คำสั่งส่งซ้ำได้_, ก้อน.action);   /* 🆕 รอบ 52 ★1 */
 
     /* 🔴 เพดานเวลารอ (S4-2 · 21 ก.ย. 2026) — ปัญหาเดิม: เน็ตหน้างานไม่หลุดแต่ช้ามาก
        fetch จะรอไปเรื่อย ๆ ไม่มีวันจบ น้องเห็นวงกลมหมุนค้างแล้วกดซ้ำ
@@ -327,6 +406,59 @@ function โปรไฟล์เร็ว_() {
         }, function () {
           return { res: res, txt: '', j: null, ดี: false };
         });
+      });
+    }
+
+    /* 🆕 รอบ 52 ★1 — ทางของคำสั่งที่ "ส่งคำขอเดิมซ้ำอย่างควบคุม" ได้ (กติกาอยู่ที่หัว คำสั่งส่งซ้ำได้_) */
+    function เข้าใจแล้ว_(r) {
+      var j = (r && r.ดี) ? r.j : null;
+      if (!j || typeof j !== 'object') return false;
+      if (j.ok === true) return typeof j.ref === 'string' && j.ref.length > 0;
+      if (j.ok === false) return typeof j.error === 'string' && j.error.length > 0;
+      return false;
+    }
+    function ชั่วคราว_(j) {
+      return !!(j && j.ok === false && (Object.prototype.hasOwnProperty.call(ผลชั่วคราว_, j.error) || !/^[A-Z][A-Z0-9_]*$/.test(String(j.error))));
+    }
+    function ยิงหนึ่งครั้ง_() {
+      เส้นตาย_ = Date.now() + เพดานรวม_;   /* เวลารอต่อครั้ง = เพดานเดิมของหน้านี้ ไม่ต่อเวลา */
+      return new Promise(function (ตอบ) {
+        var จบ = false, นาฬิกา = null;
+        function ปิด_(r) { if (!จบ) { จบ = true; try { clearTimeout(นาฬิกา); } catch (e) {} ตอบ(r); } }
+        function หลุด_() { ปิด_({ res: null, txt: '', j: null, ดี: false, หลุด: true }); }
+        /* กันคำตอบค้างกลางทาง (หัวมาแล้วแต่เนื้อไม่มา / เบราว์เซอร์ไม่มีตัวตัดสาย) · ของที่มาช้ากว่านี้ถูกทิ้ง */
+        นาฬิกา = setTimeout(หลุด_, เพดานรวม_ + 1500);
+        try { ยิงแล้วอ่าน_().then(ปิด_, หลุด_); } catch (e) { หลุด_(); }
+      });
+    }
+    if (ส่งซ้ำได้) {
+      var วันเริ่ม_ = วันไทย_(), ส่งซ้ำแล้ว_ = false;
+      แผ่นรอ_(1);
+      return ยิงหนึ่งครั้ง_().then(function (r1) {
+        if (เข้าใจแล้ว_(r1)) return r1;                    /* ได้คำตอบที่เข้าใจแล้ว = แสดงผลนั้น ไม่ส่งซ้ำ */
+        return รอ_(1200).then(function () {
+          if (วันไทย_() !== วันเริ่ม_) return r1;          /* ข้ามวัน (เวลาไทย) = ไม่เล่นซ้ำข้ามช่วงเวลา */
+          return สวิตช์ส่งซ้ำ_().then(function (เปิด) {
+            if (!เปิด || วันไทย_() !== วันเริ่ม_) return r1;
+            ส่งซ้ำแล้ว_ = true;
+            แผ่นรอ_(2);
+            return ยิงหนึ่งครั้ง_();                        /* ครั้งที่ 2 = ครั้งสุดท้าย · เนื้อเดิมทุกไบต์ (opt เดิม) */
+          });
+        });
+      }).then(function (r) {
+        แผ่นรอ_(0);
+        if (!เข้าใจแล้ว_(r) || (ส่งซ้ำแล้ว_ && ชั่วคราว_(r.j))) {
+          หน้าคำตอบเพี้ยน_(true, r.res ? r.res.status : 0, ก้อน.action,
+            r.หลุด ? 'หมดเวลารอ หรือยิงไม่ออก' : r.txt, ส่งซ้ำแล้ว_);
+          r.ดี = false; r.j = null;   /* ให้หน้าเดิมเข้าทาง "ยังไม่ทราบผล" ของตัวเอง (เก็บเลขคำขอเดิม) */
+        } else if (r.j.ok === false && r.j.error === 'AUTH_REQUIRED') {
+          หน้าเข้าใหม่_(!ตั๋ว);
+        }
+        return ห่อ_(r);
+      }, function (e) {
+        แผ่นรอ_(0);
+        หน้าคำตอบเพี้ยน_(true, 0, ก้อน.action, 'ภายในหน้า: ' + String(e && e.message || e), ส่งซ้ำแล้ว_);
+        throw e;
       });
     }
 
