@@ -70,7 +70,7 @@
 /* ══ buy-my.html · รายการฝากซื้อของฉัน · ฝากซื้อเฟส 1 · 23 ก.ย. 2026 ══
    เปิดจากการ์ดในหน้า "เรื่องของฉัน" (my.html) และจากหน้าสั่งสำเร็จ
    · น้องเห็นเฉพาะของตัวเอง — เซิร์ฟเวอร์หาจากรหัสที่ LINE ยืนยัน ไม่ใช่จากหน้านี้
-   · 1 กด = 1 คำขอ · ปุ่มปิดระหว่างรอ · ไม่ยิงซ้ำเอง · รอสูงสุด 20 วินาที
+   · 1 กด = 1 คำขอ · ปุ่มปิดระหว่างรอ · รอสูงสุด 20 วินาทีต่อครั้ง · รุ่น 19: ส่งคำขอเดิมซ้ำได้ 1 ครั้งเฉพาะคำสั่งที่ทำซ้ำไม่เพิ่มผล (มติรอบ 51 · ดูรายการ ซ้ำได้)
    · ข้อความทุกช่องใส่ด้วย textContent · ไม่เก็บอะไรในเครื่อง
    · ข้อความ: รหัส K2-/K1- = ใบล่ามไฟล์ 41 · รหัสอื่น = ไฟล์ 40 (ใช้ของเดิม ไม่แปลใหม่)
      ช่อง my ว่าง = ยังรอล่าม ⇒ หน้าขึ้นอังกฤษแทน (ตัวกันจอว่างแบบเดียวกับ my.html) */
@@ -100,7 +100,8 @@ var T = {
   'E-8':   { th: 'กำลังบันทึก…', en: 'Saving...', my: '' },
   'F-29':  { th: 'กำลังเชื่อมต่อไลน์… อีกสักครู่ปุ่มจะกดได้', en: 'Connecting to LINE… the buttons will turn on in a moment.', my: '' },
   'F-27':  { th: 'กรุณาเปิดหน้านี้จากเมนูในไลน์ ไม่ใช่จากลิงก์เว็บ', en: 'Please open this page from the LINE menu, not from a web link.', my: '' },
-  'G-3':   { th: 'ตอนนี้โหลดไม่ได้ กรุณาลองใหม่', en: 'Cannot load right now. Please try again.', my: '' }
+  'G-3':   { th: 'ตอนนี้โหลดไม่ได้ กรุณาลองใหม่', en: 'Cannot load right now. Please try again.', my: '' },
+  'K2-18': { th: 'กำลังตรวจรายการเดิม…', en: 'Checking your order…', my: '' }   /* รุ่น 19 (มติรอบ 51 ★S1) · ใบล่ามข้อ 346 */
 };
 
 (function () {
@@ -136,23 +137,45 @@ var T = {
   var ชื่อของ = {};   /* id → ชื่อพม่า/อังกฤษ จากหน้าสินค้า (ในออเดอร์เก็บแค่ชื่อไทย) */
   function ชื่อ(it) { var p = ชื่อของ[it.id]; return (p && (p.name_my || p.name_en)) || it.name || it.id; }
 
-  function ยิง(body) {
-    var tk = null;
-    try { tk = liff.getIDToken(); } catch (e) {}
-    if (!tk) return Promise.resolve({ ok: false, error: 'NO_TICKET' });
-    body.idToken = tk;
+  /* รุ่น 19 (มติผู้วางแผนรอบ 51 ★S1) — ส่งคำขอเดิมซ้ำได้ 1 ครั้ง เฉพาะคำสั่งในรายการนี้ (ตรวจแล้วว่าทำซ้ำไม่เพิ่มผล:
+     ยกเลิกซ้ำ = ตอบว่ายกเลิกแล้ว · ตอบใบรับของซ้ำคำเดิม = ตอบว่าตอบแล้ว · รายการของฉัน = อ่านอย่างเดียว)
+     · เนื้อคำขอสร้างครั้งเดียว ใช้ข้อความเดิมทุกไบต์ทั้ง 2 ครั้ง · ซ้ำเฉพาะ หมดเวลา/เน็ตล้ม/คำตอบผิดรูป · รวมไม่เกิน 1 ครั้ง
+     · คำตอบที่เป็นผลจริง (ok:false พร้อมรหัส) = ไม่ส่งซ้ำ · เพดานรอต่อครั้ง 20 วินาทีเท่าเดิม */
+  var ซ้ำได้ = { my_orders: 1, cancel_order: 1, confirm_receipt: 1, dispute_receipt: 1 };
+  function รูปถูก(action, j) {   /* คำตอบสำเร็จต้องตรงรูปของคำสั่ง (มติรอบ 50 ★1) */
+    if (action === 'my_orders') return Array.isArray(j.orders);
+    if (action === 'cancel_order') return !!j.order_id && j.status === 'CANCELLED';
+    if (action === 'confirm_receipt' || action === 'dispute_receipt') return !!j.receipt_no && !!j.confirm_status;
+    return true;
+  }
+  function ยิงครั้งเดียว(action, เนื้อ) {
     var ตัด = window.AbortController ? new AbortController() : null;
     var นาฬิกา = ตัด ? setTimeout(function () { ตัด.abort(); }, รอสูงสุด) : null;
-    return fetch(API_URL, { method: 'POST', body: JSON.stringify(body), credentials: 'omit', signal: ตัด ? ตัด.signal : undefined })
+    return fetch(API_URL, { method: 'POST', body: เนื้อ, credentials: 'omit', signal: ตัด ? ตัด.signal : undefined })
       .then(function (r) { return r.text(); })
       .then(function (x) {
         if (นาฬิกา) clearTimeout(นาฬิกา);
         var j; try { j = JSON.parse(x); } catch (e) { return { ok: false, error: 'NOT_JSON' }; }
-        /* รอบ 50 (ทดสอบผ่าน /exec 24 ก.ย.): บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลคำสั่งนี้ ⇒ ถือว่ายังไม่รู้ผล ห้ามขึ้นว่าสำเร็จ */
-        if (j && (j.products !== undefined || /API is running/.test(String(j.msg || '')))) return { ok: false, error: 'NOT_JSON' };
+        if (!j || typeof j !== 'object') return { ok: false, error: 'NOT_JSON' };
+        /* รอบ 50 (ทดสอบผ่าน /exec 24 ก.ย.): บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลคำสั่งนี้ ⇒ ถือว่ายังไม่รู้ผล */
+        if (j.products !== undefined || /API is running/.test(String(j.msg || ''))) return { ok: false, error: 'NOT_JSON' };
+        if (j.ok === true && !รูปถูก(action, j)) return { ok: false, error: 'NOT_JSON' };
         return j;
       })
       .catch(function () { if (นาฬิกา) clearTimeout(นาฬิกา); return { ok: false, error: 'TIMEOUT' }; });
+  }
+  function ยังไม่รู้ผล(r) { return !!r && (r.error === 'TIMEOUT' || r.error === 'NOT_JSON'); }
+  function ยิง(body, ก่อนครั้งที่สอง) {
+    var tk = null;
+    try { tk = liff.getIDToken(); } catch (e) {}
+    if (!tk) return Promise.resolve({ ok: false, error: 'NO_TICKET' });
+    body.idToken = tk;
+    var เนื้อ = JSON.stringify(body);
+    return ยิงครั้งเดียว(body.action, เนื้อ).then(function (r) {
+      if (!ยังไม่รู้ผล(r) || !ซ้ำได้[body.action]) return r;
+      if (ก่อนครั้งที่สอง) ก่อนครั้งที่สอง();
+      return ยิงครั้งเดียว(body.action, เนื้อ).then(function (r2) { r2.ครั้งที่สอง = true; return r2; });
+    });
   }
 
   function ป้ายออเดอร์(o) {
@@ -228,8 +251,9 @@ var T = {
     bYes.onclick = function () {
       bYes.disabled = true; bBack.disabled = true;
       msg.textContent = t('E-8');
-      ยิง({ action: 'cancel_order', order_id: o.order_id }).then(function (r) {
+      ยิง({ action: 'cancel_order', order_id: o.order_id }, function () { msg.textContent = t('K2-18'); }).then(function (r) {
         if (r.ok) { msg.className = 'msg ok'; msg.textContent = t('K2-7'); setTimeout(โหลด, 900); return; }
+        if (r.ครั้งที่สอง && r.error !== 'CANCEL_CLOSED') { โหลด(); return; }   /* รุ่น 19: ถามซ้ำแล้วยังไม่รู้ผล = โหลดรายการล่าสุดให้ดูเอง (ไม่บอกว่ายกเลิกไม่สำเร็จ) */
         bBack.disabled = false;
         msg.className = 'msg bad';
         msg.textContent = r.error === 'CANCEL_CLOSED' ? t('K2-12') : t('G-3');
@@ -242,8 +266,9 @@ var T = {
   function ตอบใบ(ปุ่ม, msg, action, no, ข้อความสำเร็จ) {
     ปุ่ม.forEach(function (x) { x.disabled = true; });
     msg.className = 'msg'; msg.textContent = t('E-8');
-    ยิง({ action: action, receipt_no: no }).then(function (r) {
+    ยิง({ action: action, receipt_no: no }, function () { msg.textContent = t('K2-18'); }).then(function (r) {
       if (r.ok) { msg.className = 'msg ok'; msg.textContent = t(ข้อความสำเร็จ); setTimeout(โหลด, 1200); return; }
+      if (r.ครั้งที่สอง) { โหลด(); return; }   /* รุ่น 19: ถามซ้ำแล้วยังไม่รู้ผล = โหลดรายการล่าสุดให้ดูเอง */
       ปุ่ม.forEach(function (x) { x.disabled = false; });
       msg.className = 'msg bad'; msg.textContent = t('G-3');
     });
