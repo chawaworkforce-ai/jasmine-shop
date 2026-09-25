@@ -188,7 +188,7 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
           notSent:'အော်ဒါ သိမ်းပြီးပါပြီ။ ဆိုင်မှ လက်ခံရရှိပါပြီ။',
           loginNeed:'LINE login သို့ ပြန်ညွှန်းနေသည်...',
           /* ฝากซื้อเฟส 1 — รอล่าม (ไฟล์ 40 A1-6 ฉบับแก้ + ไฟล์ 41 · F-25 จากไฟล์ 40) ว่าง = ใช้อังกฤษแทน */
-          brand:'', k1_1:'', k1_2:'', k1_3:'', k1_4:'', k1_5:'', k1_6:'', k1_7:'', k1_8:'', f25:''},
+          brand:'', k1_1:'', k1_2:'', k1_3:'', k1_4:'', k1_5:'', k1_6:'', k1_7:'', k1_8:'', k1_9:'', f25:''},
       en:{open:'Opening shop...',loadErr:'Failed to load products',empty:'No products yet',
           add:'Add',confirm:'Confirm order',items:'items',baht:'฿',sending:'Saving...',
           okTitle:'Order placed',orderNo:'Order No.',again:'Order more',
@@ -205,12 +205,15 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
           k1_6:'Your account cannot use this service right now. Please call the team.',
           k1_7:'View my orders',
           k1_8:'No reply yet. Please check "My orders" before ordering again.',
+          k1_9:'Checking your order…',
           f25:'Your account is not linked yet. Please call the team.'}
     };
 
     var lang='my', products=[], cart={}, profile=null;
     var buy=null;          /* ฝากซื้อเฟส 1: {max_items, round, cancel_until} จากหลังบ้าน */
     var reqId=null;        /* เลขคำขอของตะกร้านี้ — ส่งซ้ำหลังเน็ตหลุด หลังบ้านคืนออเดอร์เดิม ไม่สร้างซ้ำ */
+    var กำลังส่ง=false;    /* รุ่น 19 (มติรอบ 51 ★S1): กำลังรอผลการสั่ง = ล็อกปุ่มยืนยันและตะกร้า */
+    var งานส่ง=0;          /* รุ่น 19: เลขงานสั่งล่าสุด — ผลของงานเก่าห้ามแตะหน้าจอ */
     function $(id){ return document.getElementById(id); }
     function t(k){ return (I18N[lang] && I18N[lang][k]) || I18N.my[k] || I18N.en[k] || k; }   /* ฝากซื้อเฟส 1: พม่ายังไม่มา → อังกฤษ */
     function tv(k,v){ var s=t(k); Object.keys(v||{}).forEach(function(n){ s=s.split('{'+n+'}').join(String(v[n])); }); return s; }
@@ -298,7 +301,8 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
 
     /* 🔴 ก8 (มติผู้วางแผนรอบ 49 · 24 ก.ย. 2026) — เปิดหน้าครั้งแรกเคยขึ้น "Unexpected token '<'" เพราะ Google ตอบหน้า HTML แทน JSON
        ของใหม่: คำสั่งอ่าน (โหลดสินค้า) ลองใหม่อัตโนมัติ 1 ครั้ง เฉพาะตอนยิงไม่ออกหรือคำตอบไม่ใช่ JSON
-       · คำตอบ JSON ที่บอกว่าไม่สำเร็จ = คำตอบจริง ไม่ลองซ้ำ · คำสั่งสั่งซื้อไม่ลองซ้ำเอง (น้องกดใหม่ = ใช้เลขคำขอเดิม) */
+       · คำตอบ JSON ที่บอกว่าไม่สำเร็จ = คำตอบจริง ไม่ลองซ้ำ · คำสั่งสั่งซื้อไม่ลองซ้ำเอง (น้องกดใหม่ = ใช้เลขคำขอเดิม)
+       · รุ่น 19 (มติรอบ 51 ★S1): การสั่งซื้อถามซ้ำเองได้ 1 ครั้งด้วยเลขคำขอและตะกร้าเดิม — ดูหมายเหตุ ★S1 ก่อน confirmOrder */
     function loadProducts(){ อ่านสินค้า_(1); }
     function อ่านสินค้า_(ครั้ง){
       fetch(API_URL + '?action=products')
@@ -379,6 +383,7 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
     }
 
     function setQty(id,q){
+      if(กำลังส่ง) return;                                           /* รุ่น 19: ระหว่างรอผลการสั่ง ห้ามแก้ตะกร้า */
       var p=prodById(id);
       var max=(p && p.stock!==null && p.stock!==undefined)?p.stock:Infinity;
       if(buy && buy.max_items){                                    /* ฝากซื้อเฟส 1: เพดานชิ้นรวมทั้งตะกร้า */
@@ -409,41 +414,79 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
       } else { bar.classList.remove('show'); }
     }
 
+    /* รุ่น 19 (มติผู้วางแผนรอบ 51 ★S1) — ส่งคำขอเดิมซ้ำได้ 1 ครั้ง
+       · อ่านตะกร้าครั้งเดียว → เนื้อคำขอเดียว (เลขคำขอเดิม) ใช้ทั้ง 2 ครั้ง · หลังบ้านเจอเลขคำขอเดิม+คนเดิม = คืนออร์เดอร์เดิม ไม่ตัดสต็อก/ไม่แจ้งซ้ำ
+       · ซ้ำเฉพาะ หมดเวลา · เน็ตล้ม · คำตอบผิดรูป (หน้า HTML / คำตอบของ doGet) · รวมไม่เกิน 1 ครั้ง · เพดานรอต่อครั้ง 20 วินาทีเท่าเดิม
+       · คำตอบที่เป็นผลจริง (ของหมด · พักบริการ · ORDER_ON_HOLD …) = ไม่ส่งซ้ำ
+       · ระหว่างรอ ปุ่มยืนยันและตะกร้าถูกล็อก · ครั้งที่ 2 ยังไม่ทราบผล = หยุด เก็บตะกร้า+เลขคำขอ พาไปดูรายการของฉัน (ไม่บอกว่าสั่งไม่สำเร็จ) */
+    function ยิงสั่งครั้งเดียว_(เนื้อ){
+      var ตัด = window.AbortController ? new AbortController() : null;
+      var นาฬิกา = ตัด ? setTimeout(function(){ ตัด.abort(); }, 20000) : null;
+      return fetch(API_URL, { method:'POST', body: เนื้อ, signal: ตัด ? ตัด.signal : undefined })
+        .then(function(r){ return r.text(); })
+        .then(function(txt){
+          if(นาฬิกา) clearTimeout(นาฬิกา);
+          var res; try { res = JSON.parse(txt); } catch(e){ return { ไม่ทราบผล:true }; }
+          if(res && res.ok === false) return { res:res };
+          /* รอบ 50: บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลการสั่ง ⇒ ไม่มีเลขออร์เดอร์ = ยังไม่ทราบผล */
+          if(res && res.ok === true && typeof res.orderId === 'string' && res.orderId && Array.isArray(res.items)) return { res:res };
+          return { ไม่ทราบผล:true };
+        }, function(){ if(นาฬิกา) clearTimeout(นาฬิกา); return { ไม่ทราบผล:true }; });
+    }
+    function ยิงสั่ง_(เนื้อ, ก่อนครั้งที่สอง){
+      return ยิงสั่งครั้งเดียว_(เนื้อ).then(function(ผล){
+        if(!ผล.ไม่ทราบผล) return ผล;
+        ก่อนครั้งที่สอง();
+        return ยิงสั่งครั้งเดียว_(เนื้อ).then(function(ผล2){ ผล2.ครั้งที่สอง = true; return ผล2; });
+      });
+    }
+    function ล็อกตะกร้า(ล็อก){
+      กำลังส่ง = ล็อก;
+      $('confirmBtn').disabled = ล็อก;
+      $('grid').style.pointerEvents = ล็อก ? 'none' : '';
+    }
+    function รหัสที่รู้จัก_(e){   /* รหัสจากหลังบ้านที่เป็นผลจริงของการสั่ง (หน้า showOrderError แปลให้) */
+      e = String(e || '');
+      return /^(NOT_REGISTERED|NOT_ALLOWED|DUPLICATE_LINK|SITE_NOT_OPEN|TOO_MANY_ITEMS|SERVICE_NOT_OPEN|SERVICE_PAUSED|ORDER_NOT_SETTLED|ORDER_ON_HOLD|NO_TICKET|BAD_TICKET|EMPTY_ORDER)$/.test(e) ||
+        e.indexOf('NOT_ENOUGH_STOCK')===0 || e.indexOf('PRODUCT_ON_HOLD')===0;
+    }
+    function showUnknown(){   /* ยังไม่ทราบผล — ไม่บอกว่าสั่งไม่สำเร็จ · พาไปดูรายการของฉัน · ตะกร้าและเลขคำขอเดิมยังอยู่ (กดยืนยันซ้ำ = ออร์เดอร์เดิม) */
+      showError(t('k1_8'));
+      var b=document.createElement('button'); b.type='button'; b.className='mine'; b.textContent=t('k1_7');
+      b.onclick=function(){ location.href='buy-my.html'; };
+      var box=$('errbox'); box.appendChild(document.createElement('br')); box.appendChild(b);
+    }
+
     function confirmOrder(){
+      if(กำลังส่ง) return;
       var items=[];
       Object.keys(cart).forEach(function(id){ items.push({ id:id, qty:cart[id] }); });
       if(items.length===0) return;
       if(!profile){ showError('No LINE profile'); return; }
-      var btn=$('confirmBtn'); btn.disabled=true; btn.textContent=t('sending');
       /* 🔴 ด่านตรวจตัวตน — เพิ่ม 20 ก.ย. 2026 ห้ามถอดออก
          ของเดิมส่งรหัสไลน์ของตัวเองไปให้หลังบ้านเชื่อตรง ๆ ⇒ ใครรู้ที่อยู่ /exec ก็สั่งซื้อแทนคนอื่นได้
          ของใหม่ส่ง "ตั๋ว" ที่ LINE ออกให้ หลังบ้านเอาไปถาม LINE ว่าเป็นของใคร แล้วเชื่อคำตอบนั้นเท่านั้น */
       var tk = null;
       try { tk = liff.getIDToken(); } catch(e) {}
-      if(!tk){ showError('Please open the shop from the LINE menu'); btn.disabled=false; btn.textContent=t('confirm'); return; }
-      /* ฝากซื้อเฟส 1: เลขคำขอ + เพดานรอ 20 วินาที · ไม่ยิงซ้ำเอง
-         เน็ตหลุดแล้วน้องกดใหม่ = เลขคำขอเดิม ⇒ หลังบ้านคืนออเดอร์เดิม ไม่ได้ของ 2 เท่า */
+      if(!tk){ showError('Please open the shop from the LINE menu'); return; }
       if(!reqId){ reqId = 'w-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10); }
-      var ตัด = window.AbortController ? new AbortController() : null;
-      var นาฬิกา = ตัด ? setTimeout(function(){ ตัด.abort(); }, 20000) : null;
+      var เนื้อ = JSON.stringify({ idToken:tk, profile:profile, items:items, action:'place_order', req_id:reqId });
+      var งานนี้ = ++งานส่ง, btn=$('confirmBtn');
+      ล็อกตะกร้า(true); btn.textContent=t('sending');
       $('errbox').style.display='none';
-      fetch(API_URL, { method:'POST', body: JSON.stringify({ idToken:tk, profile:profile, items:items, action:'place_order', req_id:reqId }),
-                       signal: ตัด ? ตัด.signal : undefined })
-        .then(function(r){ return r.json(); })
-        .then(function(res){
-          if(นาฬิกา) clearTimeout(นาฬิกา);
-          btn.disabled=false; btn.textContent=t('confirm');
-          if(!res || !res.ok){ showOrderError(res); return; }
-          /* รอบ 50 (ทดสอบผ่าน /exec 24 ก.ย.): บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลการสั่ง
-             ⇒ ไม่มีเลขออร์เดอร์ = ยังไม่ทราบผล · ห้ามขึ้นจอสำเร็จ ห้ามล้างตะกร้า · เก็บเลขคำขอเดิม (กดใหม่ = ได้ออร์เดอร์เดิม ไม่ซ้ำ) */
-          if(typeof res.orderId !== 'string' || !res.orderId || !Array.isArray(res.items)){ showError(t('k1_8')); return; }
-          onOrderSuccess(res);
-        })
-        .catch(function(err){
-          if(นาฬิกา) clearTimeout(นาฬิกา);
-          btn.disabled=false; btn.textContent=t('confirm');
-          showError(t('k1_8'));                                    /* ไม่รู้ผล — ให้ดูรายการก่อน กดซ้ำได้อย่างปลอดภัย */
-        });
+      ยิงสั่ง_(เนื้อ, function(){ if(งานนี้===งานส่ง) btn.textContent=t('k1_9'); }).then(function(ผล){
+        if(งานนี้!==งานส่ง) return;                                  /* ผลของงานเก่า = ไม่แตะหน้าจอ */
+        ล็อกตะกร้า(false); btn.textContent=t('confirm');
+        if(ผล.ไม่ทราบผล){ showUnknown(); return; }
+        var res=ผล.res;
+        if(res.ok){ onOrderSuccess(res); return; }
+        if(ผล.ครั้งที่สอง && !รหัสที่รู้จัก_(res.error)){ showUnknown(); return; }   /* ครั้งแรกไม่ทราบผล + ครั้งที่ 2 ได้รหัสแปลก (เช่นรอคิวเกินเวลา) = ยังไม่ทราบผล */
+        showOrderError(res);
+      }).catch(function(){
+        if(งานนี้!==งานส่ง) return;
+        ล็อกตะกร้า(false); btn.textContent=t('confirm');
+        showUnknown();                                               /* พังระหว่างแสดงผล — ไม่รู้ผล ให้ดูรายการก่อน */
+      });
     }
 
     /* ฝากซื้อเฟส 1 — แปลรหัสจากหลังบ้านเป็นข้อความที่น้องอ่านได้ */
