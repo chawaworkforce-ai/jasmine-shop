@@ -36,6 +36,12 @@
   header h1{ font-size:17px; margin:0; font-weight:700; }
   header .sub{ font-size:13px; opacity:.92; margin-top:3px; }
   .wrap{ padding:12px 12px 40px; max-width:620px; margin:0 auto; }
+  /* 🆕 27 ก.ย. 2026 · ทางลัดไปหน้ารายงานหน้างาน + ส่งประกาศถึงน้อง
+     (ปุ่ม 1 ของเมนูลูกค้าชื่อ "ประกาศ + รายงาน" เปิดหน้านี้ · เดิมหน้านี้ไม่มีทางไปสองหน้านั้น) */
+  .ทางลัด{ display:flex; flex-wrap:wrap; gap:8px; padding:12px 12px 0; max-width:620px; margin:0 auto; }
+  .ทางลัด a{ flex:1 1 140px; text-align:center; text-decoration:none; background:#fff; color:var(--ink);
+             border:1px solid var(--line); border-radius:12px; padding:12px 10px; font-size:14px; font-weight:700; }
+  .ทางลัด a:active{ background:#eef2f0; }
 
   .แถบนับ{ display:flex; gap:8px; margin-bottom:12px; }
   .นับ{ flex:1; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 8px; text-align:center; }
@@ -96,6 +102,11 @@
   <h1 id="ห_หัว">ดูแลหน้างาน</h1>
   <div class="sub" id="ห_ไซต์">กำลังเปิด…</div>
 </header>
+
+<nav class="ทางลัด" aria-label="ทางลัดลูกค้า">
+  <a href="report.html">📝 รายงานหน้างาน</a>
+  <a href="announce-customer.html">📢 ส่งประกาศถึงน้อง</a>
+</nav>
 
 <div class="wrap">
   <div id="ห_แจ้ง" class="เตือน" hidden></div>
