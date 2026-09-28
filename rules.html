@@ -25,7 +25,7 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>ကုမ္ပဏီစည်းမျဉ်း / Company Rules</title>
+<title>ကုမ္ပဏီစည်းမျဉ်းများ / Company Rules</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; --red:#a3322b; --green:#256544; }
@@ -60,8 +60,8 @@
 </head>
 <body>
   <header>
-    <h1>📋 ကုမ္ပဏီစည်းမျဉ်း / Company Rules</h1>
-    <p id="hsub">ခဏစောင့်ပါ… / Connecting…</p>
+    <h1>📋 ကုမ္ပဏီစည်းမျဉ်းများ / Company Rules</h1>
+    <p id="hsub">ချိတ်ဆက်နေပါသည်… / Connecting…</p>
   </header>
 
   <div class="langbar" id="langbar" style="display:none">
@@ -69,7 +69,7 @@
     <button id="btn-en" type="button" aria-pressed="false">English</button>
   </div>
 
-  <div id="status">ခဏစောင့်ပါ… / Loading…</div>
+  <div id="status">ဖွင့်နေပါသည်… / Loading…</div>
   <div class="wrap" id="wrap" style="display:none"></div>
 
 <script>
@@ -162,14 +162,14 @@ function โปรไฟล์เร็ว_() {
       จอ_('<div style="font-size:56px">🔧</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
         '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
-        'App setup incomplete — please tell the admin</div>' +
+        'App setup incomplete — please tell the admin<br>အက်ပ်၏ ဆက်တင်များကို အပြည့်အစုံ မသတ်မှတ်ရသေးပါ။ — စနစ်စီမံခန့်ခွဲသူထံ အကြောင်းကြားပေးပါ။</div>' +
         '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>');
     } else {
       จอ_('<div style="font-size:56px">⏱️</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
-        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.<br>အချိန်ကုန်ဆုံးသွားပါပြီ — ပြန်လည်ဝင်ရောက်ပါ။<br>ဆက်လက်အသုံးပြုရန် ခလုတ်ကို နှိပ်ပေးပါ။</div>' +
         '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>');
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again / ပြန်လည်ဝင်ရောက်ရန်</button>');
     }
   }
 
@@ -184,7 +184,7 @@ function โปรไฟล์เร็ว_() {
     var เวลา = '';
     try { เวลา = new Date().toLocaleString(); } catch (e) {}
     return '<div id="_d1สลับ" style="margin-top:20px;font-size:12px;color:#9a9a9a;' +
-      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details</div>' +
+      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details / စနစ်စီမံခန့်ခွဲသူအတွက် အသေးစိတ်အချက်အလက်</div>' +
       '<div id="_d1รายละเอียด" style="display:none;margin-top:10px;max-width:100%;' +
       'background:#f4f4f4;border-radius:10px;padding:10px 12px;font-size:11px;color:#444;' +
       'text-align:left;word-break:break-all;line-height:1.5;-webkit-user-select:text;user-select:text">' +
@@ -203,9 +203,9 @@ function โปรไฟล์เร็ว_() {
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
         'Sent, but result unknown. Do NOT send again.<br>' +
-        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        'ပေးပို့ပြီးပါပြီ၊ သို့သော် ရလဒ်ကို မသိရှိရသေးပါ။<br>ထပ်မံပေးပို့ရန် မနှိပ်ပါနှင့် — စနစ်စီမံခန့်ခွဲသူထံ အရင်အကြောင်းကြား၍ စစ်ဆေးပေးရန် တောင်းဆိုပါ။</div>' +
         '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
-        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
+        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close / ပိတ်ရန်</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
     } else {
       จอ_('<div style="font-size:56px">📡</div>' +
@@ -213,9 +213,9 @@ function โปรไฟล์เร็ว_() {
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
         'Could not load. Please try again.<br>' +
-        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        'ဒေတာဖွင့်၍ မအောင်မြင်ပါ။<br>လောလောဆယ် ဖွင့်၍မရပါ။ ထပ်မံကြိုးစားပေးပါ။</div>' +
         '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်မံကြိုးစားပါ။</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
     }
   }
@@ -350,11 +350,11 @@ function โปรไฟล์เร็ว_() {
     },
     mm: {
       pill:   '\u1019\u103C\u1014\u103A\u1019\u102C',
-      sub:    '\u1016\u1010\u103A\u101B\u1014\u103A\u101E\u102C',
-      empty:  '\u1005\u100A\u103A\u1038\u1019\u103B\u1009\u103A\u1038 \u1019\u1011\u100A\u1037\u103A\u101B\u101E\u1031\u1038\u1015\u102B\u104B',
-      failed: '\u1001\u102F\u1001\u100F \u1019\u1016\u1010\u103A\u1014\u102D\u102F\u1004\u103A\u1015\u102B\u104B\n\u1011\u1015\u103A\u1000\u103C\u102D\u102F\u1038\u1005\u102C\u1038\u1015\u102B\u104B',
-      retry:  '\u1011\u1015\u103A\u1000\u103C\u102D\u102F\u1038\u1005\u102C\u1038\u1015\u102B',
-      updated:'\u1014\u1031\u102C\u1000\u103A\u1006\u102F\u1036\u1038\u1015\u103C\u1004\u103A\u1006\u1004\u103A'
+      sub:    '\u1016\u1010\u103a\u101b\u103e\u102f\u101b\u1014\u103a\u101e\u102c',
+      empty:  '\u1000\u102f\u1019\u1039\u1015\u100f\u102e\u1005\u100a\u103a\u1038\u1019\u103b\u1009\u103a\u1038\u1019\u103b\u102c\u1038\u1000\u102d\u102f \u1011\u100a\u1037\u103a\u101e\u103d\u1004\u103a\u1038\u1011\u102c\u1038\u1001\u103c\u1004\u103a\u1038 \u1019\u101b\u103e\u102d\u101e\u1031\u1038\u1015\u102b\u104b',
+      failed: '\u101c\u1031\u102c\u101c\u1031\u102c\u1006\u101a\u103a \u1016\u103d\u1004\u1037\u103a\u104d\u1019\u101b\u1015\u102b\u104b \u1011\u1015\u103a\u1019\u1036\u1000\u103c\u102d\u102f\u1038\u1005\u102c\u1038\u1015\u1031\u1038\u1015\u102b\u104b',
+      retry:  '\u1011\u1015\u103a\u1019\u1036\u1000\u103c\u102d\u102f\u1038\u1005\u102c\u1038\u1015\u102b\u104b',
+      updated:'\u1014\u1031\u102c\u1000\u103a\u1006\u102f\u1036\u1038\u1021\u1015\u103a\u1012\u102d\u1010\u103a\u1015\u103c\u102f\u101c\u102f\u1015\u103a\u101e\u100a\u1037\u103a\u1021\u1001\u103b\u102d\u1014\u103a'
     }
   };
   /* \U0001F7E1 ข้อความพม่าข้างบนเป็นร่าง — ให้เจ้าของหรือพี่มายตรวจก่อนใช้จริง
@@ -475,7 +475,7 @@ function โปรไฟล์เร็ว_() {
   function โหลด_(){
     var t = ข้อความ[ภาษา];
     var ของฉัน = ++เลขคำขอ;
-    จอสถานะ_('\u1001\u100F\u1005\u1031\u102C\u1004\u1037\u103A\u1015\u102B\u2026 / Loading\u2026');
+    จอสถานะ_('\u1016\u103d\u1004\u1037\u103a\u1014\u1031\u1015\u102b\u101e\u100a\u103a\u2026 / Loading\u2026');
     document.getElementById('hsub').textContent = t.sub;
 
     fetch(API_URL, {
