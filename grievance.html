@@ -25,7 +25,7 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Talk to P'Mai</title>
+<title>Talk to P'Mai / မမိုင်နှင့် တိုင်ပင်ရန်</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root{ --green:#2f7d55; --green-d:#246343; --ink:#1f2a26; --muted:#76837d; --line:#e2e9e5; --bg:#f2f6f4; --paper:#fff; }
@@ -59,10 +59,10 @@
 <body>
   <header>
     <h1>Talk to P'Mai 🤍</h1>
-    <div class="my">P'Mai ထံ တိုင်ပင်ပါ</div>
-    <p>This is confidential. Tell us your problem early — we're here to help.<br>လျှို့ဝှက်ထားပါမည်။ ပြဿနာကို စောစော ပြောပါ — ကူညီပါမည်။</p>
+    <div class="my">မမိုင်နှင့် တိုင်ပင်ရန်</div>
+    <p>This is confidential. Tell us your problem early — we're here to help.<br>ဤကိစ္စကို လျှို့ဝှက်ထားပေးပါမည်။ ပြဿနာရှိပါက အမြန်ဆုံး ပြောပြပါ။ ကျွန်ုပ်တို့ ကူညီပေးနိုင်ပါသည်။</p>
   </header>
-  <div id="status">Loading…</div>
+  <div id="status">Loading… / ဖွင့်နေပါသည်…</div>
   <div class="wrap" id="wrap"></div>
 
 <script>
@@ -173,7 +173,7 @@ function โปรไฟล์เร็ว_() {
           '<span style="font-size:13px;color:#666">คำขอแรกยังไม่ได้คำตอบ ระบบส่งคำขอเดิมซ้ำให้ 1 ครั้ง<br>' +
           'ไม่ต้องกดอะไร รอสักครู่<br>Checking the original request — please wait<br>ခဏစောင့်ပါ…</span>'
         : '<div style="font-size:30px">⏳</div><b>กำลังส่ง…</b><br>' +
-          '<span style="font-size:13px;color:#666">Sending… please wait<br>ပို့နေသည်…</span>') +
+          '<span style="font-size:13px;color:#666">Sending… please wait<br>ပေးပို့နေပါသည်…</span>') +
       '</div>';
     var แสดง = function () {
       var x = document.getElementById('_d1รอ'), c = document.getElementById('_d1รอการ์ด');
@@ -226,14 +226,14 @@ function โปรไฟล์เร็ว_() {
       จอ_('<div style="font-size:56px">🔧</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
         '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
-        'App setup incomplete — please tell the admin</div>' +
+        'App setup incomplete — please tell the admin<br>အက်ပ်၏ ဆက်တင်များကို အပြည့်အစုံ မသတ်မှတ်ရသေးပါ။ — စနစ်စီမံခန့်ခွဲသူထံ အကြောင်းကြားပေးပါ။</div>' +
         '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>');
     } else {
       จอ_('<div style="font-size:56px">⏱️</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
-        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.<br>အချိန်ကုန်ဆုံးသွားပါပြီ — ပြန်လည်ဝင်ရောက်ပါ။<br>ဆက်လက်အသုံးပြုရန် ခလုတ်ကို နှိပ်ပေးပါ။</div>' +
         '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>');
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again / ပြန်လည်ဝင်ရောက်ရန်</button>');
     }
   }
 
@@ -248,7 +248,7 @@ function โปรไฟล์เร็ว_() {
     var เวลา = '';
     try { เวลา = new Date().toLocaleString(); } catch (e) {}
     return '<div id="_d1สลับ" style="margin-top:20px;font-size:12px;color:#9a9a9a;' +
-      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details</div>' +
+      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details / စနစ်စီမံခန့်ခွဲသူအတွက် အသေးစိတ်အချက်အလက်</div>' +
       '<div id="_d1รายละเอียด" style="display:none;margin-top:10px;max-width:100%;' +
       'background:#f4f4f4;border-radius:10px;padding:10px 12px;font-size:11px;color:#444;' +
       'text-align:left;word-break:break-all;line-height:1.5;-webkit-user-select:text;user-select:text">' +
@@ -267,13 +267,13 @@ function โปรไฟล์เร็ว_() {
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
         'Sent, but result unknown. Do NOT send again.<br>' +
-        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        'ပေးပို့ပြီးပါပြီ၊ သို့သော် ရလဒ်ကို မသိရှိရသေးပါ။<br>ထပ်မံပေးပို့ရန် မနှိပ်ပါနှင့် — စနစ်စီမံခန့်ခွဲသူထံ အရင်အကြောင်းကြား၍ စစ်ဆေးပေးရန် တောင်းဆိုပါ။</div>' +
         (ส่งซ้ำแล้ว ? '<div style="font-size:13px;color:#555;line-height:1.6;margin-top:12px;background:#fff7e0;' +
           'border-radius:10px;padding:8px 10px">ระบบส่งคำขอเดิมซ้ำให้อัตโนมัติแล้ว 1 ครั้ง ก็ยังไม่ได้คำตอบ<br>' +
           'ข้อมูลและเลขรายการเดิมยังเก็บไว้ — ตรวจรายการ / แจ้งผู้ดูแลก่อนส่งใหม่<br>' +
           'Auto-resent once, still no answer. Please check before sending again.</div>' : '') +
         '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
-        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
+        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close / ပိတ်ရန်</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
     } else {
       จอ_('<div style="font-size:56px">📡</div>' +
@@ -281,9 +281,9 @@ function โปรไฟล์เร็ว_() {
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
         'Could not load. Please try again.<br>' +
-        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        'ဒေတာဖွင့်၍ မအောင်မြင်ပါ။<br>လောလောဆယ် ဖွင့်၍မရပါ။ ထပ်မံကြိုးစားပေးပါ။</div>' +
         '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်မံကြိုးစားပါ။</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
     }
   }
@@ -460,12 +460,12 @@ function โปรไฟล์เร็ว_() {
   const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
   const CATS = [
-    ["Bullying / harassment","အနိုင်ကျင့်ခြင်း"],
-    ["Problem with supervisor","ခေါင်းဆောင်နှင့် ပြဿနာ"],
-    ["Sick / health","ဖျားနာ / ကျန်းမာရေး"],
-    ["Dorm / housing","အိပ်ဆောင် / နေထိုင်ရေး"],
-    ["Pay / money","လစာ / ငွေကြေး"],
-    ["Personal / life","ကိုယ်ရေး / ဘဝ ပြဿနာ"],
+    ["Bullying / harassment","အနိုင်ကျင့်ခံရခြင်း / နှောင့်ယှက်ခြင်း"],
+    ["Problem with supervisor","အလုပ်ခေါင်းဆောင်နှင့် ပြဿနာရှိခြင်း"],
+    ["Sick / health","နေမကောင်းခြင်း / ကျန်းမာရေး"],
+    ["Dorm / housing","အဆောင် / နေထိုင်ရာ"],
+    ["Pay / money","လစာ / ငွေကြေးကိစ္စ"],
+    ["Personal / life","ကိုယ်ရေးကိုယ်တာ / ဘဝရေးရာ"],
     ["Other","အခြား"]
   ];
 
@@ -478,26 +478,26 @@ function โปรไฟล์เร็ว_() {
       document.getElementById('status').style.display='none';
       document.getElementById('wrap').style.display='block';
       render();
-    }catch(e){ document.getElementById('status').textContent="Please open inside LINE app. ("+(e.message||e)+")"; }
+    }catch(e){ document.getElementById('status').textContent="Please open inside LINE app. / ဤစာမျက်နှာကို ဝဘ်လင့်ခ်မှမဟုတ်ဘဲ LINE မီနူးမှ ဖွင့်ပေးပါ။ ("+(e.message||e)+")"; }
   }
 
   function render(){
-    let h='<h3>What would you like to talk about? <span class="my">ဘာအကြောင်း ပြောချင်လဲ</span></h3><div class="cats">';
+    let h='<h3>What would you like to talk about? <span class="my">မည်သည့်အကြောင်းအရာကို ပြောဆိုလိုပါသလဲ။</span></h3><div class="cats">';
     CATS.forEach((c,i)=>{ h+='<div class="cat '+(cat===i?'on':'')+'" onclick="pickCat('+i+')"><div class="en">'+esc(c[0])+'</div><div class="my">'+esc(c[1])+'</div></div>'; });
     h+='</div>';
-    h+='<h3>Tell us more <span class="my">အသေးစိတ် ပြောပါ</span></h3>';
-    h+='<textarea id="msg" oninput="setMsg(this.value)" placeholder="Write here… / ဒီမှာ ရေးပါ…">'+esc(msgText)+'</textarea>';
-    h+='<h3>How to send <span class="my">ပို့နည်း ရွေးပါ</span></h3><div class="modes">';
-    h+='<div class="mode '+(mode==="anon"?"on":"")+'" onclick="pickMode(\'anon\')"><div class="en">Send without my name</div><div class="my">အမည် မထည့်ဘဲ ပို့မည် — P\'Mai won\'t know who you are</div></div>';
-    h+='<div class="mode '+(mode==="named"?"on":"")+'" onclick="pickMode(\'named\')"><div class="en">Add my name (so P\'Mai can help me directly)</div><div class="my">အမည်ထည့်မည် — P\'Mai က တိုက်ရိုက် ကူညီနိုင်ရန်</div></div>';
+    h+='<h3>Tell us more <span class="my">အသေးစိတ်ကို ကျွန်ုပ်တို့အား ပြောပြပါ။</span></h3>';
+    h+='<textarea id="msg" oninput="setMsg(this.value)" placeholder="Write here… / ဤနေရာတွင် ရေးပါ…">'+esc(msgText)+'</textarea>';
+    h+='<h3>How to send <span class="my">ပေးပို့မည့်နည်းလမ်းကို ရွေးချယ်ပါ။</span></h3><div class="modes">';
+    h+='<div class="mode '+(mode==="anon"?"on":"")+'" onclick="pickMode(\'anon\')"><div class="en">Send without my name</div><div class="my">အမည်မဖော်ဘဲ ပေးပို့ရန် — မမိုင်သည် မည်သူပေးပို့သည်ကို သိရှိမည်မဟုတ်ပါ။</div></div>';
+    h+='<div class="mode '+(mode==="named"?"on":"")+'" onclick="pickMode(\'named\')"><div class="en">Add my name (so P\'Mai can help me directly)</div><div class="my">အမည်ထည့်၍ ပေးပို့ရန် — မမိုင်မှ တိုက်ရိုက်ကူညီပေးနိုင်မည်။</div></div>';
     h+='</div>';
     if(mode==="anon" && sites.length){
-      h+='<select id="site" onchange="setSite(this.value)"><option value="">(Optional) Your site / သင့်ဆိုက် — မဖြစ်မနေ မဟုတ်</option>';
+      h+='<select id="site" onchange="setSite(this.value)"><option value="">(Optional) Your site / သင့်လုပ်ငန်းခွင် (မထည့်လည်းရပါသည်)</option>';
       sites.forEach(s=>{ h+='<option value="'+esc(s)+'"'+(siteSel===s?' selected':'')+'>'+esc(s)+'</option>'; });
       h+='</select>';
     }
-    h+='<div class="reassure">🤍 Your message goes privately to P\'Mai. If you choose "without my name", we truly will not know who sent it.<br>သင့်စကား P\'Mai ထံ တိုက်ရိုက် ရောက်ပါမည်။ အမည်မထည့်ရင် ဘယ်သူပို့မှန်း ကျွန်ုပ်တို့ မသိပါ။</div>';
-    h+='<button class="btn" id="send" onclick="send()">Send / ပို့မည်</button>';
+    h+='<div class="reassure">🤍 Your message goes privately to P\'Mai. If you choose "without my name", we truly will not know who sent it.<br>သင့်မက်ဆေ့ချ်ကို မမိုင်ထံ တိုက်ရိုက်ပေးပို့မည်ဖြစ်ပါသည်။ အမည်မထည့်ရန် ရွေးချယ်ပါက မည်သူပေးပို့သည်ကို ကျွန်ုပ်တို့ အမှန်တကယ် သိရှိမည်မဟုတ်ပါ။</div>';
+    h+='<button class="btn" id="send" onclick="send()">Send / ပေးပို့ရန်</button>';
     document.getElementById('wrap').innerHTML=h;
   }
 
@@ -507,26 +507,26 @@ function โปรไฟล์เร็ว_() {
   function pickMode(m){ mode=m; render(); }
 
   async function send(){
-    if(cat===null){ alert("Please choose a topic. / အကြောင်းအရာ ရွေးပါ"); return; }
-    if(!mode){ alert("Please choose how to send. / ပို့နည်း ရွေးပါ"); return; }
+    if(cat===null){ alert("Please choose a topic. / အကြောင်းအရာကို ရွေးချယ်ပေးပါ။"); return; }
+    if(!mode){ alert("Please choose how to send. / ပေးပို့မည့်နည်းလမ်းကို ရွေးချယ်ပေးပါ။"); return; }
     const msg=(document.getElementById('msg')?document.getElementById('msg').value:'').trim();
     const payload={ action:"grievance", category:CATS[cat][0], message:msg };
     if(mode==="named"){ payload.anonymous=false; payload.userId=userId; payload.display_name=displayName; }
     else { payload.anonymous=true; const se=document.getElementById('site'); if(se&&se.value) payload.site=se.value; } // ไม่ส่ง userId
     payload.req_id = ก3_เลขคำขอ_('grievance', payload);   /* ก3 รอบ 50: เนื้อเดิม = เลขเดิม */
-    const btn=document.getElementById('send'); btn.disabled=true; btn.textContent="Sending…";
+    const btn=document.getElementById('send'); btn.disabled=true; btn.textContent="Sending… / ပေးပို့နေပါသည်…";
     try{
       const res=await (await fetch(API_URL,{method:"POST",body:JSON.stringify(payload)})).json();
       /* 🔴 21 ก.ย. 2026 — เอา alert ออก: ตัวห่อ D1 ขึ้นจอเต็มหน้า 3 ภาษาให้อยู่แล้ว
          ของเดิมเด้งป๊อปอัปข้อความดิบภาษาอังกฤษซ้อนขึ้นมา ผิดกติกา "ห้ามข้อความดิบถึงน้อง" */
-      if(!res.ok){ btn.disabled=false; btn.textContent="Send / ပို့မည်"; return; }
+      if(!res.ok){ btn.disabled=false; btn.textContent="Send / ပေးပို့ရန်"; return; }
       /* ก3 รอบ 50: ok แต่ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ ⇒ ยังไม่ทราบผล · คงเลขคำขอไว้ (กดส่งเนื้อเดิมอีกครั้ง = ไม่ซ้ำ) */
-      if(!ก3_สำเร็จจริง_(res)){ btn.disabled=false; btn.textContent="Send / ပို့မည်"; return; }
+      if(!ก3_สำเร็จจริง_(res)){ btn.disabled=false; btn.textContent="Send / ပေးပို့ရန်"; return; }
       ก3_ล้าง_('grievance');
-      document.getElementById('wrap').innerHTML='<div class="done"><div class="c">🤍</div><h2>Sent to P\'Mai</h2>'
-        +'<p>Thank you for telling us. P\'Mai will take care of it.<br>ပြောပြတဲ့အတွက် ကျေးဇူးတင်ပါတယ်။ P\'Mai က ဂရုစိုက်ပါမည်။</p></div>';
+      document.getElementById('wrap').innerHTML='<div class="done"><div class="c">🤍</div><h2>Sent to P\'Mai<br>မမိုင်ထံ ပေးပို့ပြီးပါပြီ။</h2>'
+        +'<p>Thank you for telling us. P\'Mai will take care of it.<br>ကျွန်ုပ်တို့အား ပြောပြပေးသည့်အတွက် ကျေးဇူးတင်ပါသည်။ မမိုင်မှ ဤကိစ္စကို စောင့်ရှောက်ဆောင်ရွက်ပေးပါမည်။</p></div>';
     }catch(e){ /* จอแจ้งเหตุเป็นหน้าที่ของตัวห่อ D1 ที่นี่แค่ปลดปุ่มให้กดใหม่ได้ */
-      btn.disabled=false; btn.textContent="Send / ပို့မည်"; }
+      btn.disabled=false; btn.textContent="Send / ပေးပို့ရန်"; }
   }
 
   /* ── ก3 รอบ 50 (24 ก.ย. 2026): เลขคำขอกันส่งซ้ำ ──
