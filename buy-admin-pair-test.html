@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<script>
+/* สวิตช์ปิดหน้า (S4-4) — ปิดหน้านี้ได้ด้วย flags.json ช่อง "buy-admin": "off" · อ่านไม่ได้ = เปิดตามปกติ */
+(function () {
+  try {
+    if (!window.fetch || !window.AbortController) return;
+    var ชื่อหน้า = (location.pathname.split('/').pop() || '').replace(/\.html$/i, '') || 'index';
+    var ตัวตัด = new AbortController();
+    var นาฬิกา = setTimeout(function () { ตัวตัด.abort(); }, 3000);
+    fetch('flags.json?ts=' + Date.now(), { cache: 'no-store', signal: ตัวตัด.signal })
+      .then(function (r) { clearTimeout(นาฬิกา); return r.ok ? r.json() : null; })
+      .then(function (ธง) {
+        if (ธง && String(ธง[ชื่อหน้า] == null ? '' : ธง[ชื่อหน้า]).trim().toLowerCase() === 'off') {
+          location.replace('maintenance.html?p=' + encodeURIComponent(ชื่อหน้า));
+        }
+      })
+      .catch(function () { clearTimeout(นาฬิกา); });
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>จัดการฝากซื้อ/รับของ</title>
+<script>/* 🧪 ฉบับซ้อมคู่เท่านั้น (มติ GPT รอบ 55 ข้อ G2) — ไม่ใช่หน้าระบบจริง · หลังบ้าน = บานทดสอบของ Shop (ชีตปลอม) · ชุดข้อมูล test
+   ตัวแทนไลน์: ตั๋วปลอมของบัญชีปลอม (บานทดสอบรับเฉพาะตอนเปิดตั๋วปลอมในนัดซ้อม · บานจริงไม่รับ) · รหัสในนี้แต่งขึ้นเหมือนหน้าซ้อมรอบ 52 · ห้ามนำไปใช้กับของจริง */
+(function () {
+  var คน = { aew: { uid: 'U' + 'eeeeeeeeeeeeeeeeeeeeeeeeee' + '0000e4', label: 'คุณแอ้ว (ผู้ทำรายการ · ปลอม)' },
+             owner: { uid: 'U' + 'dddddddddddddddddddddddddd' + '0000d3', label: 'เจ้าของ (ผู้ทำรายการสำรอง · ปลอม)' } };
+  var q = /[?&]as=(aew|owner)(&|$)/.exec(location.search || ''), ตัว = คน[q ? q[1] : 'aew'];
+  window.liff = {
+    init: function () { return Promise.resolve(); },
+    isLoggedIn: function () { return true; },
+    isInClient: function () { return false; },
+    login: function () {},
+    closeWindow: function () {},
+    getIDToken: function () { return 'tok:' + ตัว.uid; }
+  };
+  document.addEventListener('DOMContentLoaded', function () {
+    var b = document.createElement('div');
+    b.textContent = '🧪 ฉบับซ้อมคู่ — ข้อมูลปลอม · หลังบ้านทดสอบ · ชุดข้อมูล test (ต่อได้เฉพาะระบบกู้ยืมรุ่นซ้อม) · เล่นเป็น: ' + ตัว.label;
+    b.setAttribute('role', 'status');
+    b.style.cssText = 'position:sticky;top:0;z-index:99999;background:#b45309;color:#fff;padding:8px 12px;font:700 15px/1.3 sans-serif;text-align:center';
+    document.body.insertBefore(b, document.body.firstChild);
+    document.title = '🧪 ซ้อมคู่ · ' + document.title;
+  });
+})();
+</script>
+<style>
+  :root{ --slate:#2b3440; --ink:#1f2630; --muted:#7a8694; --line:#e4e8ed; --bg:#f3f5f7;
+         --ok:#2f7d55; --warn:#9a6b00; --bad:#b3402f; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
+  header{ background:var(--slate); color:#fff; padding:16px; }
+  header h1{ font-size:18px; margin:0; } header p{ font-size:12px; margin:3px 0 0; opacity:.8; }
+  .wrap{ padding:12px; max-width:640px; margin:0 auto; }
+  #status{ padding:18px 8px; text-align:center; color:var(--muted); font-size:14px; white-space:pre-wrap; }
+  #status.bad{ color:var(--bad); }
+  .bar{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+  .bar select, .bar button{ font-size:14px; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:#fff; font-family:inherit; }
+  .bar select{ flex:1; }
+  .chips{ display:flex; gap:8px; margin-bottom:12px; }
+  .chip{ flex:1; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; cursor:pointer; }
+  .chip .n{ font-size:22px; font-weight:700; } .chip .l{ font-size:12px; color:var(--muted); }
+  .chip.a .n{ color:var(--warn); } .chip.b .n{ color:var(--bad); } .chip.c .n{ color:#2a7d9b; }
+  .list{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px 12px; margin-bottom:12px; font-size:13px; display:none; }
+  .list div{ padding:5px 0; border-bottom:1px dashed var(--line); }
+  h2{ font-size:15px; margin:16px 2px 8px; display:flex; justify-content:space-between; }
+  .person{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .person .top{ display:flex; justify-content:space-between; font-weight:700; font-size:14px; }
+  .order{ border-top:1px solid var(--line); margin-top:10px; padding-top:10px; }
+  .oid{ font-size:13px; font-weight:700; display:flex; justify-content:space-between; gap:6px; align-items:center; }
+  .st{ font-size:11px; font-weight:700; padding:3px 8px; border-radius:8px; white-space:nowrap; background:#eef2f5; }
+  .st.NEW{ background:#fff3d6; color:var(--warn); } .st.PARTIAL{ background:#e6f1f7; color:#2a7d9b; }
+  .st.DELIVERED{ background:#e8f4ec; color:var(--ok); } .st.CANCELLED,.st.CLEARED{ background:#f1f1f1; color:#888; }
+  .st.PARTIAL_CLOSED{ background:#eef0f6; color:#55607a; } .st.HOLD{ background:#fde8e8; color:#b3261e; }   /* รอบ 50 */
+  .hold{ background:#fdecec; border:1px solid #f3b8b3; color:#8c1d18; border-radius:10px; padding:8px 10px; margin:6px 0; font-size:13px; line-height:1.5; white-space:pre-line; }
+  .why{ display:flex; gap:12px; flex-wrap:wrap; font-size:13px; margin:6px 0; } .why label{ display:flex; gap:4px; align-items:center; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+  td,th{ padding:4px 2px; text-align:left; border-bottom:1px dashed var(--line); }
+  th{ color:var(--muted); font-weight:600; font-size:12px; }
+  td.n, th.n{ text-align:right; }
+  input.q{ width:52px; padding:6px; font-size:14px; border:1px solid var(--line); border-radius:8px; text-align:right; }
+  input.t{ width:100%; padding:8px; font-size:14px; border:1px solid var(--line); border-radius:8px; margin-top:6px; font-family:inherit; }
+  .acts{ display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .acts button{ flex:1 1 40%; border:0; border-radius:10px; padding:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .acts button:disabled{ opacity:.45; cursor:default; }
+  .b-go{ background:var(--ok); color:#fff; } .b-no{ background:#f4e3e0; color:var(--bad); } .b-mid{ background:#e6f1f7; color:#1f5f76; }
+  .rc{ background:#f8fafb; border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin-top:8px; font-size:13px; }
+  .rc .h{ display:flex; justify-content:space-between; font-weight:700; }
+  .muted{ color:var(--muted); font-size:12px; }
+  .msg{ font-size:13px; margin-top:6px; white-space:pre-wrap; }
+  .msg.ok{ color:var(--ok); } .msg.bad{ color:var(--bad); }
+  .empty{ text-align:center; color:var(--muted); padding:24px 8px; font-size:14px; }
+  .exp{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:12px; font-size:13px; }   /* รุ่น 18 PAY-10 */
+  .exp textarea{ width:100%; height:90px; margin-top:6px; font-size:11px; border:1px solid var(--line); border-radius:8px; padding:6px; font-family:monospace; }
+  .test{ font-size:11px; font-weight:700; padding:2px 6px; border-radius:8px; background:#f1e8fb; color:#6b3fa0; margin-left:4px; }   /* รุ่น 18 ป้ายทดสอบ */
+  #hof{ border-color:#9fc3d6; }   /* รุ่น 20 ส่งไปลงหนี้ทั้งชุด */
+  #hof .hh{ font-size:16px; font-weight:700; margin-bottom:4px; }
+  #hof .big{ font-size:17px; } #hof .acts button.big{ min-height:54px; }
+  #hof .hh2{ font-weight:700; margin:4px 0; }
+  #hofHeld{ display:none; background:#fff8e6; border:1px solid #f0d9a0; border-radius:10px; padding:8px 10px; margin-top:6px; }
+  #hof details{ margin-top:10px; } #hof summary{ cursor:pointer; color:var(--muted); font-size:13px; padding:4px 0; }
+  #hof .log{ white-space:pre-wrap; font-size:11px; background:#f8fafb; border:1px solid var(--line); border-radius:8px; padding:6px; max-height:180px; overflow:auto; margin:6px 0 0; }
+  .msg.warn{ color:var(--warn); }
+</style>
+</head>
+<body>
+<header><h1>🛍️ จัดการฝากซื้อ/รับของ</h1><p id="hsub">สำหรับแอดมิน · ข้อมูลจากระบบฝากซื้อสินค้า</p></header>
+<div class="wrap">
+  <div id="status">กำลังเชื่อมต่อไลน์…</div>
+  <div id="main" style="display:none">
+    <div class="bar">
+      <select id="round" aria-label="รอบส่ง"></select>
+      <button id="reload" type="button">โหลดใหม่</button>
+    </div>
+    <div class="exp" id="hof" style="display:none">   <!-- รุ่น 20 (มติรอบ 53): ส่งไปลงหนี้ทั้งชุด · เฉพาะผู้ทำรายการ (ด่านจริงอยู่ที่เซิร์ฟเวอร์) -->
+      <div class="hh">🔁 ส่งไปลงหนี้ในระบบกู้ยืม (ทั้งชุด)</div>
+      <div class="muted">ใช้ใน Chrome บนแท็บเล็ตเครื่องที่มีระบบกู้ยืม · ① เปิดระบบกู้ยืม → ② ส่งรายการ → กดลงหนี้ที่แท็บระบบกู้ยืม → กลับมาหน้านี้ หน้านี้บันทึกเลขหนี้และตรวจให้เอง</div>
+      <div id="hofLine" class="hold" style="display:none">⚠️ หน้านี้เปิดอยู่ในไลน์ — ส่งไปลงหนี้ทั้งชุดได้เฉพาะใน Chrome (ระบบกู้ยืมอยู่ใน Chrome)
+คัดลอกลิงก์ แล้วเปิดแอป Chrome วางในช่องที่อยู่ด้านบน<div class="acts"><button id="hofCopyLink" type="button" class="b-mid">📋 คัดลอกลิงก์หน้านี้</button></div><div id="hofLineMsg" class="msg"></div></div>
+      <div class="acts">
+        <button id="hofOpen" type="button" class="b-mid big">① เปิดระบบกู้ยืม</button>
+        <button id="hofSend" type="button" class="b-go big" disabled>② ส่งไปลงหนี้ (แตะ ① ก่อน)</button>
+      </div>
+      <div id="hofSt" class="msg big"></div>
+      <div id="hofProg" class="msg big"></div>
+      <div id="hofHeld"></div>
+      <div id="hofRes"></div>
+      <div id="hofDone" class="msg big"></div>
+      <div class="acts"><button id="hofRecheck" type="button" class="b-mid big" style="display:none">🔎 ตรวจครบอีกครั้ง</button></div>
+      <details><summary>ทางสำรอง: วางเลขหนี้ทั้งชุด (ใช้เมื่อส่งข้ามแท็บไม่ได้)</summary>
+        <div class="muted">วางข้อความเลขหนี้ที่คัดลอกจากระบบกู้ยืมทั้งก้อน แล้วแตะตรวจและบันทึก · หน้านี้ตรวจทีละใบกับข้อมูลล่าสุดก่อนบันทึก แล้วให้คัดลอกผลตรวจกลับไปวางในระบบกู้ยืม</div>
+        <textarea id="hofPaste" aria-label="วางข้อความเลขหนี้จากระบบกู้ยืม"></textarea>
+        <div class="acts"><button id="hofPasteGo" type="button" class="b-go">ตรวจและบันทึกเลขหนี้ที่วาง</button></div>
+        <div id="hofPasteOut" class="msg"></div>
+      </details>
+      <details><summary>บันทึกการส่ง (ไว้ส่งให้ผู้ดูแลเมื่อมีปัญหา)</summary>
+        <pre id="hofLog" class="log"></pre>
+        <div class="acts"><button id="hofLogCopy" type="button" class="b-mid">📋 คัดลอกบันทึกการส่ง</button></div>
+        <div id="hofLogMsg" class="msg"></div>
+      </details>
+    </div>
+    <div class="exp" id="exp" style="display:none">   <!-- รุ่น 18 PAY-10: เฉพาะผู้ทำรายการ (ด่านจริงอยู่ที่เซิร์ฟเวอร์) -->
+      <div class="acts"><button id="expBtn" type="button" class="b-mid">⬇️ ส่งออก 6 ช่อง ให้ระบบกู้ยืมกระทบยอด</button></div>
+      <div id="expOut" class="msg"></div>
+    </div>
+    <div class="chips">
+      <div class="chip a" data-k="ready_for_loan"><div class="n" id="c-ready">–</div><div class="l">ยืนยันแล้ว รอลงหนี้</div></div>
+      <div class="chip c" data-k="wait_over_3_days"><div class="n" id="c-wait">–</div><div class="l">น้องยังไม่ยืนยัน เกิน 3 วัน</div></div>
+      <div class="chip b" data-k="disputed"><div class="n" id="c-disp">–</div><div class="l">น้องแจ้งปัญหา</div></div>
+    </div>
+    <div class="list" id="pendlist"></div>
+    <div id="sites"></div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  /* ══ buy-admin.html · ฝากซื้อเฟส 1 · 23 ก.ย. 2026 ══
+     หลักที่ยึด (ตรงกับกติกาผู้วางแผน):
+     · ตัวตน/สิทธิ์ตรวจที่เซิร์ฟเวอร์ (ตั๋ว LINE + AdminUsers) หน้านี้ไม่ใช่ด่าน
+     · 1 กด = 1 คำขอ · ปุ่มถูกปิดระหว่างรอ · รอสูงสุด 20 วินาทีต่อครั้ง · รุ่น 19: ส่งคำขอเดิมซ้ำได้ 1 ครั้งเฉพาะคำสั่งที่ทำซ้ำไม่เพิ่มผล (มติรอบ 51)
+     · คำสั่งเขียนมีเลขคำขอ (req_id) — กดซ้ำหลังเน็ตหลุด เซิร์ฟเวอร์คืนของเดิม ไม่สร้างใบซ้ำ
+     · ข้อความทุกช่องใส่ด้วย textContent ไม่ใช้ innerHTML กับข้อมูลจากชีต
+     · ไม่เก็บอะไรในเครื่อง
+     · รุ่น 20 (มติรอบ 53): ปุ่มส่งไปลงหนี้ทั้งชุดข้ามหน้าต่าง อยู่ส่วนท้าย (ใช้ใน Chrome · ยังไม่เก็บอะไรในเครื่องเช่นเดิม)
+     · รุ่น 20 ฉบับ 2 (รอบ 55 R55-2): ขึ้นว่าบันทึกเลขหนี้ครบเมื่อผลอ่านกลับตรงหนี้ครบ 6 ช่อง · แยกใบต้องตรวจจากใบค้าง */
+  var LIFF_ID = '2010242926-nreePSO4';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbwHHkrPbz9zB3GhCVnttcURN8b8zeB5_LactfqWEIbe0i4Qc1n4Vn5lhFseN4S0TteN_w/exec';
+  var รอสูงสุด = 20000;
+
+  var สถานะไทย = { NEW: 'รอส่ง', PARTIAL: 'ส่งบางส่วน', DELIVERED: 'ส่งครบ', CANCELLED: 'น้องยกเลิก', CLEARED: 'ล้างแล้ว',
+    PARTIAL_CLOSED: 'ส่งบางส่วน · ปิดส่วนที่เหลือแล้ว', HOLD: 'พักตรวจยอด' };   /* รอบ 50 */
+  var ชนิดล้างไทย = { NO_STOCK: 'ของไม่มีจริง (ไม่คืนสต็อก)', OTHER: 'เหตุอื่น (คืนสต็อกส่วนที่ยังไม่ส่ง)' };
+  var ใบไทย = { WAIT: 'รอน้องยืนยัน', CONFIRMED: 'น้องยืนยันแล้ว', DISPUTED: 'น้องแจ้งปัญหา', VOID: 'ยกเลิกใบนี้แล้ว' };
+  var ผิดไทย = {
+    NOT_ADMIN: 'บัญชีนี้ไม่ใช่แอดมิน', NO_TICKET: 'กรุณาเปิดหน้านี้จากไลน์', BAD_TICKET: 'ตั๋วไลน์หมดอายุ ปิดแล้วเปิดใหม่จากไลน์',
+    REASON_REQUIRED: 'ต้องใส่เหตุผล', OVER_DELIVERY: 'ใส่จำนวนเกินที่เหลือ', ITEM_NOT_IN_ORDER: 'มีของที่ไม่ได้อยู่ในออเดอร์',
+    EMPTY_DELIVERY: 'ยังไม่ได้ใส่จำนวน', CANNOT_DELIVER: 'ออเดอร์นี้ส่งของไม่ได้แล้ว', CANNOT_CLEAR: 'ล้าง/ปิดไม่ได้ในสถานะนี้',
+    NOT_OPERATOR: 'บัญชีนี้ดูได้อย่างเดียว — ผู้ทำรายการฝากซื้อคือคุณแอ้วและเจ้าของ',
+    REASON_TYPE_REQUIRED: 'เลือกก่อนว่าล้างเพราะของไม่มีจริง หรือเหตุอื่น',
+    NOT_CONFIRMED: 'น้องยังไม่ยืนยันรับของ — ยังลงหนี้ไม่ได้', AMOUNT_MISMATCH: 'ยอดไม่ตรงกับใบรับของ',
+    ALREADY_LOANED: 'ใบนี้ลงหนี้ไปแล้วด้วยเลขอื่น', LOAN_REF_USED: 'เลขรายการหนี้นี้ใช้กับใบอื่นไปแล้ว',
+    LOAN_REF_REQUIRED: 'ต้องใส่เลขรายการหนี้', LOAN_AMOUNT_REQUIRED: 'ต้องใส่ยอด', RECEIPT_NOT_FOUND: 'ไม่พบใบรับของ', ORDER_NOT_FOUND: 'ไม่พบออเดอร์',
+    SERVICE_PAUSED: 'ระบบพักการบันทึกชั่วคราว (เจ้าของสั่งพัก) — ดูรายการได้ตามปกติ แต่ยังบันทึกไม่ได้'   /* รุ่น 18 */
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }
+  function บาท(n) { return (Number(n) || 0).toLocaleString('th-TH') + ' ฿'; }
+  function เลขคำขอ() {
+    var a = new Uint8Array(12); (window.crypto || window.msCrypto).getRandomValues(a);
+    return 'adm-' + Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function แปลผิด(r) {
+    if (!r) return 'ไม่ได้รับคำตอบ';
+    var e = String(r.error || '');
+    var t = ผิดไทย[e] || ('ทำไม่สำเร็จ (' + e + ')');
+    if (e === 'OVER_DELIVERY' && r.remaining != null) t += ' — เหลือ ' + r.remaining + ' ชิ้น';
+    if (e === 'AMOUNT_MISMATCH' && r.expected != null) t += ' — ใบนี้ ' + บาท(r.expected);
+    if (e === 'ALREADY_LOANED' && r.loan_ref) t += ' — ' + r.loan_ref;
+    if (e === 'LOAN_REF_USED' && r.receipt_no) t += ' — ' + r.receipt_no;
+    return t;
+  }
+
+  /* ── ยิงคำขอ · รุ่น 19 (มติผู้วางแผนรอบ 51 ★S1): ส่งคำขอเดิมซ้ำได้ 1 ครั้ง เฉพาะคำสั่งในรายการนี้ ──
+     ตรวจแล้วว่าทำซ้ำไม่เพิ่มผล: บันทึกส่งของ = เลขคำขอเดิมได้ใบเดิม · ล้าง/ยกเลิกใบ = ทำแล้วตอบว่าทำแล้ว · ลงหนี้เลขเดิมยอดเดิม = ตอบว่ามีแล้ว · คำสั่งอ่าน
+     · เนื้อคำขอสร้างครั้งเดียว (เลขรายการ การกระทำ เลขหนี้ ยอดเดิม) ใช้ทั้ง 2 ครั้ง · ซ้ำเฉพาะ หมดเวลา/เน็ตล้ม/คำตอบผิดรูป · รวมไม่เกิน 1 ครั้ง
+     · คำตอบที่เป็นผลจริง (ok:false พร้อมรหัส) = ไม่ส่งซ้ำ · เพดานรอต่อครั้ง 20 วินาทีเท่าเดิม */
+  var ซ้ำได้ = { admin_round: 1, admin_pending: 1, admin_export_receipts: 1, admin_record_delivery: 1,
+    admin_clear_order: 1, admin_void_receipt: 1, admin_record_loan: 1 };
+  function รูปถูก(action, j) {   /* คำตอบสำเร็จต้องตรงรูปของคำสั่ง (มติรอบ 50 ★1) */
+    switch (action) {
+      case 'admin_round': return Array.isArray(j.sites) && j.round !== undefined;
+      case 'admin_pending': return Array.isArray(j.ready_for_loan) && Array.isArray(j.wait_over_3_days) && Array.isArray(j.disputed);
+      case 'admin_export_receipts': return j.kind === 'jasmine-buy-receipts';
+      case 'admin_record_delivery': return !!j.receipt_no && j.amount != null;
+      case 'admin_clear_order': return !!j.order_id && !!j.status;
+      case 'admin_void_receipt': return !!j.receipt_no && j.confirm_status === 'VOID';
+      case 'admin_record_loan': return !!j.receipt_no && !!j.loan_ref;
+    }
+    return true;
+  }
+  function ยิงครั้งเดียว(action, เนื้อ) {
+    var ตัด = window.AbortController ? new AbortController() : null;
+    var นาฬิกา = ตัด ? setTimeout(function () { ตัด.abort(); }, รอสูงสุด) : null;
+    return fetch(API_URL, { method: 'POST', body: เนื้อ, credentials: 'omit', signal: ตัด ? ตัด.signal : undefined })
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        if (นาฬิกา) clearTimeout(นาฬิกา);
+        var j; try { j = JSON.parse(t); } catch (e) { return { ok: false, error: 'NOT_JSON' }; }
+        if (!j || typeof j !== 'object') return { ok: false, error: 'NOT_JSON' };
+        /* รอบ 50 (ทดสอบผ่าน /exec 24 ก.ย.): บางครั้ง Google ส่งคำตอบของ doGet (รายการสินค้า ok:true) กลับมาแทนผลคำสั่งนี้ ⇒ ถือว่ายังไม่รู้ผล */
+        if (j.products !== undefined || /API is running/.test(String(j.msg || ''))) return { ok: false, error: 'NOT_JSON' };
+        if (j.ok === true && !รูปถูก(action, j)) return { ok: false, error: 'NOT_JSON' };
+        return j;
+      })
+      .catch(function (e) { if (นาฬิกา) clearTimeout(นาฬิกา); return { ok: false, error: 'TIMEOUT', timeout: true }; });
+  }
+  function ยิง(body, ก่อนครั้งที่สอง) {
+    var tk = null;
+    try { tk = liff.getIDToken(); } catch (e) {}
+    if (!tk) return Promise.resolve({ ok: false, error: 'NO_TICKET' });
+    body.idToken = tk;
+    var เนื้อ = JSON.stringify(body);
+    return ยิงครั้งเดียว(body.action, เนื้อ).then(function (r) {
+      if (!ยังไม่รู้ผล(r) || !ซ้ำได้[body.action]) return r;
+      if (ก่อนครั้งที่สอง) ก่อนครั้งที่สอง();
+      return ยิงครั้งเดียว(body.action, เนื้อ).then(function (r2) { r2.ครั้งที่สอง = true; return r2; });
+    });
+  }
+  function ยังไม่รู้ผล(r) { return r && (r.error === 'TIMEOUT' || r.error === 'NOT_JSON'); }
+  var งานเขียนค้าง = 0;   /* รุ่น 19: ระหว่างคำสั่งเขียนยังรอผล ห้ามโหลดใหม่/เปลี่ยนรอบ (กันกดซ้ำด้วยเลขคำขอใหม่) */
+  function ล็อกโหลด() { var ล็อก = งานเขียนค้าง > 0; $('reload').disabled = ล็อก; $('round').disabled = ล็อก; }
+
+  function สถานะ(t, bad) { var s = $('status'); s.textContent = t || ''; s.className = bad ? 'bad' : ''; s.style.display = t ? 'block' : 'none'; }
+
+  var รอบที่เลือก = '';
+  var ทำรายการได้ = false;   /* รอบ 50: เซิร์ฟเวอร์บอกว่าบัญชีนี้เป็นผู้ทำรายการไหม (ด่านจริงอยู่ที่เซิร์ฟเวอร์ หน้านี้แค่ซ่อนปุ่ม) */
+
+  function โหลด() {
+    สถานะ('กำลังโหลด…');
+    $('reload').disabled = true;
+    return Promise.all([ยิง({ action: 'admin_round', round: รอบที่เลือก }), ยิง({ action: 'admin_pending' })]).then(function (rs) {
+      $('reload').disabled = งานเขียนค้าง > 0;
+      var rd = rs[0], pd = rs[1];
+      if (!rd.ok) { สถานะ(ยังไม่รู้ผล(rd) ? 'ยังไม่ได้รับคำตอบ — กด "โหลดใหม่"' : แปลผิด(rd), true); $('main').style.display = rd.error === 'NOT_ADMIN' ? 'none' : 'block'; return; }
+      สถานะ('');
+      $('main').style.display = 'block';
+      ทำรายการได้ = rd.can_operate === true;
+      $('exp').style.display = ทำรายการได้ ? 'block' : 'none';   /* รุ่น 18 */
+      if (ทำรายการได้ && $('hof')) { $('hof').style.display = 'block'; ปุ่มห(); } else if (!ทำรายการได้ && $('hof')) { $('hof').parentNode.removeChild($('hof')); }   /* รุ่น 20: ผู้ดูอย่างเดียวไม่มีปุ่มส่งไปลงหนี้ในหน้าเลย */
+      $('hsub').textContent = 'แอดมิน: ' + (rd.admin || '-') + ' · รอบส่ง ' + rd.round + (ทำรายการได้ ? '' : ' · ดูได้อย่างเดียว');
+      วาดรอบ(rd);
+      วาดตกค้าง(pd);
+      วาดไซต์(rd);
+    });
+  }
+
+  function วาดรอบ(rd) {
+    var sel = $('round'); sel.textContent = '';
+    var ทั้งหมด = (rd.rounds || []).slice();
+    if (ทั้งหมด.indexOf(rd.round) < 0) ทั้งหมด.push(rd.round);
+    ทั้งหมด.sort().reverse().forEach(function (r) {
+      var o = el('option', null, 'ส่งวันที่ ' + r); o.value = r; if (r === rd.round) o.selected = true; sel.appendChild(o);
+    });
+  }
+
+  var ตกค้างล่าสุด = null;
+  function วาดตกค้าง(pd) {
+    ตกค้างล่าสุด = pd && pd.ok ? pd : null;
+    $('c-ready').textContent = ตกค้างล่าสุด ? pd.ready_for_loan.length : '?';
+    $('c-wait').textContent = ตกค้างล่าสุด ? pd.wait_over_3_days.length : '?';
+    $('c-disp').textContent = ตกค้างล่าสุด ? pd.disputed.length : '?';
+    $('pendlist').style.display = 'none';
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (c) {
+    c.addEventListener('click', function () {
+      var box = $('pendlist');
+      if (!ตกค้างล่าสุด) return;
+      var rows = ตกค้างล่าสุด[c.getAttribute('data-k')] || [];
+      box.textContent = '';
+      if (!rows.length) box.appendChild(el('div', 'muted', 'ไม่มีรายการ'));
+      rows.forEach(function (x) { box.appendChild(el('div', null, x.receipt_no + ' · ' + x.site + ' · ' + (x.worker_name || '-') + ' · ' + บาท(x.amount) + ' · ส่ง ' + x.round)); });
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    });
+  });
+
+  function วาดไซต์(rd) {
+    var box = $('sites'); box.textContent = '';
+    if (!rd.sites || !rd.sites.length) { box.appendChild(el('div', 'empty', 'ยังไม่มีคำฝากซื้อในรอบนี้')); return; }
+    rd.sites.forEach(function (s) {
+      var h = el('h2'); h.appendChild(el('span', null, '📍 ' + s.site)); h.appendChild(el('span', null, บาท(s.total))); box.appendChild(h);
+      s.people.forEach(function (p) {
+        var card = el('div', 'person');
+        var top = el('div', 'top'); top.appendChild(el('span', null, p.name || '(ไม่มีชื่อ)')); top.appendChild(el('span', null, บาท(p.total)));
+        card.appendChild(top);
+        card.appendChild(el('div', 'muted', 'การ์ด …' + String(p.card_id || '').slice(-6)));
+        p.orders.forEach(function (o) { card.appendChild(วาดออเดอร์(o)); });
+        box.appendChild(card);
+      });
+    });
+  }
+
+  function วาดออเดอร์(o) {
+    var w = el('div', 'order');
+    var head = el('div', 'oid'); var ชื่อหัว = el('span', null, o.order_id + ' · ' + บาท(o.total));
+    if (o.is_test) ชื่อหัว.appendChild(el('span', 'test', '🧪 ทดสอบ'));   /* รุ่น 18: สั่งตอนประตูปิด หรือเจ้าของรับรองว่าเป็นทดสอบ */
+    head.appendChild(ชื่อหัว);
+    head.appendChild(el('span', 'st ' + o.status, สถานะไทย[o.status] || o.status)); w.appendChild(head);
+    if (o.status === 'CLEARED' || o.status === 'PARTIAL_CLOSED') {
+      w.appendChild(el('div', 'muted', (o.status === 'CLEARED' ? 'ล้างโดย ' : 'ปิดส่วนค้างโดย ') + (o.cleared_by || '-') + ' · ' + (o.clear_reason || '') +
+        (o.clear_type ? ' · ' + (ชนิดล้างไทย[o.clear_type] || o.clear_type) : '')));
+    }
+    if (o.status === 'HOLD') {
+      w.appendChild(el('div', 'hold', '⚠️ พักตรวจยอด — บันทึกออเดอร์แล้วแต่ตัดสต็อกไม่ครบ และยอดตอนนี้ไม่ตรงกับที่ควรเป็น\n' +
+        'สินค้าในออเดอร์นี้ถูกพักไม่ให้สั่งเพิ่ม · ตรวจนับของจริงแล้วแก้แท็บ Products ให้ถูกก่อน แล้วค่อยกดล้างข้างล่าง (ระบบไม่แตะสต็อกให้)'));
+    }
+
+    var tb = el('table'), tr = el('tr');
+    ['ของ', 'สั่ง', 'ส่งแล้ว', 'เหลือ', 'ส่งรอบนี้'].forEach(function (x, i) { tr.appendChild(el('th', i ? 'n' : null, x)); });
+    tb.appendChild(tr);
+    var ช่อง = [];
+    var ส่งได้ = ทำรายการได้ && (o.status === 'NEW' || o.status === 'PARTIAL');
+    o.items.forEach(function (it) {
+      var r = el('tr');
+      r.appendChild(el('td', null, it.name + ' (' + บาท(it.price) + ')'));
+      r.appendChild(el('td', 'n', it.qty)); r.appendChild(el('td', 'n', it.delivered));
+      r.appendChild(el('td', 'n', it.closed ? '0 (ปิด ' + it.closed + ')' : it.remaining));
+      var td = el('td', 'n');
+      if (ส่งได้ && it.remaining > 0) {
+        var inp = el('input', 'q'); inp.type = 'number'; inp.min = '0'; inp.max = String(it.remaining); inp.value = String(it.remaining); inp.inputMode = 'numeric';
+        inp.setAttribute('aria-label', 'จำนวนที่ส่ง ' + it.name);
+        ช่อง.push({ id: it.id, inp: inp, max: it.remaining }); td.appendChild(inp);
+      } else td.textContent = '–';
+      r.appendChild(td); tb.appendChild(r);
+    });
+    w.appendChild(tb);
+
+    var msg = el('div', 'msg');
+    var acts = el('div', 'acts');
+    var ปุ่มทั้งหมด = [];
+    if (ส่งได้) {
+      var bSend = el('button', 'b-go', '✅ บันทึกส่งของ'); bSend.type = 'button';
+      var reqส่ง = เลขคำขอ();   // เลขเดียวต่อการกดครั้งนี้ — กดซ้ำหลังเน็ตหลุดจะได้ใบเดิม
+      bSend.onclick = function () {
+        var items = [], ผิด = '';
+        ช่อง.forEach(function (c) { var q = Math.floor(Number(c.inp.value) || 0); if (q < 0 || q > c.max) ผิด = 'จำนวนต้องอยู่ระหว่าง 0 ถึง ' + c.max; if (q > 0) items.push({ id: c.id, qty: q }); });
+        if (ผิด) { msg.className = 'msg bad'; msg.textContent = ผิด; return; }
+        if (!items.length) { msg.className = 'msg bad'; msg.textContent = 'ยังไม่ได้ใส่จำนวน'; return; }
+        กดแล้วรอ(ปุ่มทั้งหมด, msg, { action: 'admin_record_delivery', req_id: reqส่ง, order_id: o.order_id, items: items }, function (r) {
+          return 'บันทึกแล้ว ใบรับของ ' + r.receipt_no + ' · ' + บาท(r.amount) + (r.duplicate ? ' (ใบเดิม)' : '') +
+            (r.worker_notified === false ? '\n⚠️ ส่งไลน์ถึงน้องไม่สำเร็จ — แจ้งน้องให้กดยืนยันเอง' : '');
+        });
+      };
+      acts.appendChild(bSend); ปุ่มทั้งหมด.push(bSend);
+    }
+    /* รอบ 50 — ล้าง/ปิดส่วนค้าง: รอส่ง = ล้างทั้งออเดอร์ · ส่งบางส่วน = ปิดเฉพาะที่ยังไม่ส่ง · พักตรวจยอด = ล้างหลังแก้สต็อกแล้ว
+       ต้องเลือกชนิดเหตุผล (ข้อเลือก 1 มติรอบ 49): ของไม่มีจริง = ไม่คืนสต็อก · เหตุอื่น = คืนสต็อกส่วนที่ยังไม่ส่ง */
+    var ล้างได้ = ทำรายการได้ && (o.status === 'NEW' || o.status === 'PARTIAL' || o.status === 'HOLD');
+    if (ล้างได้) {
+      var ป้ายล้าง = o.status === 'PARTIAL' ? '🧹 ปิดส่วนที่ยังไม่ส่ง' : (o.status === 'HOLD' ? '🧹 ล้างออเดอร์ที่พัก' : '🧹 ล้างออเดอร์');
+      var bClear = el('button', 'b-no', ป้ายล้าง); bClear.type = 'button';
+      var why = el('input', 't'); why.placeholder = o.status === 'HOLD' ? 'บันทึกผลตรวจนับ เช่น นับจริงเหลือ 9' : 'เหตุผล เช่น ของหมด'; why.maxLength = 200;
+      var กลุ่ม = 'why-' + o.order_id;
+      var ชนิด = el('div', 'why');
+      ['NO_STOCK', 'OTHER'].forEach(function (k) {
+        var lb = el('label'); var rb = el('input'); rb.type = 'radio'; rb.name = กลุ่ม; rb.value = k;
+        lb.appendChild(rb); lb.appendChild(el('span', null, o.status === 'HOLD' ? (k === 'NO_STOCK' ? 'ของไม่มีจริง' : 'เหตุอื่น') : ชนิดล้างไทย[k]));
+        ชนิด.appendChild(lb);
+      });
+      bClear.onclick = function () {
+        var เลือก = ชนิด.querySelector('input:checked');
+        if (!เลือก) { msg.className = 'msg bad'; msg.textContent = 'เลือกก่อนว่าล้างเพราะของไม่มีจริง หรือเหตุอื่น'; return; }
+        if (!why.value.trim()) { msg.className = 'msg bad'; msg.textContent = 'ใส่เหตุผลก่อน'; why.focus(); return; }
+        กดแล้วรอ(ปุ่มทั้งหมด, msg, { action: 'admin_clear_order', order_id: o.order_id, reason: why.value.trim(), reason_type: เลือก.value }, function (r) {
+          var คืน = (r.returned || []).map(function (x) { return x.id + ' +' + x.qty; }).join(', ');
+          if (r.status === 'PARTIAL_CLOSED') return 'ปิดส่วนที่ยังไม่ส่งแล้ว · ของที่ส่งแล้ว ใบรับของ และเลขหนี้ยังอยู่ครบ · ' + (คืน ? 'คืนสต็อก ' + คืน : 'ไม่คืนสต็อก') + ' · อย่าลืมแจ้งน้องเอง';
+          return 'ล้างแล้ว · บันทึกว่า ' + (r.by || 'คุณ') + ' เป็นคนกด · ' + (o.status === 'HOLD' ? 'สต็อกไม่ถูกแตะ' : (คืน ? 'คืนสต็อก ' + คืน : 'ไม่คืนสต็อก')) + ' · อย่าลืมแจ้งน้องเอง';
+        });
+      };
+      acts.appendChild(bClear); ปุ่มทั้งหมด.push(bClear);
+      w.appendChild(acts); w.appendChild(ชนิด); w.appendChild(why);
+    } else if (ส่งได้) {
+      w.appendChild(acts);
+    }
+    (o.receipts || []).forEach(function (rc) { w.appendChild(วาดใบรับ(rc)); });
+    w.appendChild(msg);
+    return w;
+  }
+
+  function วาดใบรับ(rc) {
+    var b = el('div', 'rc');
+    var h = el('div', 'h'); h.appendChild(el('span', null, '🧾 ' + rc.receipt_no + ' · ' + บาท(rc.amount)));
+    h.appendChild(el('span', null, rc.loan_ref ? 'ลงหนี้แล้ว' : (ใบไทย[rc.confirm_status] || rc.confirm_status))); b.appendChild(h);
+    b.appendChild(el('div', 'muted', (rc.items || []).map(function (it) { return it.name + ' x' + it.qty; }).join(' · ') + ' · บันทึกโดย ' + (rc.recorded_by || '-')));
+    if (rc.loan_ref) { b.appendChild(el('div', 'muted', 'เลขรายการหนี้: ' + rc.loan_ref)); return b; }
+    var msg = el('div', 'msg');
+    var acts = el('div', 'acts');
+    var bCopy = el('button', 'b-mid', '📋 คัดลอกเลขใบรับของ'); bCopy.type = 'button';
+    bCopy.onclick = function () { คัดลอก(rc.receipt_no, msg); };
+    acts.appendChild(bCopy);
+    if (rc.card_id) {   /* รุ่น 18 PAY-5: รหัสการ์ดเต็มจากใบรับของนั้น · 6 ตัวท้ายไว้ช่วยอ่าน · ไม่ให้พิมพ์เอง */
+      var bCard = el('button', 'b-mid', '📋 คัดลอกรหัสการ์ด …' + String(rc.card_id).slice(-6)); bCard.type = 'button';
+      bCard.onclick = function () { คัดลอก(String(rc.card_id), msg, 'รหัสการ์ดเต็ม (…' + String(rc.card_id).slice(-6) + ')'); };
+      acts.appendChild(bCard);
+    }
+    if (ทำรายการได้ && rc.confirm_status === 'CONFIRMED') {
+      var ref = el('input', 't'); ref.placeholder = 'เลขรายการหนี้จากระบบกู้ยืม'; ref.maxLength = 60;
+      var amt = el('input', 't'); amt.type = 'number'; amt.value = String(rc.amount); amt.inputMode = 'decimal'; amt.setAttribute('aria-label', 'ยอดที่ลงหนี้');
+      var bLoan = el('button', 'b-go', '💾 บันทึกเลขรายการหนี้'); bLoan.type = 'button';
+      bLoan.onclick = function () {
+        if (!ref.value.trim()) { msg.className = 'msg bad'; msg.textContent = 'ใส่เลขรายการหนี้ก่อน'; ref.focus(); return; }
+        กดแล้วรอ([bLoan], msg, { action: 'admin_record_loan', receipt_no: rc.receipt_no, loan_ref: ref.value.trim(), loan_amount: Number(amt.value) }, function (r) {
+          return 'บันทึกแล้ว · ' + r.loan_ref + (r.already ? ' (ของเดิม)' : '');
+        });
+      };
+      b.appendChild(ref); b.appendChild(amt); acts.appendChild(bLoan);
+    }
+    if (ทำรายการได้ && rc.confirm_status !== 'VOID') {
+      var why = el('input', 't'); why.placeholder = 'เหตุผลถ้าจะยกเลิกใบนี้'; why.maxLength = 200;
+      var bVoid = el('button', 'b-no', '✖ ยกเลิกใบนี้'); bVoid.type = 'button';
+      bVoid.onclick = function () {
+        if (!why.value.trim()) { msg.className = 'msg bad'; msg.textContent = 'ใส่เหตุผลก่อนยกเลิกใบ'; why.focus(); return; }
+        กดแล้วรอ([bVoid], msg, { action: 'admin_void_receipt', receipt_no: rc.receipt_no, reason: why.value.trim() }, function () {
+          return 'ยกเลิกใบนี้แล้ว (ประวัติยังอยู่) · ของในใบนี้กลับเป็น "ยังไม่ส่ง"';
+        });
+      };
+      acts.appendChild(bVoid); b.appendChild(why);
+    }
+    b.appendChild(acts); b.appendChild(msg);
+    return b;
+  }
+
+  function กดแล้วรอ(ปุ่ม, msg, body, ข้อความสำเร็จ) {
+    ปุ่ม.forEach(function (x) { x.disabled = true; });
+    งานเขียนค้าง++; ล็อกโหลด();
+    msg.className = 'msg'; msg.textContent = 'กำลังบันทึก…';
+    ยิง(body, function () { msg.textContent = 'ยังไม่ได้รับคำตอบ — กำลังตรวจรายการเดิม…'; }).then(function (r) {
+      งานเขียนค้าง--; ล็อกโหลด();
+      if (r.ok) {
+        msg.className = 'msg ok'; msg.textContent = ข้อความสำเร็จ(r) + '\nกำลังโหลดใหม่…';
+        setTimeout(โหลด, 900);
+        return;
+      }
+      ปุ่ม.forEach(function (x) { x.disabled = false; });
+      msg.className = 'msg bad';
+      var ไม่รู้ = ยังไม่รู้ผล(r) || (r.ครั้งที่สอง && !ผิดไทย[String(r.error || '')]);   /* รุ่น 19: ครั้งแรกไม่รู้ผล + ครั้งที่ 2 ได้รหัสแปลก = ยังไม่รู้ผล */
+      msg.textContent = ไม่รู้ ? 'ยังไม่ได้รับคำตอบ — กด "โหลดใหม่" ดูก่อนว่าบันทึกแล้วหรือยัง แล้วค่อยกดซ้ำ' : แปลผิด(r);
+    });
+  }
+
+  function คัดลอก(ข้อความ, msg, ป้าย) {   /* รุ่น 18: ป้าย = ข้อความที่โชว์แทน (ข้อมูลยาว/รหัสเต็ม) */
+    function สำเร็จ() { msg.className = 'msg ok'; msg.textContent = 'คัดลอกแล้ว: ' + (ป้าย || ข้อความ); }
+    function สำรอง() {
+      try {
+        var t = document.createElement('textarea'); t.value = ข้อความ; t.setAttribute('readonly', '');
+        t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select();
+        var ok = document.execCommand('copy'); document.body.removeChild(t);
+        if (ok) สำเร็จ(); else { msg.className = 'msg'; msg.textContent = 'คัดลอกเองได้: ' + ข้อความ; }
+      } catch (e) { msg.className = 'msg'; msg.textContent = 'คัดลอกเองได้: ' + ข้อความ; }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ข้อความ).then(สำเร็จ, สำรอง); else สำรอง();
+  }
+
+  /* ── รุ่น 18 PAY-10: ส่งออก 6 ช่อง (คำสั่งอ่านอย่างเดียว · ผู้ทำรายการเท่านั้น · ตรวจรูปคำตอบของคำสั่งนี้) ──
+     รุ่น 19 (มติรอบ 51 ข้อ 3): รูปแบบ 2 · ไม่พบแท็บ = ยังยืนยันความครบไม่ได้ · มีแถวผิดปกติ = แสดงจำนวน+เหตุ ไม่ให้คัดลอก/บันทึก (ห้ามขึ้นว่าพร้อมใช้กระทบยอด) */
+  var เหตุไทย = { NO_RECEIPT_NO: 'มีข้อมูลแต่ไม่มีเลขใบรับของ', DUPLICATE_RECEIPT_NO: 'เลขใบรับของซ้ำ', NO_ORDER_ID: 'ไม่มีเลขออร์เดอร์',
+    ORDER_NOT_FOUND: 'หาออร์เดอร์ต้นทางไม่พบ', ORDER_AMBIGUOUS: 'ออร์เดอร์ต้นทางซ้ำหลายแถว (กำกวม)' };
+  $('expBtn').onclick = function () {
+    var b = this, out = $('expOut');
+    b.disabled = true; out.className = 'msg'; out.textContent = 'กำลังส่งออก…';
+    Array.prototype.slice.call($('exp').querySelectorAll('.expres')).forEach(function (x) { x.parentNode.removeChild(x); });
+    ยิง({ action: 'admin_export_receipts' }, function () { out.textContent = 'ยังไม่ได้รับคำตอบ — กำลังถามซ้ำ (คำสั่งนี้อ่านอย่างเดียว)…'; }).then(function (r) {
+      b.disabled = false;
+      if (!r.ok) { out.className = 'msg bad'; out.textContent = ยังไม่รู้ผล(r) ? 'ยังไม่ได้รับคำตอบ — กดใหม่ได้ (คำสั่งนี้อ่านอย่างเดียว ไม่บันทึกอะไร)' : แปลผิด(r); return; }
+      if (r.kind !== 'jasmine-buy-receipts' || r.format_version !== 2 || typeof r.complete !== 'boolean' ||
+          !Array.isArray(r.columns) || !Array.isArray(r.rows) || !Array.isArray(r.test_rows) || !Array.isArray(r.problem_rows)) {
+        out.className = 'msg bad'; out.textContent = 'คำตอบไม่ใช่ข้อมูลส่งออกรูปแบบ 2 — กดใหม่ได้ (ถ้าเป็นซ้ำ แจ้งผู้ลงมือ)'; return;
+      }
+      if (r.tab_exists !== true) { out.className = 'msg bad'; out.textContent = 'ไม่พบแท็บใบรับของ — ยังยืนยันความครบไม่ได้ (ยังไม่ส่งออก)'; return; }
+      if (r.headers_ok !== true) { out.className = 'msg bad'; out.textContent = 'หัวคอลัมน์แท็บใบรับของไม่ครบ (' + (r.missing_headers || []).join(', ') + ') — ยังไม่ส่งออก ให้แจ้งผู้ลงมือ'; return; }
+      if (r.complete !== true || r.problem_rows.length) {
+        out.className = 'msg bad';
+        out.textContent = '⚠️ ยังใช้กระทบยอดไม่ได้ — พบแถวผิดปกติ ' + r.problem_rows.length + ' แถว (ใช้จริง ' + r.count + ' ใบ · ทดสอบ ' + r.test_count + ' ใบ ยังไม่ส่งออก) · ให้แจ้งผู้ลงมือตรวจชีตก่อน';
+        var กล่องผิด = el('div', 'expres');
+        r.problem_rows.forEach(function (p) {
+          กล่องผิด.appendChild(el('div', null, 'แถว ' + p.sheet_row + ' ในแท็บใบรับของ · ' + (เหตุไทย[p.reason] || p.reason) +
+            ' · ใบ ' + ((p.values && p.values[0]) || '-') + ' · ออร์เดอร์ ' + (p.order_id || '-')));
+        });
+        $('exp').appendChild(กล่องผิด);
+        return;
+      }
+      var ข้อมูล = { kind: r.kind, format_version: r.format_version, exported_at: r.exported_at, timezone: r.timezone, exported_by: r.exported_by,
+        source_tab: r.source_tab, complete: r.complete, columns: r.columns, count: r.count, rows: r.rows, test_count: r.test_count, test_rows: r.test_rows,
+        problem_count: r.problem_count, problem_rows: r.problem_rows };
+      var ข้อความ = JSON.stringify(ข้อมูล);
+      out.className = 'msg ok';
+      out.textContent = 'ส่งออกแล้ว ' + r.exported_at + ' · ครบ ไม่มีแถวผิดปกติ · ใช้จริง ' + r.count + ' ใบ · ทดสอบ (แยกไว้ ไม่ใช้กระทบยอดจริง) ' + r.test_count + ' ใบ';
+      var กล่อง = el('div', 'expres');
+      var acts = el('div', 'acts'), msg2 = el('div', 'msg');
+      var bc = el('button', 'b-mid', '📋 คัดลอกข้อมูลส่งออก'); bc.type = 'button';
+      bc.onclick = function () { คัดลอก(ข้อความ, msg2, 'ข้อมูลส่งออก ' + r.count + ' ใบ (' + r.exported_at + ')'); };
+      var ชื่อไฟล์ = 'jasmine-receipts-' + String(r.exported_at).replace(/[^0-9]/g, '').slice(0, 14) + '-n' + r.count + '-t' + r.test_count + '.json';
+      var bf = el('button', 'b-mid', '💾 บันทึกเป็นไฟล์'); bf.type = 'button';
+      bf.onclick = function () {
+        try {
+          var blob = new Blob([ข้อความ], { type: 'application/json' });
+          var f = (typeof File === 'function') ? new File([blob], ชื่อไฟล์, { type: 'application/json' }) : null;
+          if (f && navigator.canShare && navigator.canShare({ files: [f] }) && navigator.share) {
+            navigator.share({ files: [f], title: ชื่อไฟล์ }).then(function () { msg2.className = 'msg ok'; msg2.textContent = 'ส่งไฟล์แล้ว: ' + ชื่อไฟล์; },
+              function () { msg2.className = 'msg'; msg2.textContent = 'ยกเลิกการส่งไฟล์ — ใช้ปุ่มคัดลอกแทนได้'; });
+            return;
+          }
+          var u = URL.createObjectURL(blob), a2 = document.createElement('a');
+          a2.href = u; a2.download = ชื่อไฟล์; document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+          setTimeout(function () { URL.revokeObjectURL(u); }, 5000);
+          msg2.className = 'msg'; msg2.textContent = 'สั่งบันทึกไฟล์ ' + ชื่อไฟล์ + ' แล้ว — ถ้าไม่เห็นไฟล์ ใช้ปุ่มคัดลอกแทน';
+        } catch (e) { msg2.className = 'msg bad'; msg2.textContent = 'บันทึกไฟล์ไม่ได้บนเครื่องนี้ — ใช้ปุ่มคัดลอกแทน'; }
+      };
+      acts.appendChild(bc); acts.appendChild(bf); กล่อง.appendChild(acts);
+      var ta = el('textarea'); ta.readOnly = true; ta.value = ข้อความ; ta.setAttribute('aria-label', 'ข้อมูลส่งออก (กดค้างเพื่อเลือกทั้งหมดได้)');
+      กล่อง.appendChild(ta); กล่อง.appendChild(msg2);
+      $('exp').appendChild(กล่อง);
+    });
+  };
+
+  /* ══ รุ่น 20 (มติรอบ 53 ★1 · ไฟล์ 50 ข้อ 4 และ 8 · ไฟล์ 61) — ส่งไปลงหนี้ทั้งชุดข้ามหน้าต่าง ══
+     · ① เปิดระบบกู้ยืมในแท็บชื่อ jasmine-loan (เรียก window.open ทันทีตอนแตะ ไม่รอคำตอบใด) · ② ส่งข้อมูลส่งออกรูปแบบ 2 ทั้งชุด = ก้อนเดียวกับปุ่ม 📋 ด้านบน
+     · รับข้อความเฉพาะ origin ระบบกู้ยืมตรงตัว + แท็บที่หน้านี้เปิด + v:1 + dataset ตรง · ส่งด้วยปลายทางตรงตัว ไม่ใช้ '*'
+     · เลขหนี้ที่ได้กลับ: ตรวจทีละใบกับข้อมูลส่งออกล่าสุด → บันทึกด้วยคำสั่งเดิม admin_record_loan ทีละใบ (หลังบ้านไม่แตะ · บันทึกซ้ำเลขเดิมได้ผลเดิม)
+       → อ่านกลับด้วยคำสั่งส่งออกเดิม → jl-verify · อ่านกลับไม่ได้ = "บันทึกแล้ว รอตรวจครบ" ไม่ขึ้นว่าจบ
+     · ไม่เก็บอะไรในเครื่อง: หน้านี้โหลดใหม่/ปิด = แตะ ① ใหม่ ระบบกู้ยืมบอกเลขค้าง (pending_refs) แล้วหน้านี้ขอเอง (jl-pull)
+     · ฉบับ 2 (รอบ 55 R55-2 · 27 ก.ย.): นับว่าบันทึกครบเมื่อแถวที่อ่านกลับตรงหนี้ครบ 6 ช่อง (ใบ · คน · ยอดใบรับของ · สถานะ · เลขหนี้ · ยอดหนี้ = เกณฑ์ R54-6 เดียวกับระบบกู้ยืม)
+       ใบที่ไม่ครบ = "ไม่สำเร็จ แตะ ① ทำต่อ" เฉพาะเมื่อส่งซ้ำแล้วมีทางสำเร็จ (แถวยังตรงหนี้ แค่ยังไม่มีเลขหนี้) · นอกนั้น = ต้องตรวจ · ผลตรวจจากระบบกู้ยืมแยกใบต้องตรวจ (ช่อง check) ไม่ชวนแตะ ① ซ้ำ */
+  var ที่มากู้ยืม = 'https://jasmine-loan-epxb.pages.dev';   // origin ตรงตัวของระบบกู้ยืม
+  var หน้ากู้ยืม = ที่มากู้ยืม + '/?from=shop';
+  var ชื่อหน้าต่างกู้ยืม = 'jasmine-loan';
+  var ชุดข้อมูล = 'test';                                     // ฉบับซ้อมคู่ · ทุกข้อความมีป้ายนี้ · ผู้รับต้องตรวจ
+  var รอพร้อม = 20000, รอรับชุด = 20000;
+  var ห = { win: null, ready: false, busy: false, sending: false, labelLoading: false, label: null, batch: null, queue: [], tReady: null, tGot: null, tWatch: null, recheck: null, log: [] };
+  var เหตุกู้ยืมไทย = { BAD_FORMAT: 'ข้อมูลผิดรูป', BAD_COUNTS: 'ตัวนับไม่ตรงจำนวนแถว', NOT_COMPLETE: 'ข้อมูลยังไม่ครบ', BAD_ROW: 'มีแถวผิดรูป', DUP_RECEIPT: 'เลขใบรับของซ้ำ' };
+  var เหตุใบไทย = { NO_RECEIPT_NO: 'ไม่มีเลขใบรับของ', DUPLICATE_IN_MESSAGE: 'เลขใบซ้ำในรายการที่ส่งมา', BAD_LOAN_REF: 'รูปเลขหนี้ไม่ถูก (ว่าง · ยาวเกิน 60 · มีช่องว่างหัวท้าย)',
+    LOAN_REF_REPEATED: 'เลขหนี้เดียวกันใช้กับหลายใบในรายการที่ส่งมา', BAD_AMOUNT: 'ยอดไม่ถูกต้อง', TEST_RECEIPT: 'เป็นใบทดสอบ — ห้ามลงหนี้จริง',
+    RECEIPT_NOT_IN_EXPORT: 'ไม่พบใบนี้ในข้อมูลฝากซื้อ', NOT_CONFIRMED: 'ใบนี้ยังไม่อยู่ในสถานะน้องยืนยันแล้ว', CARD_MISMATCH: 'การ์ดไม่ตรงกับใบรับของ',
+    AMOUNT_MISMATCH: 'ยอดไม่ตรงกับใบรับของ', ALREADY_LOANED: 'ใบนี้บันทึกเลขหนี้อื่นไว้แล้ว', LOAN_REF_USED: 'เลขหนี้นี้ใช้กับใบอื่นไปแล้ว' };
+  var หยุดทั้งชุด = { SERVICE_PAUSED: 1, NOT_OPERATOR: 1, NOT_ADMIN: 1, BAD_TICKET: 1, NO_TICKET: 1 };
+  var ขัดจากหลังบ้าน = { ALREADY_LOANED: 1, LOAN_REF_USED: 1, AMOUNT_MISMATCH: 1, NOT_CONFIRMED: 1, RECEIPT_NOT_FOUND: 1 };
+
+  function ในแอป() {   /* เบราว์เซอร์ในไลน์/แอปอื่น เปิดระบบกู้ยืมของ Chrome ไม่ถึง (ข้อมูลกู้ยืมอยู่ใน Chrome) */
+    var ua = navigator.userAgent || '';
+    if (/\bLine\//i.test(ua) || /FBAN|FBAV|Instagram/i.test(ua)) return true;
+    try { return !!(window.liff && liff.isInClient && liff.isInClient()); } catch (e) { return false; }
+  }
+  function จดห(t) {
+    var d = new Date(), p = function (n) { return ('0' + n).slice(-2); };
+    ห.log.push(p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + ' ' + t);
+    if (ห.log.length > 80) ห.log = ห.log.slice(-80);
+    if ($('hofLog')) $('hofLog').textContent = ห.log.join('\n');
+  }
+  function บอกห(t, kind) { var m = $('hofSt'); if (!m) return; m.className = 'msg big' + (kind ? ' ' + kind : ''); m.textContent = t || ''; }
+  function ส่งห(m) {
+    if (!ห.win || ห.win.closed) { จดห('✖ ส่ง ' + m.type + ' ไม่ได้: แท็บระบบกู้ยืมปิดอยู่'); return false; }
+    m.v = 1; m.dataset = ชุดข้อมูล;
+    try { ห.win.postMessage(m, ที่มากู้ยืม); } catch (e) { จดห('✖ ส่ง ' + m.type + ' ไม่ได้'); return false; }
+    จดห('→ ' + m.type + (m.batch_id ? ' ' + m.batch_id : '') + (m.count != null ? ' · ' + m.count + ' ใบ' : ''));
+    return true;
+  }
+  function ปุ่มห() {
+    if (!$('hof')) return;
+    var แอป = ในแอป(), เปิดอยู่ = !!(ห.win && !ห.win.closed), s = ห.label;
+    $('hofLine').style.display = แอป ? 'block' : 'none';
+    $('hofOpen').disabled = แอป || ห.busy;
+    var b = $('hofSend');
+    if (ห.busy) b.textContent = '② กำลังบันทึกเลขหนี้…';
+    else if (ห.sending) b.textContent = '② กำลังส่ง…';
+    else if (ห.batch && ห.batch.got && ห.ready) b.textContent = '② ส่งแล้ว — ไปกดลงหนี้ที่แท็บระบบกู้ยืม';
+    else if (!เปิดอยู่ || !ห.ready) b.textContent = '② ส่งไปลงหนี้ (แตะ ① ก่อน)';
+    else if (ห.labelLoading && !s) b.textContent = '② กำลังอ่านรายการ…';
+    else if (!s) b.textContent = '② อ่านรายการไม่ได้ (แตะ ① อีกครั้ง)';
+    else b.textContent = s.n ? '② ส่งไปลงหนี้ ' + s.n + ' ใบ · รวม ' + บาท(s.amt) : '② ไม่มีใบที่รอลงหนี้';
+    b.disabled = แอป || ห.busy || ห.sending || !เปิดอยู่ || !ห.ready || !s || !s.n || !!(ห.batch && ห.batch.got);
+  }
+
+  /* อ่านข้อมูลส่งออก (คำสั่งเดิม อ่านอย่างเดียว) · เกณฑ์ใช้ได้และก้อนข้อมูล = เหมือนปุ่ม ⬇️/📋 ด้านบนทุกช่อง (ชุดทดสอบเทียบให้ทุกรอบ) */
+  function ส่งออกใช้ได้(r) {
+    if (r.kind !== 'jasmine-buy-receipts' || r.format_version !== 2 || typeof r.complete !== 'boolean' ||
+        !Array.isArray(r.columns) || !Array.isArray(r.rows) || !Array.isArray(r.test_rows) || !Array.isArray(r.problem_rows)) return 'คำตอบไม่ใช่ข้อมูลส่งออกรูปแบบ 2';
+    if (r.tab_exists !== true) return 'ไม่พบแท็บใบรับของ — ยังยืนยันความครบไม่ได้';
+    if (r.headers_ok !== true) return 'หัวคอลัมน์แท็บใบรับของไม่ครบ — แจ้งผู้ลงมือ';
+    if (r.complete !== true || r.problem_rows.length) return 'ข้อมูลยังไม่ครบ — พบแถวผิดปกติ ' + r.problem_rows.length + ' แถว (กด "⬇️ ส่งออก 6 ช่อง" ดูรายละเอียด) · แจ้งผู้ลงมือตรวจชีตก่อน';
+    return '';
+  }
+  function ก้อนส่งออก(r) {
+    return { kind: r.kind, format_version: r.format_version, exported_at: r.exported_at, timezone: r.timezone, exported_by: r.exported_by,
+      source_tab: r.source_tab, complete: r.complete, columns: r.columns, count: r.count, rows: r.rows, test_count: r.test_count, test_rows: r.test_rows,
+      problem_count: r.problem_count, problem_rows: r.problem_rows };
+  }
+  function อ่านส่งออก() {
+    return ยิง({ action: 'admin_export_receipts' }).then(function (r) {
+      if (!r.ok) return { ok: false, text: ยังไม่รู้ผล(r) ? 'ยังไม่ได้รับคำตอบจากระบบฝากซื้อ' : แปลผิด(r) };
+      var ผิด = ส่งออกใช้ได้(r);
+      return ผิด ? { ok: false, text: ผิด } : { ok: true, payload: ก้อนส่งออก(r) };
+    });
+  }
+  function รอลงหนี้(p) {   /* ใบที่ป้าย ② นับ = ใช้จริง · น้องยืนยันแล้ว · ยังไม่มีเลขหนี้ (เกณฑ์เดียวกับที่ฝั่งกู้ยืมเลือก) */
+    var ใบ = p.rows.filter(function (x) { return x[3] === 'CONFIRMED' && (x[4] == null || x[4] === ''); });
+    return { n: ใบ.length, amt: ใบ.reduce(function (a, x) { return a + (Number(x[2]) || 0); }, 0),
+      sig: ใบ.map(function (x) { return x[0] + '|' + x[1] + '|' + x[2]; }).sort().join(',') };
+  }
+  function เตรียมป้าย() {
+    ห.labelLoading = true; ปุ่มห();
+    return อ่านส่งออก().then(function (x) {
+      ห.labelLoading = false;
+      if (!x.ok) { ห.label = null; บอกห('อ่านรายการฝากซื้อไม่ได้: ' + x.text + ' — แตะ ① อีกครั้งเพื่อลองใหม่', 'bad'); จดห('✖ อ่านรายการไม่ได้'); }
+      else ห.label = รอลงหนี้(x.payload);
+      ปุ่มห();
+    });
+  }
+
+  function เฝ้าแท็บ() {
+    clearInterval(ห.tWatch);
+    ห.tWatch = setInterval(function () {
+      if (ห.win && ห.win.closed) {
+        clearInterval(ห.tWatch); clearTimeout(ห.tReady); clearTimeout(ห.tGot);
+        ห.ready = false; ห.sending = false;
+        บอกห('แท็บระบบกู้ยืมถูกปิด — แตะ ① เพื่อเปิดใหม่ (งานค้างในระบบกู้ยืมไม่หาย)' + (ห.busy ? ' · หน้านี้บันทึกต่อจนจบรอบ' : ''), 'warn');
+        จดห('• แท็บระบบกู้ยืมถูกปิด'); ปุ่มห();
+      }
+    }, 1500);
+  }
+
+  $('hofOpen').onclick = function () {
+    if (ในแอป()) { ปุ่มห(); return; }
+    var w = null;
+    try { w = window.open(หน้ากู้ยืม, ชื่อหน้าต่างกู้ยืม); } catch (e) {}
+    if (!w) { บอกห('❌ เปิดแท็บระบบกู้ยืมไม่ได้ (เบราว์เซอร์กันหน้าต่างใหม่) — แตะ ① อีกครั้ง', 'bad'); จดห('✖ window.open ไม่ได้'); return; }
+    ห.win = w; ห.ready = false; ห.sending = false; ห.label = null;
+    if (ห.batch && ห.batch.got) ห.batch = null;   // ชุดที่ยังไม่มีคำตอบรับ = ส่งซ้ำด้วยเลขชุดเดิมได้
+    clearTimeout(ห.tReady); clearTimeout(ห.tGot);
+    บอกห('กำลังเปิดระบบกู้ยืม… รอระบบกู้ยืมตอบ (ไม่เกิน 20 วินาที)');
+    จดห('• เปิดแท็บระบบกู้ยืม');
+    ห.tReady = setTimeout(function () {
+      if (ห.ready) return;
+      บอกห('ระบบกู้ยืมยังไม่ตอบใน 20 วินาที — ดูเหตุที่แท็บระบบกู้ยืม · ถ้ามีแท็บระบบกู้ยืมเปิดค้างอีกแท็บ ให้ปิดแท็บนั้นแล้วแตะ ① อีกครั้ง', 'bad');
+      จดห('✖ ไม่ได้ jl-ready ใน 20 วิ'); ปุ่มห();
+    }, รอพร้อม);
+    เฝ้าแท็บ(); ปุ่มห();
+  };
+
+  $('hofSend').onclick = function () {
+    var เดิม = ห.label;
+    if (!ห.win || ห.win.closed || !ห.ready || !เดิม || !เดิม.n || ห.busy || ห.sending) { ปุ่มห(); return; }
+    ห.sending = true; ปุ่มห();
+    บอกห('กำลังอ่านรายการล่าสุดก่อนส่ง…');
+    อ่านส่งออก().then(function (x) {
+      if (!x.ok) { ห.sending = false; บอกห('❌ ' + x.text + ' — ยังไม่ได้ส่ง', 'bad'); ปุ่มห(); return; }
+      var s = รอลงหนี้(x.payload);
+      if (s.sig !== เดิม.sig) {   /* ป้ายต้องตรงกับสิ่งที่ส่งจริง (ไฟล์ 60 ข้อ 7) */
+        ห.sending = false; ห.label = s;
+        บอกห('รายการเปลี่ยนไปจากป้ายเดิม (' + เดิม.n + ' ใบ → ' + s.n + ' ใบ) — ยังไม่ได้ส่ง · ตรวจป้ายปุ่ม ② แล้วแตะอีกครั้ง', 'warn');
+        จดห('• รายการเปลี่ยนก่อนส่ง ' + เดิม.n + ' → ' + s.n); ปุ่มห(); return;
+      }
+      if (!ห.batch || ห.batch.got || ห.batch.sig !== s.sig) {
+        var a = new Uint8Array(4); (window.crypto || window.msCrypto).getRandomValues(a);
+        ห.batch = { id: 'sb-' + Date.now().toString(36) + '-' + Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''), sig: s.sig, n: s.n, amt: s.amt, got: false };
+      }
+      if (!ส่งห({ type: 'jl-batch', batch_id: ห.batch.id, sent_at: new Date().toISOString(), payload: x.payload })) {
+        ห.sending = false; บอกห('แท็บระบบกู้ยืมปิดอยู่ — แตะ ① ก่อน · ยังไม่ได้ส่ง', 'bad'); ปุ่มห(); return;
+      }
+      บอกห('ส่งแล้ว ' + s.n + ' ใบ · รวม ' + บาท(s.amt) + ' — รอระบบกู้ยืมตอบรับ…');
+      clearTimeout(ห.tGot);
+      ห.tGot = setTimeout(function () {
+        if (ห.batch && ห.batch.got) return;
+        ห.sending = false;
+        บอกห('ระบบกู้ยืมยังไม่ตอบรับรายการใน 20 วินาที — แตะ ① แล้วส่งใหม่ (ใบเดิมไม่ลงหนี้ซ้ำ)', 'bad');
+        จดห('✖ ไม่ได้ jl-got ใน 20 วิ'); ปุ่มห();
+      }, รอรับชุด);
+    });
+  };
+
+  function รับพร้อม(m) {
+    ห.ready = true; clearTimeout(ห.tReady);
+    var ค้าง = Math.max(0, Math.floor(Number(m.pending_refs) || 0));
+    บอกห('✅ ระบบกู้ยืมพร้อม' + (ค้าง ? ' · มีเลขหนี้ค้างส่งกลับ ' + ค้าง + ' ใบ — หน้านี้ขอมาบันทึกเอง' : ' — ตรวจป้ายปุ่ม ② แล้วแตะส่ง'), 'ok');
+    if (ค้าง > 0) ส่งห({ type: 'jl-pull' });
+    ปุ่มห(); เตรียมป้าย();
+  }
+  function รับชุดแล้ว(m) {
+    if (!ห.batch || m.batch_id !== ห.batch.id) { จดห('✖ jl-got ของชุดที่หน้านี้ไม่ได้ส่ง'); return; }
+    clearTimeout(ห.tGot); ห.sending = false;
+    if (m.ok !== true) {
+      ห.batch = null;
+      บอกห('❌ ระบบกู้ยืมไม่รับรายการนี้: ' + (เหตุกู้ยืมไทย[m.reason] || String(m.reason || '-').slice(0, 40)) + ' — ไม่มีการลงหนี้ · แจ้งผู้ลงมือ', 'bad');
+      ปุ่มห(); return;
+    }
+    ห.batch.got = true;
+    var พัก = Array.isArray(m.held) ? m.held.slice(0, 100) : [];
+    var nพัก = Math.floor(Number(m.held_count)); if (!(nพัก >= พัก.length)) nพัก = พัก.length;
+    บอกห('ระบบกู้ยืมรับรายการแล้ว · จะลงหนี้ ' + Math.max(0, Math.floor(Number(m.to_record) || 0)) + ' ใบ' + (nพัก ? ' · พักตรวจ ' + nพัก + ' ใบ' : '') +
+      ' — ไปที่แท็บระบบกู้ยืม ตรวจจำนวนและยอดแล้วกดลงหนี้ แล้วกลับมาหน้านี้', 'ok');
+    วาดพัก(พัก, nพัก); ปุ่มห();
+  }
+  function วาดพัก(พัก, n) {   /* ไฟล์ 61 ข้อ 2 ก: ใบที่ระบบกู้ยืมพักให้ผู้ดูแลตรวจ — ไม่ใช่ข้อผิดพลาด ไม่ส่งซ้ำเอง */
+    var box = $('hofHeld'); box.textContent = '';
+    if (!n) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.appendChild(el('div', 'hh2', '⏸ ระบบกู้ยืมพักตรวจ ' + n + ' ใบ — ไม่ลงหนี้รอบนี้ (ไม่ใช่ข้อผิดพลาด) · ผู้ดูแลตรวจแล้วจะมาในรอบถัดไป'));
+    พัก.forEach(function (h) { if (h && typeof h === 'object') box.appendChild(el('div', 'muted', String(h.receipt_no || '-').slice(0, 30) + ' · ' + String(h.reason || '-').slice(0, 80))); });
+    if (n > พัก.length) box.appendChild(el('div', 'muted', '(แสดง ' + พัก.length + ' ใบแรก)'));
+  }
+  function รับเลขหนี้(m, จาก) {
+    var refs = Array.isArray(m.refs) ? m.refs : null;
+    if (!refs || !refs.length || refs.length > 300 || typeof m.batch_id !== 'string' || !m.batch_id || m.batch_id.length > 80) { จดห('✖ jl-refs ผิดรูป ไม่รับ'); return false; }
+    if (จาก === 'window') ส่งห({ type: 'jl-refs-got', batch_id: m.batch_id, count: refs.length });
+    ห.queue.push({ from: จาก, batch_id: m.batch_id, refs: refs });
+    ทำคิว();
+    return true;
+  }
+  function รับผลตรวจ(m) {
+    var ครบ = Math.max(0, Math.floor(Number(m.verified) || 0)), ค้าง = Math.max(0, Math.floor(Number(m.pending) || 0));
+    /* ฉบับ 2 (R55-2): ระบบกู้ยืมรุ่นใหม่ส่ง check = ใบต้องตรวจ (นับรวมอยู่ใน pending) · แตะ ① ซ้ำไม่ช่วยใบต้องตรวจ จึงชวนแตะเฉพาะใบค้างที่เหลือ
+       ไม่มีช่อง check (ระบบกู้ยืมรุ่นเก่า/ทางตอบที่ยังไม่แนบ) = ไม่รู้ว่าใบค้างเป็นแบบไหน → ไม่เดาเป็นศูนย์ ชี้ไปดูเหตุที่แท็บระบบกู้ยืม (ไฟล์ 76 ข้อ 2) */
+    var มีช่องตรวจ = typeof m.check === 'number' && isFinite(m.check) && m.check >= 0;
+    var ตรวจ = มีช่องตรวจ ? Math.min(ค้าง, Math.floor(m.check)) : 0, ทำต่อ = ค้าง - ตรวจ;
+    var box = $('hofDone');
+    box.className = 'msg big ' + (ค้าง ? 'warn' : 'ok');
+    if (!ค้าง) box.textContent = 'ระบบกู้ยืมตรวจแล้ว: ผูกกลับครบ ' + ครบ + '/' + ครบ + ' ✅';
+    else if (!มีช่องตรวจ) box.textContent = 'ระบบกู้ยืมตรวจแล้ว: ผูกกลับแล้ว ' + ครบ + ' · ค้าง ' + ค้าง + ' — ดูเหตุที่แท็บระบบกู้ยืม: ใบรอส่งกลับ แตะ ① เพื่อทำต่อ · ใบต้องตรวจ ให้ผู้ดูแลตรวจ';
+    else box.textContent = 'ระบบกู้ยืมตรวจแล้ว: ผูกกลับแล้ว ' + ครบ + (ทำต่อ ? ' · ค้าง ' + ทำต่อ + ' — แตะ ① เพื่อทำต่อ' : '') +
+      (ตรวจ ? ' · ต้องตรวจ ' + ตรวจ + ' ใบ — ผู้ดูแลตรวจ' + (ทำต่อ ? ' (แตะ ① ไม่ช่วยใบที่ต้องตรวจ)' : ' ไม่ต้องแตะ ① ซ้ำ') : '');
+  }
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== ที่มากู้ยืม) return;                          // ที่มาอื่น: ทิ้งเงียบ
+    if (!ทำรายการได้ || !$('hof')) return;                        // ผู้ดูอย่างเดียว: ไม่มีส่วนนี้ในหน้า
+    if (!ห.win || e.source !== ห.win) { จดห('✖ ปฏิเสธข้อความ: ไม่ใช่แท็บที่หน้านี้เปิด (แตะ ① ใหม่)'); return; }
+    var m = e.data;
+    if (!m || typeof m !== 'object' || m.v !== 1 || typeof m.type !== 'string') { จดห('✖ ปฏิเสธข้อความ: รูปไม่ถูก'); return; }
+    if (m.dataset !== ชุดข้อมูล) { จดห('✖ ปฏิเสธข้อความ: ชุดข้อมูลไม่ตรง (' + String(m.dataset).slice(0, 12) + ')'); return; }
+    จดห('← ' + m.type + (m.batch_id ? ' ' + String(m.batch_id).slice(0, 40) : ''));
+    if (m.type === 'jl-ready') return รับพร้อม(m);
+    if (m.type === 'jl-got') return รับชุดแล้ว(m);
+    if (m.type === 'jl-refs') return รับเลขหนี้(m, 'window');
+    if (m.type === 'jl-done') return รับผลตรวจ(m);
+    จดห('✖ ไม่รู้จักข้อความ ' + m.type.slice(0, 20));
+  });
+
+  /* ตรวจเลขหนี้ทีละใบกับข้อมูลส่งออกล่าสุด (ก่อนบันทึก) · หลังบ้านตรวจซ้ำอีกชั้นเสมอ */
+  function ตรวจเลขหนี้(refs, P) {
+    var จริง = {}, ทด = {}, ใช้เลข = {};
+    P.rows.forEach(function (r) { จริง[r[0]] = r; if (r[4]) ใช้เลข[r[4]] = r[0]; });
+    P.test_rows.forEach(function (r) { ทด[r[0]] = r; if (r[4]) ใช้เลข[r[4]] = r[0]; });
+    var toRecord = [], already = [], conflict = [], นับใบ = {}, นับเลข = {};
+    refs.forEach(function (x) {   /* ใบหรือเลขหนี้ที่ซ้ำในรายการเดียวกัน = ต้องตรวจทุกใบที่ซ้ำ (ไม่เลือกใบแรกเอง) */
+      if (x && typeof x.receipt_no === 'string' && x.receipt_no) นับใบ[x.receipt_no] = (นับใบ[x.receipt_no] || 0) + 1;
+      if (x && typeof x.loan_ref === 'string' && x.loan_ref) นับเลข[x.loan_ref] = (นับเลข[x.loan_ref] || 0) + 1;
+    });
+    refs.forEach(function (x) {
+      var no = x && typeof x.receipt_no === 'string' ? x.receipt_no : '';
+      var ref = x && typeof x.loan_ref === 'string' ? x.loan_ref : '';
+      var card = x && typeof x.card_id === 'string' ? x.card_id : '';
+      var amt = x ? x.loan_amount : null;
+      function ขัด(code, ต่อ) {
+        var c = { receipt_no: no.slice(0, 30) || '(ไม่มีเลขใบ)', code: code, reason: เหตุใบไทย[code] || code };
+        if (ต่อ) Object.keys(ต่อ).forEach(function (k) { c[k] = ต่อ[k]; });
+        conflict.push(c);
+      }
+      if (!no) return ขัด('NO_RECEIPT_NO');
+      if (นับใบ[no] > 1) return ขัด('DUPLICATE_IN_MESSAGE');
+      if (!ref || ref.length > 60 || ref !== ref.trim() || /[\u0000-\u001f\u007f]/.test(ref)) return ขัด('BAD_LOAN_REF');
+      if (นับเลข[ref] > 1) return ขัด('LOAN_REF_REPEATED', { got: ref });
+      if (!(typeof amt === 'number' && isFinite(amt) && amt > 0)) return ขัด('BAD_AMOUNT');
+      var r = จริง[no];
+      if (!r) return ขัด(ทด[no] ? 'TEST_RECEIPT' : 'RECEIPT_NOT_IN_EXPORT');
+      if (r[3] !== 'CONFIRMED') return ขัด('NOT_CONFIRMED', { have: r[3] });
+      if (r[1] !== card) return ขัด('CARD_MISMATCH');
+      if (r[2] !== amt) return ขัด('AMOUNT_MISMATCH', { have: r[2], got: amt });
+      if (r[4] != null && r[4] !== '') {
+        if (r[4] === ref && r[5] === amt) { already.push({ receipt_no: no, card_id: card, loan_ref: ref, loan_amount: amt }); return; }
+        return ขัด('ALREADY_LOANED', { have: r[4], got: ref });
+      }
+      if (ใช้เลข[ref] && ใช้เลข[ref] !== no) return ขัด('LOAN_REF_USED', { got: ref });
+      toRecord.push({ receipt_no: no, card_id: card, loan_ref: ref, loan_amount: amt });
+    });
+    return { toRecord: toRecord, already: already, conflict: conflict };
+  }
+  function บันทึกทีละใบ(list, i, ผล, เสร็จ) {
+    if (i >= list.length) return เสร็จ();
+    var x = list[i];
+    $('hofProg').textContent = 'บันทึกเลขหนี้ ' + (i + 1) + '/' + list.length + ' — อย่าปิดหน้านี้';
+    ยิง({ action: 'admin_record_loan', receipt_no: x.receipt_no, loan_ref: x.loan_ref, loan_amount: x.loan_amount }).then(function (r) {
+      var e = String((r && r.error) || '');
+      if (r && r.ok) ผล.ok.push(x.receipt_no);
+      else if (ยังไม่รู้ผล(r) || (r && r.ครั้งที่สอง && !ผิดไทย[e])) ผล.unknown.push(x.receipt_no);   // ตัดสินจากการอ่านกลับ
+      else {
+        ผล.fail.push({ receipt_no: x.receipt_no, code: e, reason: แปลผิด(r), data: !!ขัดจากหลังบ้าน[e] });
+        if (หยุดทั้งชุด[e]) { ผล.stopped = e; จดห('✖ หยุดบันทึก: ' + แปลผิด(r)); return เสร็จ(); }
+      }
+      บันทึกทีละใบ(list, i + 1, ผล, เสร็จ);
+    });
+  }
+  /* ฉบับ 2 (R55-2): ยอดเทียบกันที่หน่วยสตางค์ (Math.round(v*100) เหมือนระบบกู้ยืม) · ไม่ใช่ตัวเลข = ใช้เทียบไม่ได้ */
+  function สตางค์(v) { return typeof v === 'number' && isFinite(v) ? Math.round(v * 100) : null; }
+  function ใบไม่ตรงหนี้(r, x) {   /* แถวที่อ่านกลับ เทียบกับหนี้ทีละช่อง (ยกเว้นช่องเลขหนี้/ยอดหนี้) · คืนเหตุ หรือ null */
+    if (r[3] !== 'CONFIRMED') return { code: 'READBACK_NOT_CONFIRMED', reason: 'สถานะใบที่อ่านกลับไม่ใช่ “น้องยืนยันแล้ว” (' + (r[3] == null || r[3] === '' ? 'ว่าง' : String(r[3]).slice(0, 20)) + ')', have: r[3] };
+    if (r[1] !== x.card_id) return { code: 'READBACK_CARD_MISMATCH', reason: 'การ์ดในใบที่อ่านกลับไม่ตรงกับหนี้' };
+    if (r[2] == null || r[2] === '') return { code: 'READBACK_AMOUNT_MISSING', reason: 'อ่านกลับแล้วไม่มียอดใบรับของ' };
+    if (สตางค์(r[2]) === null) return { code: 'READBACK_AMOUNT_BAD', reason: 'ยอดใบรับของที่อ่านกลับไม่ใช่ตัวเลข (' + String(r[2]).slice(0, 20) + ')', have: String(r[2]).slice(0, 20) };
+    if (สตางค์(r[2]) !== สตางค์(x.loan_amount)) return { code: 'READBACK_AMOUNT_MISMATCH', reason: 'ยอดใบรับของที่อ่านกลับ (' + บาท(r[2]) + ') ไม่ตรงยอดหนี้ (' + บาท(x.loan_amount) + ')', have: r[2], got: x.loan_amount };
+    return null;
+  }
+  function จัดผล(job, ต, ผล, P) {
+    var แถว = {}, ทด = {};
+    P.rows.forEach(function (r) { แถว[r[0]] = r; });
+    P.test_rows.forEach(function (r) { ทด[r[0]] = 1; });
+    var ล้ม = {}; ผล.fail.forEach(function (f) { ล้ม[f.receipt_no] = f; });
+    var recorded = [], failed = [], conflict = ต.conflict.slice();
+    ต.toRecord.concat(ต.already).forEach(function (x) {
+      var r = แถว[x.receipt_no], f = ล้ม[x.receipt_no], ผิด = r ? ใบไม่ตรงหนี้(r, x) : null, มีเลขนี้ = !!r && r[4] === x.loan_ref;
+      function ขัด(code, reason, ต่อ) {   /* ต้องตรวจ = ไม่บันทึกทับ ไม่ปรับยอดเอง ไม่ชวนส่งซ้ำ */
+        var c = { receipt_no: x.receipt_no, code: code, reason: reason + ' — ต้องตรวจ ไม่บันทึกทับ' };
+        if (ต่อ) Object.keys(ต่อ).forEach(function (k) { if (ต่อ[k] !== undefined) c[k] = ต่อ[k]; });
+        conflict.push(c);
+      }
+      if (มีเลขนี้ && !ผิด && สตางค์(r[5]) !== null && สตางค์(r[5]) === สตางค์(x.loan_amount)) { recorded.push(x.receipt_no); return; }   // ตรงครบ 6 ช่อง
+      if (f && f.data) { conflict.push({ receipt_no: x.receipt_no, code: f.code, reason: f.reason }); return; }   // หลังบ้านปฏิเสธด้วยเหตุข้อมูล (เดิม)
+      if (!r) return ขัด(ทด[x.receipt_no] ? 'READBACK_TEST_RECEIPT' : 'READBACK_ROW_MISSING', ทด[x.receipt_no] ? 'อ่านกลับแล้วใบนี้อยู่ในออร์เดอร์ทดสอบ' : 'อ่านกลับแล้วไม่พบใบนี้ในข้อมูลฝากซื้อ');
+      if (มีเลขนี้) return ผิด ? ขัด(ผิด.code, 'บันทึกเลขหนี้ในใบแล้ว แต่' + ผิด.reason, { have: ผิด.have, got: ผิด.got })
+        : ขัด('READBACK_LOAN_AMOUNT_MISMATCH', 'บันทึกเลขหนี้ในใบแล้ว แต่ยอดหนี้ในใบ (' + (r[5] == null || r[5] === '' ? 'ว่าง' : บาท(r[5])) + ') ไม่ตรงยอดหนี้ (' + บาท(x.loan_amount) + ')', { have: r[5], got: x.loan_amount });
+      if (r[4] != null && r[4] !== '') return ขัด('ALREADY_LOANED', 'ใบนี้มีเลขหนี้อื่นอยู่แล้ว', { have: String(r[4]).slice(0, 60), got: x.loan_ref });
+      if (ผิด) return ขัด(ผิด.code, 'ยังไม่ได้บันทึกเลขหนี้ และ' + ผิด.reason, { have: ผิด.have, got: ผิด.got });   // ส่งซ้ำก็ไม่ผ่านด่านก่อนบันทึก
+      failed.push({ receipt_no: x.receipt_no, code: f ? f.code : (ผล.stopped ? 'STOPPED' : 'NOT_FOUND_AFTER_SAVE'),   // แถวยังตรงหนี้ แค่ยังไม่มีเลขหนี้ = ทำต่อได้
+        reason: f ? f.reason : (ผล.stopped ? 'หยุดก่อนถึงใบนี้ (' + (ผิดไทย[ผล.stopped] || ผล.stopped) + ')' : 'อ่านกลับแล้วยังไม่พบเลขหนี้นี้') });
+    });
+    return { recorded: recorded, failed: failed, conflict: conflict, total: job.refs.length };
+  }
+  function วาดผล(ส, ส่งถึง) {
+    var box = $('hofRes'); box.textContent = '';
+    var ok = ส.recorded.length, n = ส.total;
+    box.appendChild(el('div', 'msg big ' + (ok === n ? 'ok' : 'bad'), ok === n ? '✅ บันทึกเลขหนี้ครบ ' + ok + '/' + n + ' ใบ (ตรวจกับข้อมูลที่อ่านกลับแล้ว)'
+      : '⚠️ บันทึกเลขหนี้ได้ ' + ok + '/' + n + ' ใบ · ไม่สำเร็จ ' + ส.failed.length + ' · ต้องตรวจ ' + ส.conflict.length));
+    ส.conflict.concat(ส.failed).slice(0, 100).forEach(function (c) { box.appendChild(el('div', 'muted', c.receipt_no + ' · ' + c.reason)); });
+    if (ส.failed.length) box.appendChild(el('div', 'muted', 'ใบที่ไม่สำเร็จ: แตะ ① อีกครั้ง ระบบกู้ยืมจะส่งเลขค้างมาให้บันทึกซ้ำ (ไม่เกิดหนี้ซ้ำ)'));
+    if (ส.conflict.length) box.appendChild(el('div', 'muted', 'ใบที่ต้องตรวจ: ให้ผู้ดูแล (เจ้าของ/payroll) ตรวจ — หน้านี้ไม่บันทึกทับ'));
+    if (ส่งถึง === false) box.appendChild(el('div', 'muted', 'แท็บระบบกู้ยืมปิดอยู่ ส่งผลตรวจไม่ถึง — แตะ ① ระบบจะตรวจครบให้เอง'));
+  }
+  function ตรวจกลับ(job, ต, ผล, จบ) {
+    อ่านส่งออก().then(function (y) {
+      if (!y.ok) {
+        ห.recheck = { job: job, ต: ต, ผล: ผล };
+        บอกห('💾 บันทึกแล้ว รอตรวจครบ — อ่านกลับไม่ได้ (' + y.text + ') · แตะ "🔎 ตรวจครบอีกครั้ง"', 'warn');
+        $('hofRecheck').style.display = ''; จดห('✖ อ่านกลับไม่ได้'); จบ(); return;
+      }
+      ห.recheck = null;
+      var ส = จัดผล(job, ต, ผล, y.payload), ถึง = null;
+      if (job.from === 'window') ถึง = ส่งห({ type: 'jl-verify', batch_id: job.batch_id, payload: y.payload, recorded: ส.recorded, failed: ส.failed, conflict: ส.conflict });
+      else แสดงผลวาง(job, y.payload, ส);
+      บอกห(ส.recorded.length === ส.total ? 'บันทึกเลขหนี้ครบแล้ว — ตรวจผลด้านล่าง' : 'บันทึกไม่ครบ — ดูรายการด้านล่าง', ส.recorded.length === ส.total ? 'ok' : 'bad');
+      วาดผล(ส, ถึง);
+      จบ();
+      setTimeout(โหลด, 300);   // หน้ารายการขึ้น "ลงหนี้แล้ว"
+    });
+  }
+  function ทำคิว() {
+    if (ห.busy) return;
+    var job = ห.queue.shift(); if (!job) return;
+    ห.busy = true; งานเขียนค้าง++; ล็อกโหลด(); ปุ่มห();
+    $('hofRecheck').style.display = 'none'; $('hofRes').textContent = ''; $('hofDone').textContent = '';
+    var จบ = function () {
+      ห.busy = false; งานเขียนค้าง--; ล็อกโหลด(); $('hofProg').textContent = ''; ปุ่มห();
+      if (ห.queue.length) ทำคิว(); else if (ห.ready && ห.win && !ห.win.closed) { ห.batch = null; เตรียมป้าย(); }
+    };
+    บอกห('ได้เลขหนี้กลับ ' + job.refs.length + ' ใบ — กำลังอ่านข้อมูลฝากซื้อล่าสุดเพื่อตรวจก่อนบันทึก…');
+    อ่านส่งออก().then(function (x) {
+      if (!x.ok) { บอกห('❌ อ่านข้อมูลฝากซื้อไม่ได้ (' + x.text + ') — ยังไม่ได้บันทึกเลขหนี้ใด · แตะ ① เพื่อทำต่อ', 'bad'); จดห('✖ อ่านก่อนบันทึกไม่ได้'); จบ(); return; }
+      var ต = ตรวจเลขหนี้(job.refs, x.payload);
+      จดห('• ตรวจแล้ว: บันทึก ' + ต.toRecord.length + ' · มีแล้ว ' + ต.already.length + ' · ต้องตรวจ ' + ต.conflict.length);
+      var ผล = { ok: [], unknown: [], fail: [], stopped: '' };
+      บันทึกทีละใบ(ต.toRecord, 0, ผล, function () {
+        $('hofProg').textContent = 'บันทึกครบรอบแล้ว — กำลังอ่านกลับเพื่อตรวจ…';
+        ตรวจกลับ(job, ต, ผล, จบ);
+      });
+    });
+  }
+  $('hofRecheck').onclick = function () {
+    var rc = ห.recheck; if (!rc || ห.busy) return;
+    ห.busy = true; งานเขียนค้าง++; ล็อกโหลด(); ปุ่มห(); this.style.display = 'none';
+    บอกห('กำลังอ่านกลับเพื่อตรวจครบ…');
+    ตรวจกลับ(rc.job, rc.ต, rc.ผล, function () { ห.busy = false; งานเขียนค้าง--; ล็อกโหลด(); ปุ่มห(); });
+  };
+
+  /* ทางสำรอง (ไฟล์ 61 ข้อ 3): วางเลขหนี้ทั้งชุด = ข้อความรูปเดียวกับ jl-refs · ใช้ขั้นตรวจ/บันทึก/อ่านกลับเดียวกัน · ผลตรวจให้คัดลอกกลับ (รูปเดียวกับ jl-verify) */
+  $('hofPasteGo').onclick = function () {
+    var out = $('hofPasteOut'); out.textContent = '';
+    if (ห.busy) { out.className = 'msg bad'; out.textContent = 'กำลังบันทึกชุดอื่นอยู่ — รอให้เสร็จก่อน'; return; }
+    var t = $('hofPaste').value.trim(), j = null;
+    try { j = JSON.parse(t); } catch (e) {}
+    var refs = Array.isArray(j) ? j : (j && Array.isArray(j.refs) ? j.refs : null);
+    if (!refs || !refs.length) { out.className = 'msg bad'; out.textContent = 'อ่านข้อความไม่ได้ — ต้องเป็นข้อความเลขหนี้ที่คัดลอกจากระบบกู้ยืมทั้งก้อน'; return; }
+    if (j && !Array.isArray(j) && j.dataset != null && j.dataset !== ชุดข้อมูล) { out.className = 'msg bad'; out.textContent = 'ชุดข้อมูลไม่ตรง (ข้อความนี้เป็นชุด ' + String(j.dataset).slice(0, 12) + ') — ไม่บันทึก'; return; }
+    var bid = (j && typeof j.batch_id === 'string' && j.batch_id && j.batch_id.length <= 80) ? j.batch_id : 'paste-' + Date.now().toString(36);
+    if (!รับเลขหนี้({ batch_id: bid, refs: refs }, 'paste')) { out.className = 'msg bad'; out.textContent = 'รายการผิดรูปหรือเกิน 300 ใบ — ไม่บันทึก'; }
+  };
+  function แสดงผลวาง(job, P, ส) {
+    var out = $('hofPasteOut'); out.textContent = '';
+    var ข้อความ = JSON.stringify({ type: 'jl-verify', v: 1, dataset: ชุดข้อมูล, batch_id: job.batch_id, payload: P, recorded: ส.recorded, failed: ส.failed, conflict: ส.conflict });
+    var acts = el('div', 'acts'), msg3 = el('div', 'msg');
+    var bc = el('button', 'b-mid', '📋 คัดลอกผลตรวจ (วางกลับในระบบกู้ยืม)'); bc.type = 'button';
+    bc.onclick = function () { คัดลอก(ข้อความ, msg3, 'ผลตรวจ ' + ส.recorded.length + '/' + ส.total + ' ใบ'); };
+    acts.appendChild(bc); out.appendChild(acts);
+    var ta = el('textarea'); ta.readOnly = true; ta.value = ข้อความ; ta.setAttribute('aria-label', 'ผลตรวจสำหรับวางกลับในระบบกู้ยืม');
+    out.appendChild(ta); out.appendChild(msg3);
+  }
+  $('hofCopyLink').onclick = function () { คัดลอก(location.href.split('#')[0].split('?')[0], $('hofLineMsg'), 'ลิงก์หน้านี้ — เปิด Chrome แล้ววางในช่องที่อยู่'); };
+  $('hofLogCopy').onclick = function () { คัดลอก(ห.log.join('\n'), $('hofLogMsg'), 'บันทึกการส่ง ' + ห.log.length + ' บรรทัด'); };
+
+  $('reload').onclick = โหลด;
+  $('round').onchange = function () { รอบที่เลือก = this.value; โหลด(); };
+
+  if (typeof liff === 'undefined') { สถานะ('โหลดไลน์ไม่สำเร็จ — ปิดแล้วเปิดใหม่จากไลน์', true); return; }
+  liff.init({ liffId: LIFF_ID }).then(function () {
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    โหลด();
+  }).catch(function (e) { สถานะ('เชื่อมต่อไลน์ไม่สำเร็จ: ' + (e && e.message ? e.message : e), true); });
+})();
+</script>
+</body>
+</html>
