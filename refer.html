@@ -25,7 +25,7 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Refer to Work</title>
+<title>Refer to Work / သူငယ်ချင်းကို အလုပ်လာလုပ်ရန် အကြံပြုပါ။</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root{ --green:#2f7d55; --green-d:#225c3f; --ink:#1f2b25; --muted:#7b8a82; --line:#e1e7e3; --bg:#f4f6f5; }
@@ -57,15 +57,15 @@
 </head>
 <body>
   <header>
-    <h1>👥 Refer to Work</h1>
-    <p>Find good people to work with us / ကျွန်ုပ်တို့နှင့် အလုပ်လုပ်မည့် လူကောင်းများ ရှာဖွေပေးပါ</p>
+    <h1>👥 Refer to Work / သူငယ်ချင်းကို အလုပ်လာလုပ်ရန် အကြံပြုပါ။</h1>
+    <p>Find good people to work with us / လူကောင်းများကို ရှာဖွေ၍ ကျွန်ုပ်တို့နှင့်အတူ အလုပ်လုပ်ရန် ကူညီပေးပါ။</p>
   </header>
   <div class="note">
-    <b>🎁 Earn a referral reward!</b>
+    <b>🎁 Earn a referral reward!<br>အကြံပြုပေးပါက ဆုရရှိမည်။</b>
     <span>Refer someone who joins and works with us, and you'll get a reward.</span>
-    <span>သင် မိတ်ဆက်ပေးသူ ဝင်ရောက် အလုပ်လုပ်ပါက ဆုကြေး ရရှိပါမည်။</span>
+    <span>ကျွန်ုပ်တို့ထံ အမှန်တကယ်လာရောက်အလုပ်လုပ်မည့်သူကို အကြံပြုပေးပါက ဆုရရှိမည်ဖြစ်ပါသည်။</span>
   </div>
-  <div id="status">Loading… / ခဏစောင့်ပါ…</div>
+  <div id="status">Loading… / ဖွင့်နေပါသည်…</div>
   <div class="wrap" id="wrap" style="display:none"></div>
 
 <script>
@@ -176,7 +176,7 @@ function โปรไฟล์เร็ว_() {
           '<span style="font-size:13px;color:#666">คำขอแรกยังไม่ได้คำตอบ ระบบส่งคำขอเดิมซ้ำให้ 1 ครั้ง<br>' +
           'ไม่ต้องกดอะไร รอสักครู่<br>Checking the original request — please wait<br>ခဏစောင့်ပါ…</span>'
         : '<div style="font-size:30px">⏳</div><b>กำลังส่ง…</b><br>' +
-          '<span style="font-size:13px;color:#666">Sending… please wait<br>ပို့နေသည်…</span>') +
+          '<span style="font-size:13px;color:#666">Sending… please wait<br>ပေးပို့နေပါသည်…</span>') +
       '</div>';
     var แสดง = function () {
       var x = document.getElementById('_d1รอ'), c = document.getElementById('_d1รอการ์ด');
@@ -229,14 +229,14 @@ function โปรไฟล์เร็ว_() {
       จอ_('<div style="font-size:56px">🔧</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
         '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
-        'App setup incomplete — please tell the admin</div>' +
+        'App setup incomplete — please tell the admin<br>အက်ပ်၏ ဆက်တင်များကို အပြည့်အစုံ မသတ်မှတ်ရသေးပါ။ — စနစ်စီမံခန့်ခွဲသူထံ အကြောင်းကြားပေးပါ။</div>' +
         '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>');
     } else {
       จอ_('<div style="font-size:56px">⏱️</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
-        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.<br>အချိန်ကုန်ဆုံးသွားပါပြီ — ပြန်လည်ဝင်ရောက်ပါ။<br>ဆက်လက်အသုံးပြုရန် ခလုတ်ကို နှိပ်ပေးပါ။</div>' +
         '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>');
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again / ပြန်လည်ဝင်ရောက်ရန်</button>');
     }
   }
 
@@ -251,7 +251,7 @@ function โปรไฟล์เร็ว_() {
     var เวลา = '';
     try { เวลา = new Date().toLocaleString(); } catch (e) {}
     return '<div id="_d1สลับ" style="margin-top:20px;font-size:12px;color:#9a9a9a;' +
-      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details</div>' +
+      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details / စနစ်စီမံခန့်ခွဲသူအတွက် အသေးစိတ်အချက်အလက်</div>' +
       '<div id="_d1รายละเอียด" style="display:none;margin-top:10px;max-width:100%;' +
       'background:#f4f4f4;border-radius:10px;padding:10px 12px;font-size:11px;color:#444;' +
       'text-align:left;word-break:break-all;line-height:1.5;-webkit-user-select:text;user-select:text">' +
@@ -270,13 +270,13 @@ function โปรไฟล์เร็ว_() {
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
         'Sent, but result unknown. Do NOT send again.<br>' +
-        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        'ပေးပို့ပြီးပါပြီ၊ သို့သော် ရလဒ်ကို မသိရှိရသေးပါ။<br>ထပ်မံပေးပို့ရန် မနှိပ်ပါနှင့် — စနစ်စီမံခန့်ခွဲသူထံ အရင်အကြောင်းကြား၍ စစ်ဆေးပေးရန် တောင်းဆိုပါ။</div>' +
         (ส่งซ้ำแล้ว ? '<div style="font-size:13px;color:#555;line-height:1.6;margin-top:12px;background:#fff7e0;' +
           'border-radius:10px;padding:8px 10px">ระบบส่งคำขอเดิมซ้ำให้อัตโนมัติแล้ว 1 ครั้ง ก็ยังไม่ได้คำตอบ<br>' +
           'ข้อมูลและเลขรายการเดิมยังเก็บไว้ — ตรวจรายการ / แจ้งผู้ดูแลก่อนส่งใหม่<br>' +
           'Auto-resent once, still no answer. Please check before sending again.</div>' : '') +
         '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
-        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
+        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close / ပိတ်ရန်</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
     } else {
       จอ_('<div style="font-size:56px">📡</div>' +
@@ -284,9 +284,9 @@ function โปรไฟล์เร็ว_() {
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
         'Could not load. Please try again.<br>' +
-        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        'ဒေတာဖွင့်၍ မအောင်မြင်ပါ။<br>လောလောဆယ် ဖွင့်၍မရပါ။ ထပ်မံကြိုးစားပေးပါ။</div>' +
         '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်မံကြိုးစားပါ။</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
     }
   }
@@ -469,7 +469,7 @@ function โปรไฟล์เร็ว_() {
       document.getElementById('status').style.display='none';
       document.getElementById('wrap').style.display='block';
       landing();
-    }catch(e){ document.getElementById('status').textContent = "Open in LINE app please. ("+(e.message||e)+")"; }
+    }catch(e){ document.getElementById('status').textContent = "Open in LINE app please. / ဤစာမျက်နှာကို ဝဘ်လင့်ခ်မှမဟုတ်ဘဲ LINE မီနူးမှ ဖွင့်ပေးပါ။ ("+(e.message||e)+")"; }
   }
 
   function landing(){
@@ -477,38 +477,38 @@ function โปรไฟล์เร็ว_() {
     document.getElementById('wrap').innerHTML =
       '<div class="pick" onclick="formWorker()"><div class="ic">👥</div>'
       + '<div class="t">A friend / relative wants to work</div>'
-      + '<div class="s">မိတ်ဆွေ၊ ဆွေမျိုး အလုပ်လုပ်လိုသည်</div></div>'
+      + '<div class="s">သူငယ်ချင်း သို့မဟုတ် ဆွေမျိုးက အလုပ်လုပ်လိုပါသည်။</div></div>'
       + '<div class="pick" onclick="formBroker()"><div class="ic">🤝</div>'
       + '<div class="t">Introduce a broker</div>'
-      + '<div class="s">ကျွန်ုပ်တို့ထံ အလုပ်သမားပို့ပေးမည့် ပွဲစား မိတ်ဆက်ရန်</div></div>';
+      + '<div class="s">ကျွန်ုပ်တို့ထံ အလုပ်သမားများ ပို့ပေးနိုင်သည့် အလုပ်သမားအကျိုးဆောင်ကို အကြံပြုပေးပါ။</div></div>';
   }
 
   function formWorker(){
     photoData=''; permit='';
     document.getElementById('wrap').innerHTML =
-      '<label>Full name (English)<small>အမည် (အင်္ဂလိပ်)</small></label><input type="text" id="f_name">'
+      '<label>Full name (English)<small>အမည်အပြည့်အစုံ (အင်္ဂလိပ်ဘာသာ)</small></label><input type="text" id="f_name">'
       + '<label>Phone number<small>ဖုန်းနံပါတ်</small></label><input type="text" id="f_phone">'
-      + '<label>Current location<small>လက်ရှိ နေထိုင်ရာ နေရာ</small></label><input type="text" id="f_loc">'
-      + '<label>Work permit?<small>အလုပ်လုပ်ခွင့် ရှိပါသလား</small></label>'
-      + '<div class="yn"><button id="p_y" onclick="setPermit(\'Yes / ရှိ\')">Yes / ရှိ</button>'
-      + '<button id="p_n" onclick="setPermit(\'No / မရှိ\')">No / မရှိ</button></div>'
-      + '<label>Document photo<small>စာရွက်စာတမ်း ဓာတ်ပုံ တင်ပါ</small></label>'
-      + '<div class="upload" onclick="document.getElementById(\'f_photo\').click()" id="upbox">Tap to upload / ဓာတ်ပုံ တင်ရန် နှိပ်ပါ</div>'
+      + '<label>Current location<small>လက်ရှိနေထိုင်သည့်လိပ်စာ</small></label><input type="text" id="f_loc">'
+      + '<label>Work permit?<small>အလုပ်လုပ်ခွင့်လက်မှတ် ရှိပါသလား။</small></label>'
+      + '<div class="yn"><button id="p_y" onclick="setPermit(\'Yes / ရှိပါသည်။\')">Yes / ရှိပါသည်။</button>'
+      + '<button id="p_n" onclick="setPermit(\'No / မရှိပါ။\')">No / မရှိပါ။</button></div>'
+      + '<label>Document photo<small>စာရွက်စာတမ်းဓာတ်ပုံ</small></label>'
+      + '<div class="upload" onclick="document.getElementById(\'f_photo\').click()" id="upbox">Tap to upload / ဓာတ်ပုံတင်ရန် နှိပ်ပါ။</div>'
       + '<input type="file" id="f_photo" accept="image/*" style="display:none" onchange="onPhoto(this)">'
-      + '<label>Previous work experience<small>အလုပ်အတွေ့အကြုံ</small></label><textarea id="f_exp" rows="3"></textarea>'
-      + '<label>Your name (referrer)<small>အကြံပြုသူ အမည်</small></label><input type="text" id="f_refname">'
-      + '<label>Your phone (referrer)<small>အကြံပြုသူ ဖုန်းနံပါတ်</small></label><input type="text" id="f_refphone">'
-      + '<button class="btn b-send" onclick="sendWorker()">Submit / ပို့မည်</button>'
+      + '<label>Previous work experience<small>ယခင်အလုပ်အတွေ့အကြုံ</small></label><textarea id="f_exp" rows="3"></textarea>'
+      + '<label>Your name (referrer)<small>သင့်အမည် (အကြံပြုသူ)</small></label><input type="text" id="f_refname">'
+      + '<label>Your phone (referrer)<small>သင့်ဖုန်းနံပါတ် (အကြံပြုသူ)</small></label><input type="text" id="f_refphone">'
+      + '<button class="btn b-send" onclick="sendWorker()">Submit / ပေးပို့ရန်</button>'
       + '<button class="b-back" onclick="landing()">← Back / နောက်သို့</button>';
   }
 
   function formBroker(){
     document.getElementById('wrap').innerHTML =
-      '<label>Broker name<small>ပွဲစား အမည်</small></label><input type="text" id="b_name">'
-      + '<label>Broker phone<small>ပွဲစား ဖုန်းနံပါတ်</small></label><input type="text" id="b_phone">'
-      + '<label>Your name (referrer)<small>အကြံပြုသူ အမည်</small></label><input type="text" id="b_refname">'
-      + '<label>Your phone (referrer)<small>အကြံပြုသူ ဖုန်းနံပါတ်</small></label><input type="text" id="b_refphone">'
-      + '<button class="btn b-send" onclick="sendBroker()">Submit / ပို့မည်</button>'
+      '<label>Broker name<small>အလုပ်သမားအကျိုးဆောင်အမည်</small></label><input type="text" id="b_name">'
+      + '<label>Broker phone<small>အလုပ်သမားအကျိုးဆောင်၏ ဖုန်းနံပါတ်</small></label><input type="text" id="b_phone">'
+      + '<label>Your name (referrer)<small>သင့်အမည် (အကြံပြုသူ)</small></label><input type="text" id="b_refname">'
+      + '<label>Your phone (referrer)<small>သင့်ဖုန်းနံပါတ် (အကြံပြုသူ)</small></label><input type="text" id="b_refphone">'
+      + '<button class="btn b-send" onclick="sendBroker()">Submit / ပေးပို့ရန်</button>'
       + '<button class="b-back" onclick="landing()">← Back / နောက်သို့</button>';
   }
 
@@ -529,8 +529,8 @@ function โปรไฟล์เร็ว_() {
 
   async function sendWorker(){
     const name=document.getElementById('f_name').value.trim();
-    if(!name){ alert("Please enter name / အမည် ထည့်ပါ"); return; }
-    const btn=document.querySelector('.b-send'); btn.disabled=true; btn.textContent="Sending… / ပို့နေသည်…";
+    if(!name){ alert("Please enter name / အမည်ထည့်သွင်းပေးပါ။"); return; }
+    const btn=document.querySelector('.b-send'); btn.disabled=true; btn.textContent="Sending… / ပေးပို့နေပါသည်…";
     try{
       const data = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({
         action:"refer_worker", userId:userId, name:name,
@@ -545,21 +545,21 @@ function โปรไฟล์เร็ว_() {
           document.getElementById('f_loc').value.trim(), permit, document.getElementById('f_exp').value.trim(),
           document.getElementById('f_refname').value.trim(), document.getElementById('f_refphone').value.trim(), photoData])
       })})).json();
-      if(!data.ok){ alert("Failed: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      if(!data.ok){ alert("Failed / တစ်စုံတစ်ရာ အမှားအယွင်းဖြစ်ပွားပါသည်။: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပေးပို့ရန်"; return; }
       /* ก3 รอบ 50: ok แต่ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ ⇒ ยังไม่ทราบผล · คงเลขคำขอไว้ */
-      if(!ก3_สำเร็จจริง_(data)){ btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      if(!ก3_สำเร็จจริง_(data)){ btn.disabled=false; btn.textContent="Submit / ပေးပို့ရန်"; return; }
       ก3_ล้าง_('refer_worker');
       done();
     }catch(e){
       /* ก3 รอบ 50 (แบบ ก2): ตัวห่อ D1 ขึ้นจอ "ยังไม่รู้ผล" แล้ว = ไม่เด้งกล่องซ้อน · เลขคำขอยังเก็บไว้ */
-      if (document.getElementById('_d1จอ')) { btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
-      try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("Error — please try again / กรุณาลองใหม่อีกครั้ง"); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
+      if (document.getElementById('_d1จอ')) { btn.disabled=false; btn.textContent="Submit / ပေးပို့ရန်"; return; }
+      try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("Error — please try again / กรุณาลองใหม่อีกครั้ง / တစ်စုံတစ်ရာ အမှားအယွင်းဖြစ်ပွားပါသည်။ ထပ်မံကြိုးစားပါ။"); btn.disabled=false; btn.textContent="Submit / ပေးပို့ရန်"; }
   }
 
   async function sendBroker(){
     const name=document.getElementById('b_name').value.trim();
-    if(!name){ alert("Please enter broker name / ပွဲစား အမည် ထည့်ပါ"); return; }
-    const btn=document.querySelector('.b-send'); btn.disabled=true; btn.textContent="Sending… / ပို့နေသည်…";
+    if(!name){ alert("Please enter broker name / အလုပ်သမားအကျိုးဆောင်အမည် ထည့်သွင်းပေးပါ။"); return; }
+    const btn=document.querySelector('.b-send'); btn.disabled=true; btn.textContent="Sending… / ပေးပို့နေပါသည်…";
     try{
       const data = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({
         action:"refer_broker", userId:userId,
@@ -570,21 +570,21 @@ function โปรไฟล์เร็ว_() {
         req_id: ก3_เลขคำขอ_('refer_broker', [name, document.getElementById('b_phone').value.trim(),
           document.getElementById('b_refname').value.trim(), document.getElementById('b_refphone').value.trim()])
       })})).json();
-      if(!data.ok){ alert("Failed: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      if(!data.ok){ alert("Failed / တစ်စုံတစ်ရာ အမှားအယွင်းဖြစ်ပွားပါသည်။: "+(data.error||"")); btn.disabled=false; btn.textContent="Submit / ပေးပို့ရန်"; return; }
       /* ก3 รอบ 50: ok แต่ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ ⇒ ยังไม่ทราบผล · คงเลขคำขอไว้ */
-      if(!ก3_สำเร็จจริง_(data)){ btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
+      if(!ก3_สำเร็จจริง_(data)){ btn.disabled=false; btn.textContent="Submit / ပေးပို့ရန်"; return; }
       ก3_ล้าง_('refer_broker');
       done();
     }catch(e){
       /* ก3 รอบ 50 (แบบ ก2): ตัวห่อ D1 ขึ้นจอ "ยังไม่รู้ผล" แล้ว = ไม่เด้งกล่องซ้อน · เลขคำขอยังเก็บไว้ */
-      if (document.getElementById('_d1จอ')) { btn.disabled=false; btn.textContent="Submit / ပို့မည်"; return; }
-      try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("Error — please try again / กรุณาลองใหม่อีกครั้ง"); btn.disabled=false; btn.textContent="Submit / ပို့မည်"; }
+      if (document.getElementById('_d1จอ')) { btn.disabled=false; btn.textContent="Submit / ပေးပို့ရန်"; return; }
+      try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("Error — please try again / กรุณาลองใหม่อีกครั้ง / တစ်စုံတစ်ရာ အမှားအယွင်းဖြစ်ပွားပါသည်။ ထပ်မံကြိုးစားပါ။"); btn.disabled=false; btn.textContent="Submit / ပေးပို့ရန်"; }
   }
 
   function done(){
     document.getElementById('wrap').innerHTML =
-      '<div class="done"><div class="c">✅</div><p>Thank you! We received it.<br>ကျေးဇူးတင်ပါသည်။ လက်ခံရရှိပါပြီ။</p>'
-      + '<button class="btn b-send" onclick="landing()">Refer another / နောက်တစ်ယောက် ထပ်ပို့ရန်</button></div>';
+      '<div class="done"><div class="c">✅</div><p>Thank you! We received it.<br>ကျေးဇူးတင်ပါသည်။ အချက်အလက်များကို လက်ခံရရှိပြီးပါပြီ။</p>'
+      + '<button class="btn b-send" onclick="landing()">Refer another / နောက်ထပ်လူတစ်ဦးကို အကြံပြုရန်</button></div>';
   }
 
   /* ── ก3 รอบ 50 (24 ก.ย. 2026): เลขคำขอกันส่งซ้ำ ──
