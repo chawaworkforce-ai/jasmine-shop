@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>My Score</title>
+<title>My Score / ကျွန်ုပ်၏အမှတ်များ</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root{ --blue:#2a7d9b; --blue-d:#1f5f76; --star:#f5b50a; --ink:#1f2b25; --muted:#7b8a82; --line:#e7ece9; --bg:#f4f6f5; --red:#a3322b; --green:#256544; }
@@ -31,10 +31,10 @@
 </head>
 <body>
   <header>
-    <h1>⭐ My Score / မိမိအမှတ်</h1>
-    <p id="hsub">Connecting…</p>
+    <h1>⭐ My Score / ကျွန်ုပ်၏အမှတ်များ</h1>
+    <p id="hsub">Connecting… / ချိတ်ဆက်နေပါသည်…</p>
   </header>
-  <div id="status">Loading… / ခဏစောင့်ပါ…</div>
+  <div id="status">Loading… / ဖွင့်နေပါသည်…</div>
   <div class="wrap" id="wrap" style="display:none"></div>
 
 <script>
@@ -124,14 +124,14 @@ function โปรไฟล์เร็ว_() {
       จอ_('<div style="font-size:56px">🔧</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">ตั้งค่าแอปยังไม่ครบ</div>' +
         '<div style="font-size:15px;color:#555;line-height:1.6">หน้านี้ยังขอ "ตั๋วยืนยันตัวตน" ไม่ได้<br>' +
-        'App setup incomplete — please tell the admin</div>' +
+        'App setup incomplete — please tell the admin<br>အက်ပ်၏ ဆက်တင်များကို အပြည့်အစုံ မသတ်မှတ်ရသေးပါ။ — စနစ်စီမံခန့်ခွဲသူထံ အကြောင်းကြားပေးပါ။</div>' +
         '<div style="font-size:13px;color:#888;margin-top:14px">แจ้งผู้ดูแลระบบ</div>');
     } else {
       จอ_('<div style="font-size:56px">⏱️</div>' +
         '<div style="font-size:19px;font-weight:700;margin:10px 0 4px">หมดเวลา — เข้าใหม่</div>' +
-        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.</div>' +
+        '<div style="font-size:15px;color:#555;line-height:1.6">Session expired.<br>Please tap the button to continue.<br>အချိန်ကုန်ဆုံးသွားပါပြီ — ပြန်လည်ဝင်ရောက်ပါ။<br>ဆက်လက်အသုံးပြုရန် ခလုတ်ကို နှိပ်ပေးပါ။</div>' +
         '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again</button>');
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔑 เข้าใหม่ / Log in again / ပြန်လည်ဝင်ရောက်ရန်</button>');
     }
   }
 
@@ -146,7 +146,7 @@ function โปรไฟล์เร็ว_() {
     var เวลา = '';
     try { เวลา = new Date().toLocaleString(); } catch (e) {}
     return '<div id="_d1สลับ" style="margin-top:20px;font-size:12px;color:#9a9a9a;' +
-      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details</div>' +
+      'text-decoration:underline">รายละเอียดสำหรับผู้ดูแล / details / စနစ်စီမံခန့်ခွဲသူအတွက် အသေးစိတ်အချက်အလက်</div>' +
       '<div id="_d1รายละเอียด" style="display:none;margin-top:10px;max-width:100%;' +
       'background:#f4f4f4;border-radius:10px;padding:10px 12px;font-size:11px;color:#444;' +
       'text-align:left;word-break:break-all;line-height:1.5;-webkit-user-select:text;user-select:text">' +
@@ -165,9 +165,9 @@ function โปรไฟล์เร็ว_() {
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         '🔴 <b>อย่ากดส่งซ้ำ</b> — ให้แจ้งผู้ดูแลตรวจให้ก่อน<br>' +
         'Sent, but result unknown. Do NOT send again.<br>' +
-        'ပို့ပြီးပါပြီ။ ရလဒ်ကို မသိရသေးပါ။<br>ထပ်မပို့ပါနှင့်။ အက်ဒမင်ကို ဆက်သွယ်ပါ။</div>' +
+        'ပေးပို့ပြီးပါပြီ၊ သို့သော် ရလဒ်ကို မသိရှိရသေးပါ။<br>ထပ်မံပေးပို့ရန် မနှိပ်ပါနှင့် — စနစ်စီမံခန့်ခွဲသူထံ အရင်အကြောင်းကြား၍ စစ်ဆေးပေးရန် တောင်းဆိုပါ။</div>' +
         '<button id="_d1ปิด" style="margin-top:22px;padding:14px 28px;border:0;border-radius:12px;' +
-        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close</button>' +
+        'background:#8a8a8a;color:#fff;font-size:16px;font-weight:700">ปิด / Close / ပိတ်ရန်</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
     } else {
       จอ_('<div style="font-size:56px">📡</div>' +
@@ -175,9 +175,9 @@ function โปรไฟล์เร็ว_() {
         '<div style="font-size:15px;color:#555;line-height:1.7">' +
         'เซิร์ฟเวอร์ตอบกลับมาไม่ถูกต้อง กรุณากดลองใหม่<br>' +
         'Could not load. Please try again.<br>' +
-        'ဆာဗာနှင့် ချိတ်ဆက်၍ မရပါ။<br>ထပ်မံ ကြိုးစားပါ။</div>' +
+        'ဒေတာဖွင့်၍ မအောင်မြင်ပါ။<br>လောလောဆယ် ဖွင့်၍မရပါ။ ထပ်မံကြိုးစားပေးပါ။</div>' +
         '<button id="_d1โหลดใหม่" style="margin-top:22px;padding:16px 30px;border:0;border-radius:12px;' +
-        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်စမ်းရန်</button>' +
+        'background:#06c755;color:#fff;font-size:18px;font-weight:700">🔄 ลองใหม่ / ထပ်မံကြိုးစားပါ။</button>' +
         กล่องรายละเอียด_(รหัส, คำสั่ง, ต้นข้อความ));
     }
   }
@@ -293,11 +293,11 @@ function โปรไฟล์เร็ว_() {
   };
 })();
   const CRIT = [
-    { en:'Diligence', my:'ကြိုးစားမှု' },
-    { en:'Work understanding', my:'အလုပ်နားလည်မှု' },
-    { en:'Teamwork', my:'အသင်းအဖွဲ့လိုက်' },
-    { en:'Dress & factory rules', my:'ဝတ်စုံ/စည်းကမ်း' },
-    { en:'No product damage', my:'ပစ္စည်းမပျက်စီး' }
+    { en:'Diligence', my:'လုံ့လဝီရိယ' },
+    { en:'Work understanding', my:'အလုပ်အပေါ် နားလည်မှု' },
+    { en:'Teamwork', my:'လုပ်ဖော်ကိုင်ဖက်များနှင့် ပေါင်းသင်းဆက်ဆံနိုင်မှု' },
+    { en:'Dress & factory rules', my:'ဝတ်စားဆင်ယင်မှုနှင့် စက်ရုံစည်းမျဉ်းများကို လိုက်နာမှု' },
+    { en:'No product damage', my:'စက်ရုံ၏ ထုတ်ကုန်များကို မပျက်စီးစေခြင်း' }
   ];
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -311,18 +311,18 @@ function โปรไฟล์เร็ว_() {
       if(!liff.isLoggedIn()){ liff.login(); return; }
       const profile = (โปรไฟล์เร็ว_() || await liff.getProfile());
       load(profile.userId);
-    }catch(e){ document.getElementById('status').textContent = "Open in LINE app please. ("+(e.message||e)+")"; }
+    }catch(e){ document.getElementById('status').textContent = "Open in LINE app please. / ဤစာမျက်နှာကို ဝဘ်လင့်ခ်မှမဟုတ်ဘဲ LINE မီနူးမှ ဖွင့်ပေးပါ။ ("+(e.message||e)+")"; }
   }
 
   async function load(userId){
     try{
       const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({ action:"my_score", userId: userId }) });
       const data = await res.json();
-      if(!data.ok){ document.getElementById('status').textContent = "Error: "+(data.error||""); return; }
+      if(!data.ok){ document.getElementById('status').textContent = "Error / တစ်စုံတစ်ရာ အမှားအယွင်းဖြစ်ပွားပါသည်။: "+(data.error||""); return; }
       if(!data.linked){
         document.getElementById('status').innerHTML =
           "Your account is not linked yet.<br>Please contact your admin.<br><br>"
-          + "သင့်အကောင့် မချိတ်ဆက်ရသေးပါ။<br>အက်ဒမင်ကို ဆက်သွယ်ပါ။";
+          + "အလုပ်သမား၏အကောင့်သည် စနစ်နှင့် ချိတ်ဆက်ထားခြင်းမရှိသေးပါ။ အဖွဲ့ထံ ဖုန်းဆက်ပါ။";
         return;
       }
       document.getElementById('hsub').textContent = data.name + " · " + data.site;
@@ -333,7 +333,7 @@ function โปรไฟล์เร็ว_() {
   function render(months){
     document.getElementById('status').style.display='none';
     const W = document.getElementById('wrap'); W.style.display='block';
-    if(months.length===0){ W.innerHTML = '<div class="none" style="text-align:center;padding:24px">No records yet / မှတ်တမ်း မရှိသေးပါ</div>'; return; }
+    if(months.length===0){ W.innerHTML = '<div class="none" style="text-align:center;padding:24px">No records yet / မှတ်တမ်း မရှိသေးပါ။</div>'; return; }
     W.innerHTML = months.map(function(mo){
       var html = '<div class="mon"><div class="mhead">'+monthLabel(mo.month)+'</div>';
       if(mo.kpi){
@@ -343,11 +343,11 @@ function โปรไฟล์เร็ว_() {
                + '<div class="cstars">'+stars(mo.kpi.scores[i])+'</div></div>';
         }).join('');
       } else {
-        html += '<div class="none">No KPI this month / ဤလတွင် KPI မရှိသေး</div>';
+        html += '<div class="none">No KPI this month / ဤလအတွက် KPI အမှတ် မရှိသေးပါ။</div>';
       }
       html += '<div class="rep-h">Reports / အစီရင်ခံစာ ('+mo.reports.length+')</div>';
       if(mo.reports.length===0){
-        html += '<div class="rep0">No reports ✅ / အစီရင်ခံစာ မရှိ ✅</div>';
+        html += '<div class="rep0">No reports ✅ / အစီရင်ခံစာ မရှိပါ။ ✅</div>';
       } else {
         html += mo.reports.map(function(r){
           var second = (r.my && r.my!==r.en) ? '<br><small>'+esc(r.my)+'</small>' : '';
