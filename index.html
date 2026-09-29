@@ -180,22 +180,24 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
 
     // ====== คำแปล (มြန်မာ / English) ======
     var I18N = {
-      my:{open:'ဆိုင်ဖွင့်နေသည်...',loadErr:'ပစ္စည်းများ ဖွင့်၍မရပါ',empty:'ပစ္စည်း မရှိသေးပါ',
-          add:'ထည့်မည်',confirm:'အော်ဒါ အတည်ပြုမည်',items:'ခု',baht:'ဘတ်',sending:'သိမ်းနေသည်...',
-          okTitle:'မှာယူမှု အောင်မြင်ပါသည်',orderNo:'အော်ဒါနံပါတ်',again:'ထပ်မှာမည်',
-          left:'ကျန်',outOfStock:'ကုန်သွားပြီ',
-          sent:'အော်ဒါအချက်အလက်ကို LINE chat သို့ ပို့ပြီးပါပြီ',
-          notSent:'အော်ဒါ သိမ်းပြီးပါပြီ။ ဆိုင်မှ လက်ခံရရှိပါပြီ။',
-          loginNeed:'LINE login သို့ ပြန်ညွှန်းနေသည်...',
-          /* ฝากซื้อเฟส 1 — รอล่าม (ไฟล์ 40 A1-6 ฉบับแก้ + ไฟล์ 41 · F-25 จากไฟล์ 40) ว่าง = ใช้อังกฤษแทน */
-          brand:'', k1_1:'', k1_2:'', k1_3:'', k1_4:'', k1_5:'', k1_6:'', k1_7:'', k1_8:'', k1_9:'', f25:''},
-      en:{open:'Opening shop...',loadErr:'Failed to load products',empty:'No products yet',
+      my:{open:'ပစ္စည်းဝယ်ပေးရန် မှာယူသည့်စာမျက်နှာကို ဖွင့်နေပါသည်…',loadErr:'ပစ္စည်းစာရင်းကို ဖွင့်၍မရပါ။',empty:'လောလောဆယ် ပစ္စည်းမရှိသေးပါ။',
+          add:'ခြင်းထဲထည့်ရန်',confirm:'မှာယူမှုကို အတည်ပြုရန်',items:'ခု',baht:'ဘတ်',sending:'သိမ်းဆည်းနေပါသည်…',
+          okTitle:'မှာယူမှု အောင်မြင်ပါသည်။',orderNo:'အော်ဒါနံပါတ်',again:'ထပ်မံမှာယူရန်',
+          left:'လက်ကျန်',outOfStock:'ပစ္စည်းကုန်ပြီ',
+          sent:'မှာယူထားသည့်ပစ္စည်းစာရင်းကို အလုပ်သမား၏ LINE ချတ်ထဲသို့ ပေးပို့ပြီးပါပြီ။',
+          notSent:'ပစ္စည်းဝယ်ပေးရန် မှာယူထားသည့်စာရင်းကို သိမ်းဆည်းပြီးဖြစ်ပြီး အဖွဲ့မှ လက်ခံရရှိပြီးပါပြီ။',
+          loginNeed:'LINE အကောင့်ဝင်စာမျက်နှာသို့ သွားနေပါသည်…',
+          openLine:'LINE မီနူးမှ ပစ္စည်းဝယ်ပေးရန် မှာယူသည့်စာမျက်နှာကို ဖွင့်ပေးပါ။',
+          /* 29 ก.ย. 2026: เติมจากใบล่ามไฟล์ 43 ตามแผนที่เลข (ข้อ 6 · 166 · 180–195 · 219 · 228–235) · k1_9 = ข้อ 346 ยังรอล่าม → ว่าง = ใช้อังกฤษแทน */
+          brand:'Jasmine · ပစ္စည်းဝယ်ပေးရန် မှာယူခြင်း', k1_1:'မှာယူဝယ်ပေးထားသည့်ပစ္စည်းများကို နောက်လာမည့် လစာပေးကာလတွင် ပို့ပေးမည်။', k1_2:'ဤအကြိမ် ပစ္စည်းပို့မည့်ရက် - {date}', k1_3:'{date} အထိ ပယ်ဖျက်နိုင်ပါသည်။', k1_4:'တစ်ကြိမ်လျှင် အများဆုံး {n} ခုအထိ မှာယူနိုင်ပါသည်။', k1_5:'ဤလုပ်ငန်းခွင်တွင် ဝန်ဆောင်မှုကို မဖွင့်လှစ်ရသေးပါ။', k1_6:'လောလောဆယ် အလုပ်သမား၏အကောင့်ဖြင့် ပစ္စည်းဝယ်ပေးရန် မှာယူသည့်ဝန်ဆောင်မှုကို အသုံးပြု၍မရသေးပါ။ အဖွဲ့ထံ ဖုန်းဆက်ပါ။', k1_7:'ကျွန်ုပ်၏ ပစ္စည်းဝယ်ပေးရန် မှာယူထားသည့်စာရင်းကို ကြည့်ရန်', k1_8:'အဖြေမရရှိသေးပါ။ ထပ်မံမှာယူမီ ကျွန်ုပ်၏ မှာယူထားသည့်စာရင်းကို အရင်စစ်ဆေးပါ။', k1_9:'', f25:'အလုပ်သမား၏အကောင့်သည် စနစ်နှင့် ချိတ်ဆက်ထားခြင်းမရှိသေးပါ။ အဖွဲ့ထံ ဖုန်းဆက်ပါ။'},
+      en:{open:'Opening Buy for Me…',loadErr:'Failed to load products',empty:'No products yet',
           add:'Add',confirm:'Confirm order',items:'items',baht:'฿',sending:'Saving...',
           okTitle:'Order placed',orderNo:'Order No.',again:'Order more',
           left:'left',outOfStock:'Out of stock',
           sent:'Order summary sent to your LINE chat',
-          notSent:'Order saved. The shop has received it.',
+          notSent:'Saved. The team has received it.',
           loginNeed:'Redirecting to LINE login...',
+          openLine:'Please open Buy for Me from the LINE menu',
           brand:'Jasmine · Buy for Me',
           k1_1:'Items will be delivered on the next payday visit',
           k1_2:'Delivery date: {date}',
@@ -468,7 +470,7 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
          ของใหม่ส่ง "ตั๋ว" ที่ LINE ออกให้ หลังบ้านเอาไปถาม LINE ว่าเป็นของใคร แล้วเชื่อคำตอบนั้นเท่านั้น */
       var tk = null;
       try { tk = liff.getIDToken(); } catch(e) {}
-      if(!tk){ showError('Please open the shop from the LINE menu'); return; }
+      if(!tk){ showError(t('openLine')); return; }
       if(!reqId){ reqId = 'w-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10); }
       var เนื้อ = JSON.stringify({ idToken:tk, profile:profile, items:items, action:'place_order', req_id:reqId });
       var งานนี้ = ++งานส่ง, btn=$('confirmBtn');
@@ -500,7 +502,7 @@ if(/[?&]liff\.state=/.test(location.search)) document.documentElement.className 
       if(e==='SERVICE_NOT_OPEN') return showError(t('k1_5'));                     /* รอบ 50: ยังไม่เปิดบริการ (รอฝั่งเงินเดือนพร้อม) */
       if(e==='SERVICE_PAUSED') return showError(t('k1_5'));                       /* รุ่น 18: เจ้าของสั่งพักคำสั่งเขียน — ใช้ข้อความที่แปลแล้ว ไม่แต่งคำใหม่ · ตะกร้า+เลขคำขอเดิมยังอยู่ */
       if(e==='ORDER_NOT_SETTLED' || e==='ORDER_ON_HOLD') return showError(t('k1_8'));   /* รอบ 50: บันทึกแล้วแต่ยังไม่เสร็จ = ยังไม่ทราบผล · เลขคำขอเดิมยังเก็บไว้ */
-      if(e==='NO_TICKET' || e==='BAD_TICKET') return showError('Please open the shop from the LINE menu');
+      if(e==='NO_TICKET' || e==='BAD_TICKET') return showError(t('openLine'));
       showError('Cannot save order: '+e);
     }
 

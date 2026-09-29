@@ -40,7 +40,7 @@
   .card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px; line-height:1.7; }
   .top{ display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
   .oid{ font-weight:700; font-size:14px; } .at{ color:var(--muted); font-size:12px; }
-  .st{ font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; background:#eef2f0; color:var(--muted); }
+  .st{ font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:normal; max-width:58%; text-align:center; background:#eef2f0; color:var(--muted); }   /* 29 ก.ย.: คำพม่ายาว ห้ามล้นจอ */
   .st.wait{ background:#fff3d6; color:var(--warn); } .st.go{ background:#e6f1f7; color:var(--blue-d); }
   .st.done{ background:#e8f4ec; color:var(--ok); } .st.bad{ background:#fbe9e6; color:var(--bad); }
   ul{ list-style:none; padding:0; margin:8px 0; font-size:14px; }
@@ -75,32 +75,32 @@
    · ข้อความ: รหัส K2-/K1- = ใบล่ามไฟล์ 41 · รหัสอื่น = ไฟล์ 40 (ใช้ของเดิม ไม่แปลใหม่)
      ช่อง my ว่าง = ยังรอล่าม ⇒ หน้าขึ้นอังกฤษแทน (ตัวกันจอว่างแบบเดียวกับ my.html) */
 var T = {
-  'K2-1':  { th: 'รายการฝากซื้อของฉัน', en: 'My orders', my: '' },
-  'K2-2':  { th: 'ยังไม่มีรายการฝากซื้อ', en: 'No orders yet', my: '' },
-  'K2-3':  { th: 'รอส่ง', en: 'Waiting for delivery', my: '' },
-  'K2-4':  { th: 'ส่งแล้วบางส่วน', en: 'Partly delivered', my: '' },
-  'K2-5':  { th: 'ส่งแล้ว รอยืนยัน', en: 'Delivered – please confirm', my: '' },
-  'K2-6':  { th: 'ได้รับแล้ว', en: 'Received', my: '' },
-  'K2-7':  { th: 'ยกเลิกแล้ว', en: 'Cancelled', my: '' },
-  'K2-8':  { th: 'ทีมยกเลิกให้', en: 'Cancelled by the team', my: '' },
-  'K2-9':  { th: 'รอทีมตรวจสอบ', en: 'Being checked by the team', my: '' },
-  'K2-10': { th: 'ยกเลิกรายการนี้', en: 'Cancel this order', my: '' },
-  'K2-11': { th: 'ต้องการยกเลิกรายการนี้ใช่ไหม', en: 'Do you want to cancel this order?', my: '' },
-  'K2-12': { th: 'เลยกำหนดยกเลิกแล้ว', en: 'The cancellation deadline has passed', my: '' },
-  'K2-13': { th: 'ได้รับของครบแล้ว', en: 'I received all items', my: '' },
-  'K2-14': { th: 'ของไม่ครบ / ไม่ได้สั่ง', en: 'Items missing / not my order', my: '' },
-  'K2-15': { th: 'บันทึกแล้ว ขอบคุณ', en: 'Saved. Thank you.', my: '' },
-  'K2-16': { th: 'ทีม Jasmine จะติดต่อกลับ', en: 'The Jasmine team will contact you.', my: '' },
+  'K2-1':  { th: 'รายการฝากซื้อของฉัน', en: 'My orders', my: 'ကျွန်ုပ်၏ ပစ္စည်းဝယ်ပေးရန် မှာယူထားသည့်စာရင်း' },
+  'K2-2':  { th: 'ยังไม่มีรายการฝากซื้อ', en: 'No orders yet', my: 'ပစ္စည်းဝယ်ပေးရန် မှာယူထားသည့်စာရင်း မရှိသေးပါ။' },
+  'K2-3':  { th: 'รอส่ง', en: 'Waiting for delivery', my: 'ပို့ရန်စောင့်ဆိုင်းနေပါသည်။' },
+  'K2-4':  { th: 'ส่งแล้วบางส่วน', en: 'Partly delivered', my: 'တစ်စိတ်တစ်ပိုင်း ပို့ပြီးပါပြီ။' },
+  'K2-5':  { th: 'ส่งแล้ว รอยืนยัน', en: 'Delivered – please confirm', my: 'ပို့ပြီးပါပြီ၊ အတည်ပြုချက်ကို စောင့်ဆိုင်းနေပါသည်။' },
+  'K2-6':  { th: 'ได้รับแล้ว', en: 'Received', my: 'လက်ခံရရှိပြီးပါပြီ။' },
+  'K2-7':  { th: 'ยกเลิกแล้ว', en: 'Cancelled', my: 'ပယ်ဖျက်ပြီးပါပြီ။' },
+  'K2-8':  { th: 'ทีมยกเลิกให้', en: 'Cancelled by the team', my: 'အဖွဲ့မှ ပယ်ဖျက်ပေးပြီးပါပြီ။' },
+  'K2-9':  { th: 'รอทีมตรวจสอบ', en: 'Being checked by the team', my: 'အဖွဲ့မှ စစ်ဆေးပေးရန် စောင့်ဆိုင်းနေပါသည်။' },
+  'K2-10': { th: 'ยกเลิกรายการนี้', en: 'Cancel this order', my: 'ဤစာရင်းကို ပယ်ဖျက်ရန်' },
+  'K2-11': { th: 'ต้องการยกเลิกรายการนี้ใช่ไหม', en: 'Do you want to cancel this order?', my: 'ဤစာရင်းကို ပယ်ဖျက်လိုပါသလား။' },
+  'K2-12': { th: 'เลยกำหนดยกเลิกแล้ว', en: 'The cancellation deadline has passed', my: 'ပယ်ဖျက်နိုင်သည့် သတ်မှတ်ရက် ကျော်လွန်သွားပါပြီ။' },
+  'K2-13': { th: 'ได้รับของครบแล้ว', en: 'I received all items', my: 'ပစ္စည်းအားလုံး အပြည့်အဝ လက်ခံရရှိပြီးပါပြီ။' },
+  'K2-14': { th: 'ของไม่ครบ / ไม่ได้สั่ง', en: 'Items missing / not my order', my: 'ပစ္စည်းမပြည့်စုံပါ / မှာယူထားခြင်းမရှိသော ပစ္စည်းဖြစ်ပါသည်။' },
+  'K2-15': { th: 'บันทึกแล้ว ขอบคุณ', en: 'Saved. Thank you.', my: 'သိမ်းဆည်းပြီးပါပြီ။ ကျေးဇူးတင်ပါသည်။' },
+  'K2-16': { th: 'ทีม Jasmine จะติดต่อกลับ', en: 'The Jasmine team will contact you.', my: 'Jasmine အဖွဲ့မှ ပြန်လည်ဆက်သွယ်ပေးပါမည်။' },
   /* 🔴 K2-17 แก้ถ้อยคำตามมติผู้วางแผนรอบ 49 (24 ก.ย.): นับเฉพาะใบที่น้องกดยืนยันแล้ว ⇒ "ยอดของที่ยืนยันรับแล้ว" ไม่ใช่ "ยอดยังไม่หัก"
      ⚠️ ใบล่ามไฟล์ 41 ส่งไปด้วยคำเดิม "ยอดของที่ได้รับแล้ว" — มีใบแก้ส่งตามล่าม · คำพม่าที่ได้คืนต้องเป็นฉบับแก้ */
-  'K2-17': { th: 'ยอดของที่ยืนยันรับแล้ว', en: 'Total of items you confirmed receiving', my: '' },
-  'K1-2':  { th: 'วันส่งของรอบนี้: {date}', en: 'Delivery date: {date}', my: '' },
-  'K1-3':  { th: 'ยกเลิกได้ถึง {date}', en: 'You can cancel until {date}', my: '' },
-  'A4-4':  { th: 'กลับ', en: 'Back', my: '' },
-  'E-8':   { th: 'กำลังบันทึก…', en: 'Saving...', my: '' },
-  'F-29':  { th: 'กำลังเชื่อมต่อไลน์… อีกสักครู่ปุ่มจะกดได้', en: 'Connecting to LINE… the buttons will turn on in a moment.', my: '' },
-  'F-27':  { th: 'กรุณาเปิดหน้านี้จากเมนูในไลน์ ไม่ใช่จากลิงก์เว็บ', en: 'Please open this page from the LINE menu, not from a web link.', my: '' },
-  'G-3':   { th: 'ตอนนี้โหลดไม่ได้ กรุณาลองใหม่', en: 'Cannot load right now. Please try again.', my: '' },
+  'K2-17': { th: 'ยอดของที่ยืนยันรับแล้ว', en: 'Total of items you confirmed receiving', my: 'လက်ခံရရှိကြောင်း အတည်ပြုထားသည့် ပစ္စည်းပမာဏ' },
+  'K1-2':  { th: 'วันส่งของรอบนี้: {date}', en: 'Delivery date: {date}', my: 'ဤအကြိမ် ပစ္စည်းပို့မည့်ရက် - {date}' },
+  'K1-3':  { th: 'ยกเลิกได้ถึง {date}', en: 'You can cancel until {date}', my: '{date} အထိ ပယ်ဖျက်နိုင်ပါသည်။' },
+  'A4-4':  { th: 'กลับ', en: 'Back', my: 'နောက်သို့' },
+  'E-8':   { th: 'กำลังบันทึก…', en: 'Saving...', my: 'သိမ်းဆည်းနေပါသည်…' },
+  'F-29':  { th: 'กำลังเชื่อมต่อไลน์… อีกสักครู่ปุ่มจะกดได้', en: 'Connecting to LINE… the buttons will turn on in a moment.', my: 'LINE နှင့် ချိတ်ဆက်နေပါသည်… ခဏအကြာတွင် ခလုတ်ကို နှိပ်နိုင်ပါမည်။' },
+  'F-27':  { th: 'กรุณาเปิดหน้านี้จากเมนูในไลน์ ไม่ใช่จากลิงก์เว็บ', en: 'Please open this page from the LINE menu, not from a web link.', my: 'ဤစာမျက်နှာကို ဝဘ်လင့်ခ်မှမဟုတ်ဘဲ LINE မီနူးမှ ဖွင့်ပေးပါ။' },
+  'G-3':   { th: 'ตอนนี้โหลดไม่ได้ กรุณาลองใหม่', en: 'Cannot load right now. Please try again.', my: 'လောလောဆယ် ဖွင့်၍မရပါ။ ထပ်မံကြိုးစားပေးပါ။' },
   'K2-18': { th: 'กำลังตรวจรายการเดิม…', en: 'Checking your order…', my: '' }   /* รุ่น 19 (มติรอบ 51 ★S1) · ใบล่ามข้อ 346 */
 };
 
