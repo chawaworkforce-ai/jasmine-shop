@@ -39,6 +39,21 @@
   .acts button{ flex:1; border:0; border-radius:10px; padding:11px; font-size:14px; font-weight:700; cursor:pointer; }
   .b-wip{ background:#fff3d6; color:#9a6b00; } .b-done{ background:#2f7d55; color:#fff; }
   .empty{ text-align:center; color:var(--muted); padding:30px 12px; font-size:14px; }
+  /* 🆕 รอบ 56 (ใบงาน 06 ส่วน 2) แถบแจ้งป่วย */
+  .sk-note{ background:#eef4fb; border:1px solid #d6e4f5; color:#2b4a6b; border-radius:10px; padding:10px 12px; font-size:13px; line-height:1.55; margin-bottom:10px; }
+  .sk-top{ display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .sk-link{ background:none; border:0; color:#2f6fd0; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; padding:4px; }
+  .sk-filter{ display:flex; gap:8px; margin-bottom:8px; }
+  .sk-filter button{ flex:1; background:#fff; border:1px solid var(--line); border-radius:999px; padding:9px 10px; font-size:13px; font-weight:700; color:var(--ink); cursor:pointer; font-family:inherit; }
+  .sk-filter button.on{ background:var(--slate); color:#fff; border-color:var(--slate); }
+  .sk-sum{ font-size:12px; color:var(--muted); margin-bottom:10px; }
+  .sk-box{ border-radius:12px; padding:16px 14px; text-align:center; font-size:14px; line-height:1.6; }
+  .sk-box.bad{ background:#fdecec; color:#a3322b; } .sk-box.unk{ background:#f1f3f5; color:#4a5560; }
+  .sk-box .hint{ font-size:11px; opacity:.8; margin-top:4px; }
+  .sk-btn{ margin-top:10px; border:0; border-radius:10px; padding:11px 18px; font-size:14px; font-weight:700; background:#06c755; color:#fff; cursor:pointer; font-family:inherit; }
+  .sk-more{ width:100%; margin-top:4px; background:#fff; border:1px dashed var(--line); border-radius:10px; padding:11px; font-size:13px; font-weight:700; color:#2f6fd0; cursor:pointer; font-family:inherit; }
+  .sk-foot{ font-size:12px; color:var(--muted); text-align:center; margin-top:10px; }
+  .st.sk-ok{ background:#e3f4ea; color:#256544; } .st.sk-fail{ background:#fdecec; color:#c0392b; } .st.sk-unk{ background:#eceff2; color:#5a6570; }
 </style>
 </head>
 <body>
@@ -49,6 +64,8 @@
     <button data-t="rp" onclick="tab('rp')">รีพอต<span class="badge" id="bg-rp">0</span></button>
     <button data-t="sp" onclick="tab('sp')">ซัพพอต<span class="badge" id="bg-sp">0</span></button>
     <button data-t="rf" onclick="tab('rf')">แนะนำคน<span class="badge" id="bg-rf">0</span></button>
+    <!-- 🆕 รอบ 56 (ใบงาน 06 ส่วน 2): แถบประวัติการป่วย ซ่อนไว้ก่อน · โชว์เมื่อหลังบ้านตอบ sickTab:true เท่านั้น (หลังบ้านรุ่นใหม่ = แอดมินทุกคน) -->
+    <button data-t="sk" id="tb-sk" style="display:none" onclick="tab('sk')">ประวัติการป่วย<span class="badge" id="bg-sk">0</span></button>
   </div>
   <!-- M7 21 ก.ย. 2026 — แถบลิงก์ 5 ทาง ตามแผนไฟล์ 09 ข้อ อ-1
        ทุกปลายทางมีด่านตรวจสิทธิ์ของตัวเองที่เซิร์ฟเวอร์อยู่แล้ว แถบนี้เป็นแค่ทางลัด ไม่ได้เปิดสิทธิ์ให้ใคร -->
@@ -65,7 +82,8 @@
     <a href="cases.html">📋 เปิดเคส</a>
     <a href="buy-admin.html">🛍️ จัดการฝากซื้อ/รับของ</a>
     <a href="grievance-stats.html">🔒 สถิติร้องทุกข์</a>
-    <a href="https://trello.com/b/mUZ81gbB/chawa-group" target="_blank" rel="noopener">🗂️ บอร์ด Trello</a>
+    <!-- 🆕 รอบ 56 (ใบงาน 06 ส่วน 1 ข้อ 4): ชี้บอร์ดเดียวกับปุ่ม "Trello Back Office" ในเมนูแอดมิน (TRELLO_BOARD_URL ของ Jasmine Admin) · เจ้าของเลือก 5 ต.ค. -->
+    <a href="https://trello.com/b/Wuxp5loO/tubtim-sg" target="_blank" rel="noopener">🗂️ บอร์ด Trello</a>
   </nav>
   <div class="wrap" id="wrap" style="display:none"></div>
 
@@ -111,7 +129,7 @@ function โปรไฟล์เร็ว_() {
   var คำสั่งอ่าน_ = {
     announce_targets:1, case_page:1, company_rules:1, customer_announce_status:1,
     customer_home:1, dashboard:1, grievance_stats:1, matched_list:1, matching_data:1,
-    my_score:1, photos:1, site_list:1, support_status:1, worker_reports:1, workers:1
+    my_score:1, photos:1, sick_list:1, site_list:1, support_status:1, worker_reports:1, workers:1   /* 🆕 รอบ 56: sick_list อ่านอย่างเดียว */
   };
   var เตือนแล้ว_ = false;
 
@@ -349,6 +367,7 @@ function โปรไฟล์เร็ว_() {
       document.getElementById('wrap').style.display='block';
       document.getElementById('hsub').textContent = "เดือน "+D.month;
       setBadges(); tab(cur);
+      if(D.sickTab===true){ document.getElementById('tb-sk').style.display=''; โหลดป่วย_(); }   /* 🆕 รอบ 56 */
     }catch(e){ document.getElementById('status').textContent = "โหลดไม่สำเร็จ: "+(e.message||e); }
   }
 
@@ -371,6 +390,7 @@ function โปรไฟล์เร็ว_() {
           body:'เบอร์: '+esc(isW?r.cand_phone:r.broker_phone||'-')+'<br>ผู้แนะนำ: '+esc(r.ref_name||'-')+' '+esc(r.ref_phone||'')+(r.doc_url?'<br><a href="'+esc(r.doc_url)+'" target="_blank">📄 ดูเอกสาร</a>':''),
           meta:r.timestamp };
       });
+    else if(t==='sk') w.innerHTML = ป่วยHTML_();   /* 🆕 รอบ 56 */
   }
 
   function ovHTML(){
@@ -428,7 +448,7 @@ function โปรไฟล์เร็ว_() {
         + '<span class="st '+(wip?'wip':'new')+'">'+(wip?'กำลังทำ':'ใหม่')+'</span></div>'
         + '<div class="body">'+m.body+'</div>'
         + '<div class="meta">'+esc(m.meta)+'</div>'
-        + '<input class="note" id="n-'+sheet+'-'+r.id+'" placeholder="โน้ต (ไม่บังคับ)">'
+        + ((D.noteOk && D.noteOk[sheet]===false) ? '' : '<input class="note" id="n-'+sheet+'-'+r.id+'" placeholder="โน้ต (ไม่บังคับ)">')   /* 🆕 รอบ 56: แท็บที่ไม่มีคอลัมน์ note ไม่มีช่องโน้ต */
         + '<div class="acts"><button class="b-wip" onclick="act(\''+sheet+'\',\''+r.id+'\',\'กำลังทำ\')">กำลังทำ</button>'
         + '<button class="b-done" onclick="act(\''+sheet+'\',\''+r.id+'\',\'เสร็จ\')">เสร็จ ✓</button></div></div>';
     }).join('');
@@ -440,13 +460,78 @@ function โปรไฟล์เร็ว_() {
     card.style.opacity=.5;
     try{
       const res = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"update_status",userId:userId,sheet:sheet,id:id,status:status,note:note.trim()})})).json();
-      if(!res.ok){ alert("ไม่สำเร็จ: "+res.error); card.style.opacity=1; return; }
+      if(!res.ok){ alert(res.error==='NOTE_NOT_SAVED' ? "แถบนี้บันทึกโน้ตไม่ได้ (ชีตไม่มีช่องโน้ต) — ลบข้อความในช่องโน้ต แล้วกดใหม่" : "ไม่สำเร็จ: "+res.error); card.style.opacity=1; return; }   /* 🆕 รอบ 56 */
       const key = sheet==='Reports'?'reports':sheet==='Support'?'support':'referrals';
       const item = D[key].find(x=>x.id===id);
       if(status==='เสร็จ'){ D[key]=D[key].filter(x=>x.id!==id); card.remove(); }
       else { if(item) item.status='กำลังทำ'; tab(cur); }
       setBadges();
     }catch(e){ try{console.error(e);}catch(_e){} /* รอบ 52: จอ D1 ขึ้นแล้ว = ไม่ซ้อนกล่องเด้ง · ไม่โชว์ข้อความภาษาเครื่อง */ if(!document.getElementById('_d1จอ')) alert("ทำรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); card.style.opacity=1; }
+  }
+
+  /* ══ 🆕 รอบ 56 · 5 ต.ค. 2026 (ใบงาน 06 ส่วน 2 · A1+C) แถบ "ประวัติการป่วย" อ่านอย่างเดียว ══
+     · ข้อมูลจากคำสั่ง sick_list — หลังบ้านตรวจสิทธิ์เอง (แอดมินทุกคน ตามเจ้าของ 5 ต.ค.) · แถบขึ้นเฉพาะเมื่อ dashboard ตอบ sickTab:true
+     · รหัส NOT_SICK_READER / SICK_READERS_NOT_SET ด้านล่าง หลังบ้านรุ่นนี้ไม่ส่งแล้ว (คงไว้ไม่กระทบ)
+     · ไม่มีปุ่มรับเรื่อง/เสร็จ (A2 ยังไม่ทำ) · ไม่ส่งไลน์ · ไม่แก้ชีต
+     · 3 สภาพแยกกัน: ไม่มีรายการ (โหลดสำเร็จแต่ว่าง) / โหลดไม่สำเร็จ (มีปุ่มลองใหม่) / ยังไม่ทราบ (หลังบ้านอ่านแท็บไม่ได้)
+       ห้ามขึ้น "ไม่มีรายการ" ตอนโหลดไม่สำเร็จหรือยังไม่ทราบ
+     · ค่าเริ่มต้น 7 วันล่าสุด (นับจากเวลาเซิร์ฟเวอร์ตอนอ่าน) + ปุ่มดูรายการเก่ากว่า · หายจากจอ ≠ จัดการเสร็จ */
+  let SK = { st:'idle', d:null, err:'', เก่า:false, เฉพาะพลาด:false };
+  const SK_วัน = 7;
+  async function โหลดป่วย_(){
+    SK.st='loading'; SK.err=''; if(cur==='sk') tab('sk');
+    try{
+      const r = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"sick_list",userId:userId})})).json();
+      if(r && r.ok===true && Array.isArray(r.rows)){ SK.st='ok'; SK.d=r; }
+      else if(r && (r.error==='NOT_SICK_READER' || r.error==='NOT_ADMIN' || r.error==='FORBIDDEN')){ SK.st='denied'; SK.err=r.error; }
+      else if(r && (r.error==='SOURCE_MISSING' || r.error==='SCHEMA_INVALID' || r.error==='SICK_READERS_NOT_SET')){ SK.st='unknown'; SK.err=r.error; }
+      else { SK.st='err'; SK.err=(r && r.error) ? String(r.error) : 'BAD_RESPONSE'; }
+    }catch(e){ SK.st='err'; SK.err='NO_RESPONSE'; }
+    ป้ายป่วย_();
+    if(SK.st==='denied'){ document.getElementById('tb-sk').style.display='none'; if(cur==='sk') tab('ov'); return; }
+    if(cur==='sk') tab('sk');
+  }
+  function ป้ายป่วย_(){
+    const b=document.getElementById('bg-sk'); if(!b) return;
+    const n = (SK.st==='ok') ? SK.d.rows.filter(x=>x.send==='fail').length : 0;
+    b.textContent=n; b.style.display = n ? 'inline-block' : 'none';
+  }
+  function กรองป่วย_(v){ SK.เฉพาะพลาด=v; tab('sk'); }
+  function เก่าป่วย_(v){ SK.เก่า=v; tab('sk'); }
+  function ป่วยการ์ด_(x){
+    const ป = x.type==='sick' ? '🤒 แจ้งป่วย' : x.type==='ride' ? '🚗 ขอรถไปหาหมอ' : '❔ ไม่ทราบประเภท';
+    const ส = x.send==='ok' ? ['ok','ส่งสำเร็จ'] : x.send==='fail' ? ['fail','ส่งไม่สำเร็จ'] : ['unk','ยังไม่ทราบ'];
+    return '<div class="card"><div class="top"><div><div class="ttl">'+ป+'</div>'
+      + '<div class="sub">'+(x.time ? esc(x.time) : '⚠️ เวลาอ่านไม่ได้')+' · '+esc(x.site || '(ไม่ระบุไซต์)')+'</div></div>'
+      + '<span class="st sk-'+ส[0]+'">ส่งไลน์: '+ส[1]+'</span></div>'
+      + '<div class="meta">รหัสการ์ด '+esc(x.card_id || '-')+' · เลขเรื่อง #'+esc(x.ref || '-')+'</div></div>';
+  }
+  function ป่วยHTML_(){
+    const หมายเหตุ = '<div class="sk-note">ℹ️ <b>ส่งไลน์สำเร็จ ไม่ได้แปลว่ามีคนรับเรื่องแล้ว</b><br>แถบนี้ดูได้อย่างเดียว ยังไม่มีปุ่มรับเรื่อง — รับเรื่องและบันทึกผลในไลน์ตามเดิม โดยอ้างเลขเรื่อง</div>';
+    if(SK.st==='idle' || SK.st==='loading') return หมายเหตุ + '<div class="empty">กำลังโหลดรายการแจ้งป่วย…</div>';
+    if(SK.st==='err') return หมายเหตุ + '<div class="sk-box bad">📡 <b>โหลดรายการแจ้งป่วยไม่สำเร็จ</b><br>ยังไม่รู้ว่ามีรายการหรือไม่ — กดลองใหม่'
+      + '<div class="hint">code: '+esc(SK.err)+'</div><button class="sk-btn" onclick="โหลดป่วย_()">🔄 ลองใหม่</button></div>';
+    if(SK.st==='unknown') return หมายเหตุ + '<div class="sk-box unk">❓ <b>ยังไม่ทราบ</b><br>หลังบ้านอ่านรายการแจ้งป่วยไม่ได้ จึงบอกไม่ได้ว่ามีรายการหรือไม่ — แจ้งผู้ดูแลระบบ'
+      + '<div class="hint">code: '+esc(SK.err)+'</div><button class="sk-btn" onclick="โหลดป่วย_()">🔄 ลองใหม่</button></div>';
+    if(SK.st!=='ok') return '<div class="empty">บัญชีนี้ไม่มีสิทธิ์ดูรายการแจ้งป่วย</div>';
+    const d=SK.d, เส้น=d.asOfMs - SK_วัน*86400000;
+    const ใหม่=d.rows.filter(x=> x.ms===null || x.ms>=เส้น), เก่า=d.rows.filter(x=> x.ms!==null && x.ms<เส้น);
+    const ชุด = SK.เก่า ? d.rows : ใหม่;
+    const นับ = s => ชุด.filter(x=>x.send===s).length;
+    const แสดง = SK.เฉพาะพลาด ? ชุด.filter(x=>x.send==='fail') : ชุด;
+    const ช่วง = SK.เก่า ? 'ทุกช่วงเวลา' : SK_วัน+' วันล่าสุด';
+    let h = หมายเหตุ;
+    h += '<div class="sk-top"><span>ข้อมูล ณ '+esc(d.asOf)+'</span><button class="sk-link" onclick="โหลดป่วย_()">🔄 โหลดใหม่</button></div>';
+    h += '<div class="sk-filter"><button class="'+(SK.เฉพาะพลาด?'':'on')+'" onclick="กรองป่วย_(false)">ทั้งหมด ('+ชุด.length+')</button>'
+      + '<button class="'+(SK.เฉพาะพลาด?'on':'')+'" onclick="กรองป่วย_(true)">ส่งไลน์ไม่สำเร็จ ('+นับ('fail')+')</button></div>';
+    h += '<div class="sk-sum">'+ช่วง+': ส่งสำเร็จ '+นับ('ok')+' · ส่งไม่สำเร็จ '+นับ('fail')+' · ยังไม่ทราบ '+นับ('unknown')+'</div>';
+    if(!แสดง.length) h += '<div class="empty">'+(SK.เฉพาะพลาด ? 'ไม่มีรายการที่ส่งไลน์ไม่สำเร็จ' : 'ไม่มีรายการแจ้งป่วย')+' ('+ช่วง+')</div>';
+    else h += แสดง.map(ป่วยการ์ด_).join('');
+    if(!SK.เก่า && เก่า.length) h += '<button class="sk-more" onclick="เก่าป่วย_(true)">ดูรายการเก่ากว่า '+SK_วัน+' วัน ('+เก่า.length+' รายการ)</button>';
+    else if(SK.เก่า) h += '<button class="sk-more" onclick="เก่าป่วย_(false)">กลับไปดูเฉพาะ '+SK_วัน+' วันล่าสุด</button>';
+    if(d.testHidden) h += '<div class="sk-foot">ไม่แสดงแถวทดสอบที่เจ้าของรับรองแล้ว '+d.testHidden+' แถว</div>';
+    if(d.cut) h += '<div class="sk-foot">แสดง '+d.rows.length+' รายการล่าสุด จากทั้งหมด '+d.total+' รายการ</div>';
+    return h;
   }
 
   main();

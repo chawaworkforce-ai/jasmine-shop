@@ -498,7 +498,23 @@ function โปรไฟล์เร็ว_() {
     }
     h+='<div class="reassure">🤍 Your message goes privately to P\'Mai. If you choose "without my name", we truly will not know who sent it.<br>သင့်မက်ဆေ့ချ်ကို မမိုင်ထံ တိုက်ရိုက်ပေးပို့မည်ဖြစ်ပါသည်။ အမည်မထည့်ရန် ရွေးချယ်ပါက မည်သူပေးပို့သည်ကို ကျွန်ုပ်တို့ အမှန်တကယ် သိရှိမည်မဟုတ်ပါ။</div>';
     h+='<button class="btn" id="send" onclick="send()">Send / ပေးပို့ရန်</button>';
+    h+='<div id="gerr" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:#fdecec;color:#a3322b;font-size:14px;line-height:1.6;text-align:center"></div>';   /* 🆕 รอบ 56 */
     document.getElementById('wrap').innerHTML=h;
+  }
+
+
+  /* 🆕 รอบ 56 · 5 ต.ค. 2026 (ใบงาน 06 ส่วน 1 ข้อ 2 · คิว O-4) หลังบ้านปฏิเสธด้วยรหัส = เดิมหน้าเงียบ (ปลดปุ่มเฉย ๆ)
+     ใหม่: ขึ้นข้อความใต้ปุ่ม · ใช้คำที่ล่ามรับรองแล้วเท่านั้น ใบล่าม [222] [217] (คำเดียวกับหน้าแจ้งป่วย sick.html)
+     ไม่ใช่ป๊อปอัป · ไม่โชว์ข้อความดิบ · ปุ่มส่งยังกดใหม่ได้ (เลขคำขอเดิม = ไม่ส่งซ้ำ) */
+  const คำรับรอง_ = {
+    ไม่ใช่น้อง: ['This page is for workers only.', 'ဤစာမျက်နှာသည် အလုပ်သမားများအတွက်သာ ဖြစ်ပါသည်။'],   /* ใบล่าม 222 */
+    ผิดพลาด:   ['Something went wrong', 'တစ်စုံတစ်ရာ အမှားအယွင်းဖြစ်ပွားပါသည်။']   /* ใบล่าม 217 */
+  };
+  function บอกผิดพลาด_(รหัส){
+    const ก=document.getElementById('gerr'); if(!ก) return;
+    const ค = (รหัส==='FORBIDDEN' || รหัส==='NO_ROLE') ? คำรับรอง_.ไม่ใช่น้อง : คำรับรอง_.ผิดพลาด;
+    ก.innerHTML = esc(ค[0])+'<br>'+esc(ค[1])+'<div style="font-size:11px;color:#9a6b6b;margin-top:4px">code: '+esc(รหัส||'-')+'</div>';
+    ก.style.display='block';
   }
 
   function setMsg(v){ msgText=v; }
@@ -519,7 +535,7 @@ function โปรไฟล์เร็ว_() {
       const res=await (await fetch(API_URL,{method:"POST",body:JSON.stringify(payload)})).json();
       /* 🔴 21 ก.ย. 2026 — เอา alert ออก: ตัวห่อ D1 ขึ้นจอเต็มหน้า 3 ภาษาให้อยู่แล้ว
          ของเดิมเด้งป๊อปอัปข้อความดิบภาษาอังกฤษซ้อนขึ้นมา ผิดกติกา "ห้ามข้อความดิบถึงน้อง" */
-      if(!res.ok){ btn.disabled=false; btn.textContent="Send / ပေးပို့ရန်"; return; }
+      if(!res.ok){ btn.disabled=false; btn.textContent="Send / ပေးပို့ရန်"; บอกผิดพลาด_(res.error); return; }   /* 🆕 รอบ 56: เดิมเงียบ */
       /* ก3 รอบ 50: ok แต่ไม่มี ref = ไม่ใช่คำตอบของคำสั่งนี้ ⇒ ยังไม่ทราบผล · คงเลขคำขอไว้ (กดส่งเนื้อเดิมอีกครั้ง = ไม่ซ้ำ) */
       if(!ก3_สำเร็จจริง_(res)){ btn.disabled=false; btn.textContent="Send / ပေးပို့ရန်"; return; }
       ก3_ล้าง_('grievance');
