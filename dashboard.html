@@ -54,6 +54,57 @@
   .sk-more{ width:100%; margin-top:4px; background:#fff; border:1px dashed var(--line); border-radius:10px; padding:11px; font-size:13px; font-weight:700; color:#2f6fd0; cursor:pointer; font-family:inherit; }
   .sk-foot{ font-size:12px; color:var(--muted); text-align:center; margin-top:10px; }
   .st.sk-ok{ background:#e3f4ea; color:#256544; } .st.sk-fail{ background:#fdecec; color:#c0392b; } .st.sk-unk{ background:#eceff2; color:#5a6570; }
+  /* 🆕 รอบ 57 (มติผู้วางแผน 22 ต.ค.) แถบประวัติการหยุด · สีเดียว ไม่มีเขียว/เหลือง/แดง */
+  .at-meta{ font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:8px; }
+  .at-meta b{ color:var(--ink); }
+  .at-tools{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+  .at-tools button{ background:#fff; border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:700; color:var(--ink); cursor:pointer; font-family:inherit; }
+  .at-sites{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .at-sites button{ background:#fff; border:1px solid var(--line); border-radius:999px; padding:7px 11px; font-size:13px; font-weight:700; color:var(--ink); cursor:pointer; font-family:inherit; }
+  .at-sites button.on{ background:var(--slate); color:#fff; border-color:var(--slate); }
+  .at-sites .cnt{ font-weight:400; opacity:.75; margin-left:5px; }
+  .at-sum{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+  .at-sum .ttl{ font-size:15px; font-weight:700; margin-bottom:2px; }
+  .at-avg{ font-size:13px; margin:4px 0 4px; } .at-avg b{ font-size:18px; color:var(--ink); margin:0 4px; } .at-avg span{ display:block; font-size:11.5px; color:var(--muted); }
+  .at-sum details{ margin-top:6px; } .at-sum summary{ font-size:13px; font-weight:700; color:#2f6fd0; cursor:pointer; padding:4px 0; }
+  .at-base{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:4px; }
+  .at-base td{ padding:5px 4px; border-bottom:1px solid var(--line); vertical-align:top; } .at-base td:first-child{ white-space:nowrap; color:var(--muted); width:1%; padding-right:10px; }
+  .at-p{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:9px 12px; margin-bottom:7px; }
+  .at-p .hd{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; cursor:pointer; }
+  .at-p .nm{ font-size:14.5px; font-weight:700; word-break:break-word; } .at-p .cid{ font-size:11px; color:var(--muted); font-weight:400; margin-left:5px; }
+  .at-p .big{ text-align:right; white-space:nowrap; line-height:1.2; } .at-p .big b{ font-size:20px; } .at-p .big span{ font-size:11px; color:var(--muted); margin-left:4px; } .at-p .big .pc{ font-size:12px; font-weight:700; color:#3f5a75; margin-top:1px; }
+  .at-bar{ height:6px; background:#eef1f4; border-radius:3px; margin:6px 0 5px; overflow:hidden; } .at-bar i{ display:block; height:100%; background:#5b7a99; border-radius:3px; }
+  .at-sub{ font-size:12px; color:var(--muted); line-height:1.55; } .at-more{ color:#2f6fd0; font-weight:600; white-space:nowrap; cursor:pointer; }
+  .at-tag{ display:inline-block; font-size:11px; padding:2px 7px; border-radius:7px; background:#eef1f4; color:#4a5560; margin:4px 4px 0 0; }
+  .at-d{ margin-top:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .at-d table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .at-d th{ color:var(--muted); font-weight:600; text-align:left; white-space:nowrap; } .at-d td, .at-d th{ padding:5px 4px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .at-d td:first-child{ white-space:nowrap; } .at-d tr.nc td{ color:#98a2ad; } .at-d td.n, .at-d th.n{ text-align:right; white-space:nowrap; }
+  .at-left{ width:100%; margin:6px 0 8px; background:#fff; border:1px dashed var(--line); border-radius:10px; padding:11px; font-size:13px; font-weight:700; color:#2f6fd0; cursor:pointer; font-family:inherit; }
+  .at-foot{ font-size:11.5px; color:var(--muted); line-height:1.65; margin-top:12px; border-top:1px solid var(--line); padding-top:8px; }
+  #at-print{ display:none; }
+  @media print {
+    @page { size: A4 landscape; margin: 9mm 9mm 11mm 9mm; }
+    body.at-printing{ background:#fff; }
+    body.at-printing > *:not(#at-print){ display:none !important; }
+    body.at-printing #at-print{ display:block !important; font-family:"Sarabun","Leelawadee UI","Tahoma",sans-serif; color:#1d2733; font-size:9pt; line-height:1.35; }
+    #at-print .atp{ break-after:page; page-break-after:always; }
+    #at-print .atp:last-child{ break-after:auto; page-break-after:auto; }
+    #at-print h1{ font-size:14pt; margin:0 0 2px; color:#1F4E79; }
+    #at-print .s{ font-size:9pt; color:#4a5868; margin-bottom:4px; }
+    #at-print .def{ border:1px solid #b8c7d9; border-left:3px solid #1F4E79; background:#f6f9fc; padding:4px 7px; font-size:8pt; margin:4px 0 6px; }
+    #at-print table{ width:100%; border-collapse:collapse; }
+    #at-print thead{ display:table-header-group; } #at-print tfoot{ display:table-footer-group; }
+    #at-print tr.sh th{ background:#1F4E79; color:#fff; font-size:8.5pt; text-align:left; padding:3px 6px; }
+    #at-print td.tf{ border:0; border-top:0.5pt solid #b8c7d9; font-size:7.3pt; color:#4a5868; padding-top:3px; }
+    #at-print th{ background:#DCE6F1; color:#1F3B57; font-weight:600; font-size:7.5pt; border:0.5pt solid #b8c7d9; padding:2px 3px; text-align:center; vertical-align:bottom; }
+    #at-print td{ border:0.5pt solid #c9d3de; padding:2px 3px; font-size:8pt; vertical-align:middle; }
+    #at-print tr{ break-inside:avoid; page-break-inside:avoid; }
+    #at-print td.c{ text-align:center; } #at-print .a{ font-weight:700; font-size:9pt; display:block; } #at-print .d{ font-size:7pt; color:#5a6876; display:block; } #at-print .f{ font-style:italic; font-size:7pt; color:#5a6876; display:block; }
+    #at-print .bh{ display:block; font-weight:400; font-size:6.8pt; color:#3f5a75; } #at-print .bh.no{ color:#8a5a00; }
+    #at-print .grp td{ background:#f1f3f5; font-weight:600; }
+    #at-print .ft{ margin-top:5px; font-size:7.5pt; color:#4a5868; }
+  }
 </style>
 </head>
 <body>
@@ -66,6 +117,8 @@
     <button data-t="rf" onclick="tab('rf')">แนะนำคน<span class="badge" id="bg-rf">0</span></button>
     <!-- 🆕 รอบ 56 (ใบงาน 06 ส่วน 2): แถบประวัติการป่วย ซ่อนไว้ก่อน · โชว์เมื่อหลังบ้านตอบ sickTab:true เท่านั้น (หลังบ้านรุ่นใหม่ = แอดมินทุกคน) -->
     <button data-t="sk" id="tb-sk" style="display:none" onclick="tab('sk')">ประวัติการป่วย<span class="badge" id="bg-sk">0</span></button>
+    <!-- 🆕 รอบ 57: แถบประวัติการหยุด ซ่อนไว้ก่อน · โชว์เมื่อหลังบ้านตอบ attTab:true เท่านั้น · ข้อมูลโหลดเมื่อกดแถบครั้งแรก -->
+    <button data-t="at" id="tb-at" style="display:none" onclick="tab('at')">ประวัติการหยุด</button>
   </div>
   <!-- M7 21 ก.ย. 2026 — แถบลิงก์ 5 ทาง ตามแผนไฟล์ 09 ข้อ อ-1
        ทุกปลายทางมีด่านตรวจสิทธิ์ของตัวเองที่เซิร์ฟเวอร์อยู่แล้ว แถบนี้เป็นแค่ทางลัด ไม่ได้เปิดสิทธิ์ให้ใคร -->
@@ -86,6 +139,7 @@
     <a href="https://trello.com/b/Wuxp5loO/tubtim-sg" target="_blank" rel="noopener">🗂️ บอร์ด Trello</a>
   </nav>
   <div class="wrap" id="wrap" style="display:none"></div>
+  <div id="at-print" aria-hidden="true"></div>   <!-- 🆕 รอบ 57: หน้าพิมพ์ของแถบประวัติการหยุด (เห็นเฉพาะตอนสั่งพิมพ์จากปุ่ม) -->
 
 <script>
   const LIFF_ID = "2010242926-nreePSO4";
@@ -127,7 +181,7 @@ function โปรไฟล์เร็ว_() {
       แต่เป็นการรอดเพราะด่านชั้นหลัง ไม่ใช่เพราะตัวห่อถูก ⇒ ปิดที่ต้นทาง)
      ของใหม่: ไม่อยู่ในรายการขาว = ถือว่าเป็นคำสั่งเขียน = ไม่ยิงซ้ำ (ปลอดภัยไว้ก่อน) */
   var คำสั่งอ่าน_ = {
-    announce_targets:1, case_page:1, company_rules:1, customer_announce_status:1,
+    announce_targets:1, attendance_list:1, case_page:1, company_rules:1, customer_announce_status:1,   /* 🆕 รอบ 57: attendance_list อ่านอย่างเดียว */
     customer_home:1, dashboard:1, grievance_stats:1, matched_list:1, matching_data:1,
     my_score:1, photos:1, sick_list:1, site_list:1, support_status:1, worker_reports:1, workers:1   /* 🆕 รอบ 56: sick_list อ่านอย่างเดียว */
   };
@@ -368,6 +422,7 @@ function โปรไฟล์เร็ว_() {
       document.getElementById('hsub').textContent = "เดือน "+D.month;
       setBadges(); tab(cur);
       if(D.sickTab===true){ document.getElementById('tb-sk').style.display=''; โหลดป่วย_(); }   /* 🆕 รอบ 56 */
+      if(D.attTab===true){ document.getElementById('tb-at').style.display=''; }   /* 🆕 รอบ 57 · ข้อมูลโหลดเมื่อกดแถบ */
     }catch(e){ document.getElementById('status').textContent = "โหลดไม่สำเร็จ: "+(e.message||e); }
   }
 
@@ -391,6 +446,7 @@ function โปรไฟล์เร็ว_() {
           meta:r.timestamp };
       });
     else if(t==='sk') w.innerHTML = ป่วยHTML_();   /* 🆕 รอบ 56 */
+    else if(t==='at'){ if(AT.st==='idle') โหลดหยุด_(); w.innerHTML = วาดหยุด_(); }   /* 🆕 รอบ 57 · วาดพัง = ขึ้น ยังโหลดข้อมูลไม่ได้ */
   }
 
   function ovHTML(){
@@ -531,6 +587,267 @@ function โปรไฟล์เร็ว_() {
     else if(SK.เก่า) h += '<button class="sk-more" onclick="เก่าป่วย_(false)">กลับไปดูเฉพาะ '+SK_วัน+' วันล่าสุด</button>';
     if(d.testHidden) h += '<div class="sk-foot">ไม่แสดงแถวทดสอบที่เจ้าของรับรองแล้ว '+d.testHidden+' แถว</div>';
     if(d.cut) h += '<div class="sk-foot">แสดง '+d.rows.length+' รายการล่าสุด จากทั้งหมด '+d.total+' รายการ</div>';
+    return h;
+  }
+
+  /* ══ 🆕 รอบ 57 · 23 ต.ค. 2026 แถบ "ประวัติการหยุด" (มติผู้วางแผน 22 ต.ค. · Q5 หน้าจอ · Q6 ปุ่มพิมพ์) ══
+     · ข้อมูลจากคำสั่ง attendance_list — หลังบ้านตรวจแอดมินเอง · แถบขึ้นเฉพาะเมื่อ dashboard ตอบ attTab:true · โหลดครั้งแรกเมื่อกดแถบ
+     · ตัวเลข = ยอดวันทำงานในใบเงินเดือน เทียบวันอ้างอิงของไซต์ · ไม่ใช่บันทึกรายวัน/วันลา · เทียบข้ามไซต์ไม่ได้ จึงดูทีละไซต์
+     · ไม่มีสีเขียว/เหลือง/แดง (ยังไม่มีเกณฑ์ "หยุดบ่อย" จากเจ้าของ) · ไม่มีข้อมูล = "—" ห้ามแสดง 0
+     · โหลดไม่ได้ / ข้อมูลแสดงผลไม่ได้ = "ยังโหลดข้อมูลไม่ได้" + ปุ่มลองใหม่ (ห้ามขึ้นรายการว่าง · ห้ามค้างที่กำลังโหลด)
+     · ทุกค่าจากไฟล์ผ่าน esc() ก่อนลงหน้า (ชื่อ ไซต์ ตัวเลข) — ผลตรวจอิสระ ค1
+     · ปุ่มพิมพ์ = หน้าพิมพ์แยกหน้าต่อไซต์ (print CSS · A4 แนวนอน · หัวไซต์และบรรทัด "พิมพ์จากจอ เมื่อ" ซ้ำทุกหน้า) ใช้บน Chrome คอม
+       ในแอป LINE สั่งพิมพ์ไม่ได้ จึงบอกวิธีเปิดในเบราว์เซอร์ */
+  let AT = { st:'idle', d:null, sick:null, err:'', site:'', open:{}, left:false, view:[], hint:false };
+  const AT_ป้ายสั้น = { 'เพิ่งเข้า':'ใหม่', 'ไม่พบงวดถัดไป/ออกแล้ว':'ออก', 'ย้ายกลางงวด':'ย้าย', 'ไม่มีวันทำงานในงวด':'วัน 0' };
+  const AT_เริ่มป่วย = '2026-11-05';
+  function น_(x){ if(x===null || x===undefined || x==='') return '—'; const n=Number(x); return isFinite(n) ? String(Math.round(n*10)/10) : '—'; }
+  function ตน_(x){ return esc(น_(x)); }                                  /* ตัวเลขลงหน้า = ผ่าน esc เสมอ */
+  function รอย_(x){ return (x==null || !isFinite(Number(x))) ? '—' : esc(String(Math.round(Number(x))))+'%'; }
+  function งวดของ_(k){ return ((AT.d && AT.d.periods) || []).find(p=>p.key===k) || null; }
+  function ป้ายงวด_(k){ const p=งวดของ_(k); return p ? (p.label || p.key) : String(k); }
+  function ออกแล้วไหม_(p){ return p.status==='ออก' || (p.tags||[]).indexOf('ออกแล้ว')>-1; }
+  function ไซต์เรียง_(){
+    return (((AT.d && AT.d.sites) || []).slice()).sort((a,b)=> ((a.ended?1:0)-(b.ended?1:0)) || (b.people.length-a.people.length) || String(a.site).localeCompare(String(b.site),'th'));
+  }
+  function ไซต์นี้_(){ return ((AT.d && AT.d.sites) || []).find(s=>s.site===AT.site) || null; }
+  function รวมค่า_(o){ let n=0; Object.keys(o||{}).forEach(k=>{ const v=o[k]; if(v && typeof v==='object') n+=รวมค่า_(v); else if(isFinite(Number(v))) n+=Number(v); }); return n; }
+  /* % มาทำงานเฉลี่ยของไซต์ = วันทำงานรวม ÷ วันอ้างอิงรวม ของทุกคนในงวดที่นับ (ถ่วงตามวัน) */
+  function เฉลี่ยไซต์_(s){
+    let ทำ=0, อ้าง=0, คน=0;
+    (s.people||[]).forEach(p=>{ if(p.n>0 && isFinite(Number(p.days)) && Number(p.base)>0){ ทำ+=Number(p.days); อ้าง+=Number(p.base); คน++; } });
+    return อ้าง>0 ? { pct: Math.round(ทำ/อ้าง*100), ทำ: ทำ, อ้าง: อ้าง, คน: คน } : null;
+  }
+  function เรียงคน_(a){
+    return a.slice().sort((x,y)=>{
+      const ax=(x.n>0 && x.absent!=null) ? Number(x.absent) : -1, ay=(y.n>0 && y.absent!=null) ? Number(y.absent) : -1;
+      if(ay!==ax) return ay-ax;
+      const px=(x.pct==null) ? 999 : Number(x.pct), py=(y.pct==null) ? 999 : Number(y.pct);
+      if(px!==py) return px-py;
+      return String(x.name).localeCompare(String(y.name),'th');
+    });
+  }
+  async function โหลดหยุด_(){
+    AT.st='loading'; AT.err=''; if(cur==='at') tab('at');
+    try{
+      const r = await (await fetch(API_URL,{method:"POST",body:JSON.stringify({action:"attendance_list",userId:userId})})).json();
+      if(r && r.ok===true && r.data && Array.isArray(r.data.sites) && Array.isArray(r.data.periods)){ AT.st='ok'; AT.d=r.data; AT.sick=r.sick||null; }
+      else if(r && (r.error==='NOT_ADMIN' || r.error==='FORBIDDEN')){ AT.st='denied'; AT.err=r.error; }
+      else { AT.st='err'; AT.err=(r && r.error) ? String(r.error) : 'BAD_RESPONSE'; }
+    }catch(e){ AT.st='err'; AT.err='NO_RESPONSE'; }
+    if(AT.st==='denied'){ document.getElementById('tb-at').style.display='none'; if(cur==='at') tab('ov'); return; }
+    if(cur==='at') tab('at');
+  }
+  /* ตัววาดจอที่ไม่มีวันค้าง: วาดพัง = ขึ้น "ยังโหลดข้อมูลไม่ได้" (ผลตรวจ ค2) */
+  function วาดหยุด_(){
+    try{ return หยุดHTML_(); }
+    catch(e){ try{ console.error(e); }catch(_e){} AT.st='err'; AT.err='ATTENDANCE_SHAPE'; return หยุดHTML_(); }
+  }
+  function เลือกไซต์_(i){ const s=ไซต์เรียง_()[i]; if(!s) return; AT.site=s.site; AT.open={}; AT.left=false; AT.hint=false; tab('at'); try{ window.scrollTo(0,0); }catch(e){} }
+  function สลับคน_(i){ const p=AT.view[i]; if(!p) return; const k=AT.site+'|'+p.card; AT.open[k]=!AT.open[k]; tab('at'); }
+  function ออกแล้ว_(v){ AT.left=v; tab('at'); }
+  function ผิดหยุด_(c){
+    return ({ ATTENDANCE_MISSING:'ไม่พบไฟล์ข้อมูลในไดรฟ์ (อาจถูกย้าย/เปลี่ยนชื่อ หรือปิดแถบนี้ชั่วคราว)',
+              ATTENDANCE_DUPLICATE:'พบไฟล์ข้อมูลชื่อซ้ำกันในไดรฟ์ — แจ้งผู้ดูแลระบบให้เหลือไฟล์เดียว',
+              ATTENDANCE_INVALID:'ไฟล์ข้อมูลรูปแบบไม่ถูกต้อง — แจ้งผู้ดูแลระบบ',
+              ATTENDANCE_SHAPE:'ข้อมูลบางส่วนแสดงผลไม่ได้ — แจ้งผู้ดูแลระบบ',
+              ATTENDANCE_UNAVAILABLE:'ระบบเปิดโฟลเดอร์ข้อมูลในไดรฟ์ไม่ได้ — กดลองใหม่ หรือแจ้งผู้ดูแลระบบ',
+              NO_RESPONSE:'เซิร์ฟเวอร์ไม่ตอบ — กดลองใหม่' })[c] || 'แจ้งผู้ดูแลระบบ';
+  }
+  /* แจ้งป่วย: บอกสถานะครั้งเดียวต่อหน้า · ตัวเลขรายคน/รายงวดโชว์เฉพาะเมื่อหลังบ้านนับได้จริง (state ok) */
+  function ป่วยสถานะ_(){ return (AT.sick && AT.sick.state) ? AT.sick.state : 'before_start'; }
+  function ป่วยหัว_(){
+    const s=ป่วยสถานะ_();
+    if(s==='ok') return 'แจ้งป่วย = จำนวนวันที่แจ้งป่วยในงวดที่นับ (นับตั้งแต่ 5 พ.ย. 69) · ไม่ได้บอกว่าตรงกับวันที่ไม่มาวันไหน · "—" = ยังไม่มีข้อมูลหรือยังเชื่อมเลขการ์ดไม่ได้'
+      + ((AT.sick && Number(AT.sick.unmapped)>0) ? ' · มีอีก '+น_(AT.sick.unmapped)+' การ์ดที่แจ้งป่วยแต่ยังหาเลขการ์ดไม่เจอ (ไม่รวมในตัวเลข)' : '')
+      + ((AT.sick && Number(AT.sick.conflict)>0) ? ' · ตัวเชื่อมเลขการ์ดขัดกัน '+น_(AT.sick.conflict)+' รายการ (ไม่นับ — แจ้งผู้ดูแลระบบ)' : '')
+      + ((AT.sick && Number(AT.sick.bad_time)>0) ? ' · แถวแจ้งป่วยที่อ่านเวลาไม่ได้ '+น_(AT.sick.bad_time)+' แถว (ไม่นับ)' : '')
+      + ((AT.sick && (Number(AT.sick.unmapped)>0 || Number(AT.sick.conflict)>0 || Number(AT.sick.bad_time)>0)) ? ' · ⚠️ จึงอาจมีวันแจ้งป่วยของบางคนตกหล่น ตัวเลข "ไม่มาโดยไม่ได้แจ้งป่วย" ของบางคนอาจสูงกว่าจริง' : '');
+    if(s==='no_map') return 'แจ้งป่วย: ยังเชื่อมกับรายการแจ้งป่วยไม่ได้ (รอตั้งค่าเลขการ์ด'+((AT.sick && Number(AT.sick.conflict)>0) ? ' · ตัวเชื่อมขัดกัน '+น_(AT.sick.conflict)+' รายการ' : '')+') — ตัวเลขวันทำงานด้านล่างยังถูกต้อง';
+    if(s==='unavailable') return 'แจ้งป่วย: อ่านรายการแจ้งป่วยไม่ได้ตอนนี้ — ตัวเลขวันทำงานด้านล่างยังถูกต้อง';
+    return 'แจ้งป่วย: ยังไม่มีข้อมูล (ระบบแจ้งป่วยเริ่ม 5 พ.ย. 69)';
+  }
+  /* เจ้าของ 23 ต.ค.: "นำข้อมูลมาผนวกกับการลาหยุด จะได้ทราบว่าป่วยจริงถึงลาหรือไม่มาทำงานเฉยๆ"
+     ไม่มีรายวัน จึงบอกได้แค่ค่าต่ำสุด: ไม่มาโดยไม่ได้แจ้งป่วย ≥ ไม่มา − แจ้งป่วย (วันที่แจ้งป่วยครอบวันไม่มาได้มากสุดเท่าจำนวนวันที่แจ้ง) */
+  function ไม่แจ้ง_(ไม่มา,ป่วย){ return (ไม่มา==null || ป่วย==null || !isFinite(Number(ไม่มา)) || !isFinite(Number(ป่วย))) ? null : Math.max(0, Math.round((Number(ไม่มา)-Number(ป่วย))*10)/10); }
+  /* ผลตรวจรอบ 2 ร2-1: คิดเฉพาะงวดที่นับ และเริ่มหลังระบบแจ้งป่วยเปิดทั้งงวด (ไม่มี sick_from) แล้วรวมรายงวด
+     — งวดก่อน 5 พ.ย. ไม่มีข้อมูลแจ้งป่วย · งวดคร่อม 5 พ.ย. มีวันที่ 1–4 ที่แจ้งผ่านระบบไม่ได้ จึงไม่คิด */
+  function ไม่แจ้งงวด_(h){ return (h.counted && h.sick!=null && !h.sick_from) ? ไม่แจ้ง_(h.absent, h.sick) : null; }
+  function ไม่แจ้งคน_(p){ let r=null; (p.hist||[]).forEach(h=>{ const z=ไม่แจ้งงวด_(h); if(z!==null) r=(r||0)+z; }); return r===null ? null : Math.round(r*10)/10; }
+  function ป่วยคน_(p){
+    if(ป่วยสถานะ_()!=='ok') return '';
+    let t='แจ้งป่วย '+น_(p.sick)+(p.sick==null ? '' : ' วัน');
+    const z=ไม่แจ้งคน_(p);
+    if(z!==null) t+=' · ไม่มาโดยไม่ได้แจ้งป่วย อย่างน้อย '+น_(z)+' วัน (งวดที่เริ่มหลัง 5 พ.ย.)';
+    return t;
+  }
+  function ป่วยงวด_(h){
+    if(ป่วยสถานะ_()!=='ok') return '';
+    if(h.sick==null){ const g=งวดของ_(h.p); return (g && String(g.end) < AT_เริ่มป่วย) ? 'แจ้งป่วย: ยังไม่มีข้อมูล (ระบบเริ่ม 5 พ.ย.)' : 'แจ้งป่วย —'; }
+    const z=ไม่แจ้งงวด_(h);
+    return 'แจ้งป่วย '+น_(h.sick)+' วัน'+(h.sick_from ? ' (นับตั้งแต่ 5 พ.ย.)' : '')+(z!==null ? ' · ไม่แจ้งป่วย อย่างน้อย '+น_(z)+' วัน' : '');
+  }
+  function อ้างอิงข้อความ_(s,k,สั้น){
+    const p=งวดของ_(k), b=(s.base||{})[k];
+    if(p && p.missing) return สั้น ? 'ไม่มีใบ' : 'ไม่มีใบงวดนี้'+(p.why ? ' ('+p.why+')' : '');
+    if(!b || b.value==null) return สั้น ? 'ยังไม่มี' : 'ยังไม่มีวันอ้างอิง'+(b && b.reason ? ' · '+b.reason : '');
+    if(b.status==='ยืนยันโดย HR') return น_(b.value)+' วัน · ยืนยันโดย HR';
+    return น_(b.value)+' วัน · ประมาณ'+(สั้น ? '' : ' ('+Math.round((Number(b.share)||0)*100)+'% ของ '+น_(b.n)+' คน)');
+  }
+  function ไซต์HTML_(s){
+    const ord=s.periods||[];
+    let มี=0; ord.forEach(k=>{ const b=(s.base||{})[k]; if(b && b.value!=null) มี++; });
+    let h='<div class="at-sum"><div class="ttl">'+esc(s.site)+(s.ended ? ' <span class="at-tag">ไม่มีใบงวดล่าสุด</span>' : '')+'</div>';
+    const ฉ=เฉลี่ยไซต์_(s);
+    if(ฉ) h+='<div class="at-avg">มาทำงานเฉลี่ย <b>'+รอย_(ฉ.pct)+'</b><span>ทำงาน '+ตน_(ฉ.ทำ)+' จาก '+ตน_(ฉ.อ้าง)+' วันอ้างอิง · คิดจาก '+ตน_(ฉ.คน)+' คนที่มีงวดนับ</span></div>';
+    else h+='<div class="at-avg">มาทำงานเฉลี่ย <b>—</b><span>ยังไม่มีงวดที่นับได้ (ไม่มีวันอ้างอิง)</span></div>';
+    h+='<div class="at-sub">'+ตน_(s.people.length)+' คน (ทำงานอยู่ '+ตน_(s.n_active)+' · ออกแล้ว '+ตน_(s.n_left)+') · มีวันอ้างอิง '+มี+' จาก '+ord.length+' งวด'
+      + (ord.length ? ' · '+esc(ป้ายงวด_(ord[0]))+' ถึง '+esc(ป้ายงวด_(ord[ord.length-1])) : '')+'</div>';
+    const โน้ต = AT.d.meta && AT.d.meta.notes && AT.d.meta.notes[s.site];
+    if(โน้ต) h+='<div class="at-sub">ℹ️ '+esc(โน้ต)+'</div>';
+    const ไม่รวม=รวมค่า_(s.excluded);
+    if(ไม่รวม) h+='<div class="at-sub">ไม่รวม '+ตน_(ไม่รวม)+' แถวที่จับคู่ทะเบียนไม่ได้ (ไม่อยู่ในรายชื่อด้านล่าง)</div>';
+    if(!มี) h+='<div class="at-sub"><b>ไซต์นี้ยังไม่มีวันอ้างอิงทุกงวด</b> — โชว์เฉพาะวันทำงาน รอคุณโบยืนยันวันทำงานเต็มของไซต์</div>';
+    h+='<details><summary>วันอ้างอิงของไซต์ รายงวด</summary><table class="at-base"><tbody>';
+    ord.forEach(k=>{ h+='<tr><td>'+esc(ป้ายงวด_(k))+'</td><td>'+esc(อ้างอิงข้อความ_(s,k,false))+'</td></tr>'; });
+    return h+'</tbody></table></details></div>';
+  }
+  function รายงวดHTML_(p){
+    const ord=(AT.d.periods||[]).map(x=>x.key);
+    const hs=(p.hist||[]).slice().sort((a,b)=>ord.indexOf(a.p)-ord.indexOf(b.p));
+    let h='<div class="at-d"><table><thead><tr><th>งวด</th><th class="n">ทำงาน</th><th class="n">อ้างอิง</th><th class="n">ไม่มา</th><th>หมายเหตุ</th></tr></thead><tbody>';
+    hs.forEach(x=>{
+      const อ้าง = (x.base==null) ? 'ยังไม่มี' : น_(x.base)+(x.bs==='ยืนยันโดย HR' ? ' ✓HR' : ' ~');
+      const ห=[];
+      if(x.flags && x.flags.length) ห.push('ไม่นับ: '+x.flags.join(' · '));
+      else if(!x.counted) ห.push('ไม่นับ: ยังไม่มีวันอ้างอิง');
+      if(x.why && x.why.length) ห.push(x.why.join(' · '));
+      const ป=ป่วยงวด_(x); if(ป) ห.push(ป);
+      h+='<tr class="'+(x.counted ? '' : 'nc')+'"><td>'+esc(ป้ายงวด_(x.p))+'</td><td class="n">'+ตน_(x.days)+'</td><td class="n">'+esc(อ้าง)+'</td><td class="n">'+(x.counted ? '<b>'+ตน_(x.absent)+'</b>' : '—')+'</td><td>'+esc(ห.join(' · '))+'</td></tr>';
+    });
+    return h+'</tbody></table><div class="at-sub" style="margin-top:4px">~ = ประมาณจากคนส่วนใหญ่ · ✓HR = คุณโบยืนยัน · แถวสีจาง = งวดที่ไม่นับ</div></div>';
+  }
+  function คนHTML_(p,i){
+    const เปิด=!!AT.open[AT.site+'|'+p.card], มีนับ=(p.n>0 && p.absent!=null);
+    const ใหญ่ = มีนับ ? '<b>'+ตน_(p.absent)+'</b><span>วันไม่มา</span><div class="pc">มาทำงาน '+รอย_(p.pct)+'</div>'
+                       : '<b>—</b><span>ยังไม่มีงวดที่นับ</span>';
+    const กว้าง = (มีนับ && Number(p.base)>0) ? Math.max(0, Math.min(100, Number(p.absent)/Number(p.base)*100)) : 0;
+    let tags=(p.tags||[]).map(t=>'<span class="at-tag">'+esc(t)+'</span>').join('');
+    const ย้ายไป=(p.tags||[]).filter(t=>String(t).indexOf('ย้ายไป ')===0).map(t=>String(t).slice(7));
+    const อื่น=(p.others||[]).filter(x=>ย้ายไป.indexOf(x)<0);
+    if(อื่น.length) tags+='<span class="at-tag">มีประวัติที่ '+esc(อื่น.join(', '))+'</span>';
+    let sub='นับ '+น_(p.n)+'/'+น_(p.N)+' งวด';
+    sub += มีนับ ? ' · ทำงาน '+น_(p.days)+' จาก '+น_(p.base)+' วัน'
+                 : ' · วันทำงานรวม '+น_(p.days_all)+' วัน (ยังเทียบไม่ได้)';
+    if(Number(p.zero)>0) sub+=' · งวดวันทำงาน 0: '+น_(p.zero);
+    const ป=ป่วยคน_(p); if(ป) sub+=' · '+ป;
+    let h='<div class="at-p"><div class="hd" onclick="สลับคน_('+i+')"><div><div class="nm">'+esc(p.name)+'<span class="cid">#'+esc(p.card)+'</span></div>'+(tags ? '<div>'+tags+'</div>' : '')+'</div>'
+      + '<div class="big">'+ใหญ่+'</div></div>';
+    if(มีนับ) h+='<div class="at-bar"><i style="width:'+กว้าง.toFixed(1)+'%"></i></div>';
+    h+='<div class="at-sub" onclick="สลับคน_('+i+')">'+esc(sub)+' <span class="at-more">'+(เปิด ? '▲ ซ่อนรายงวด' : '▼ ดูรายงวด')+'</span></div>';
+    if(เปิด) h+=รายงวดHTML_(p);
+    return h+'</div>';
+  }
+  function หยุดHTML_(){
+    const หัว='<div class="sk-note">📋 คำนวณจากยอดวันทำงานในใบเงินเดือน เทียบวันอ้างอิงของไซต์ · <b>ไม่ใช่บันทึกรายวัน ไม่ใช่บันทึกการลา</b> และไม่บอกว่าวันไหน — ใช้เป็นสัญญาณไปถามหัวหน้างาน ไม่ใช่หลักฐานลงโทษ</div>';
+    if(AT.st==='idle' || AT.st==='loading') return หัว+'<div class="empty">กำลังโหลดประวัติวันทำงาน…</div>';
+    if(AT.st==='err') return หัว+'<div class="sk-box unk">📂 <b>ยังโหลดข้อมูลไม่ได้</b><br>'+esc(ผิดหยุด_(AT.err))
+      + '<div class="hint">code: '+esc(AT.err)+'</div><button class="sk-btn" onclick="โหลดหยุด_()">🔄 ลองใหม่</button></div>';
+    if(AT.st!=='ok') return '<div class="empty">บัญชีนี้ไม่มีสิทธิ์ดูประวัติวันทำงาน</div>';
+    const m=AT.d.meta||{}, ss=ไซต์เรียง_();
+    if(!ss.length) return หัว+'<div class="sk-box unk">📂 <b>ยังโหลดข้อมูลไม่ได้</b><br>ไฟล์ข้อมูลยังไม่มีไซต์ — แจ้งผู้ดูแลระบบ</div>';
+    if(!ไซต์นี้_()) AT.site=ss[0].site;
+    const s=ไซต์นี้_(), ไม่รวม=รวมค่า_(m.excluded_total);
+    const แหล่ง=String(m.source || 'ใบทำเงินเดือนของคุณโบ').replace(/\s*\(.*\)\s*$/,'').replace(/^ยอดวันทำงานใน/,'');
+    let h=หัว;
+    h+='<div class="at-meta">งวดล่าสุด <b>'+esc(m.latest_label || '—')+'</b> · อัปเดตเมื่อ '+esc(m.built_th || '—')+(ไม่รวม ? ' · ไม่รวม '+ตน_(ไม่รวม)+' แถว' : '')
+      + '<br>แหล่งข้อมูล: '+esc(แหล่ง)+'</div>';
+    h+='<div class="at-tools"><button onclick="โหลดหยุด_()">🔄 โหลดใหม่</button><button onclick="พิมพ์หยุด_(false)">🖨️ พิมพ์ไซต์นี้</button><button onclick="พิมพ์หยุด_(true)">🖨️ พิมพ์ทุกไซต์</button></div>';
+    if(AT.hint) h+='<div class="sk-note">🖨️ <b>ในแอป LINE สั่งพิมพ์ไม่ได้</b><br>เปิด Admin Dashboard ใน Chrome บนคอม (หรือกด ⋮ มุมขวาบน → เปิดในเบราว์เซอร์) แล้วกดปุ่มพิมพ์อีกครั้ง · หรือใช้ไฟล์ PDF ทางการในโฟลเดอร์ ประวัติวันทำงาน</div>';
+    h+='<div class="at-sites">'+ss.map((x,i)=>'<button class="'+(x.site===AT.site ? 'on' : '')+'" onclick="เลือกไซต์_('+i+')">'+esc(x.site)+'<span class="cnt">'+ตน_(x.people.length)+'</span></button>').join('')+'</div>';
+    h+=ไซต์HTML_(s);
+    h+='<div class="at-meta">'+esc(ป่วยหัว_())+'</div>';
+    const ทำ=เรียงคน_(s.people.filter(p=>!ออกแล้วไหม_(p))), ออก=เรียงคน_(s.people.filter(ออกแล้วไหม_));
+    AT.view=ทำ.concat(ออก);
+    if(!ทำ.length) h+='<div class="empty">ไซต์นี้ไม่มีคนที่ยังทำงานอยู่ในข้อมูลชุดนี้</div>';
+    else h+=ทำ.map((p,i)=>คนHTML_(p,i)).join('');
+    if(ออก.length){
+      h+='<button class="at-left" onclick="ออกแล้ว_('+(AT.left ? 'false' : 'true')+')">'+(AT.left ? 'ซ่อนคนที่ออกแล้ว' : 'ดูคนที่ออกแล้ว ('+ตน_(ออก.length)+' คน)')+'</button>';
+      if(AT.left) h+=ออก.map((p,j)=>คนHTML_(p, ทำ.length+j)).join('');
+    }
+    h+='<div class="at-foot"><b>วิธีอ่าน</b><br>· ไม่มา = วันอ้างอิงของไซต์ − วันทำงานในใบ (ต่ำสุด 0) · ทศนิยมตามใบ เช่น 0.5 = ครึ่งวัน<br>'
+      + '· % มาทำงาน = วันทำงาน ÷ วันอ้างอิง ของงวดที่นับ · ค่าเฉลี่ยไซต์ถ่วงตามวัน<br>'
+      + '· % มาทำงานเกิน 100% = ทำงานมากกว่าวันอ้างอิง (เช่นมาวันหยุด) · % คิดจากยอดรวม ส่วน "ไม่มา" คิดรายงวด (งวดที่ทำเกินไม่หักลบงวดที่ขาด) จึงอาจเห็น "ไม่มา 1 วัน · มาทำงาน 100%" ได้<br>'
+      + '· แจ้งป่วย (ตั้งแต่ 5 พ.ย. 69) = จำนวนวันที่แจ้งป่วยในงวด · "ไม่มาโดยไม่ได้แจ้งป่วย อย่างน้อย" = ไม่มา − แจ้งป่วย รายงวด (ติดลบ = 0) รวมเฉพาะงวดที่เริ่มหลัง 5 พ.ย. · เป็นค่าต่ำสุด เพราะใบไม่มีรายวัน จึงไม่รู้ว่าวันที่แจ้งป่วยตรงกับวันที่ไม่มาหรือไม่<br>'
+      + '· วันอ้างอิง "ประมาณ" = ค่าที่คนส่วนใหญ่ในไซต์ทำ (ตั้งแต่ครึ่งหนึ่งขึ้นไป) · "ยืนยันโดย HR" = คุณโบยืนยัน · "ยังไม่มีวันอ้างอิง" = ระบบเดาไม่ได้ (ว่างดีกว่าผิด)<br>'
+      + '· ยอดรวมคิดเฉพาะงวดที่นับ (n/N) · งวดที่เพิ่งเข้า / ไม่พบงวดถัดไป-ออกแล้ว / ย้ายกลางงวด / วันทำงาน 0 ไม่ถูกนับ<br>'
+      + '· เทียบข้ามไซต์ไม่ได้ เพราะแต่ละไซต์วันทำงานเต็มไม่เท่ากัน · ข้อมูลอัปเดตหลังปิดงวดเงินเดือน'
+      + (ไม่รวม ? '<br>· ไม่รวม '+ตน_(ไม่รวม)+' แถวที่จับคู่ทะเบียนไม่ได้/แถวว่าง (รายละเอียดในรายงานสร้างข้างไฟล์ข้อมูล)' : '')
+      + (m.gaps && m.gaps.length ? '<br>· ข้อมูลที่ยังไม่มี: '+esc(m.gaps.join(' · ')) : '')
+      + '<br>· แหล่งข้อมูล: '+esc(m.source || '—')+'</div>';
+    return h;
+  }
+  /* ── พิมพ์ (Q6): หน้าพิมพ์แยกต่างหาก แยกหน้าต่อไซต์ · ไม่แตะหน้าจอที่ใช้อยู่ ── */
+  function พิมพ์หยุด_(ทั้งหมด){
+    if(AT.st!=='ok') return;
+    let ในไลน์=false;
+    try{ ในไลน์ = !!(window.liff && typeof liff.isInClient==='function' && liff.isInClient()); }catch(e){}
+    if(ในไลน์){ AT.hint=true; tab('at'); return; }
+    const box=document.getElementById('at-print'); if(!box) return;
+    let เนื้อ='';
+    try{
+      const ss = ทั้งหมด ? ไซต์เรียง_() : [ไซต์นี้_()].filter(Boolean);
+      if(!ss.length) return;
+      let เวลา='';
+      try{ เวลา=new Date().toLocaleString('th-TH',{ day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); }catch(e){ เวลา=String(new Date()); }
+      เนื้อ=ss.map(s=>หน้าพิมพ์_(s,เวลา)).join('');
+    }catch(e){ try{ console.error(e); }catch(_e){} AT.st='err'; AT.err='ATTENDANCE_SHAPE'; tab('at'); return; }
+    box.innerHTML=เนื้อ;
+    document.body.classList.add('at-printing');
+    const คืน=()=>{ document.body.classList.remove('at-printing'); box.innerHTML=''; window.removeEventListener('afterprint',คืน); };
+    window.addEventListener('afterprint',คืน);
+    setTimeout(()=>{ try{ window.print(); }catch(e){ คืน(); } }, 60);
+  }
+  function หน้าพิมพ์_(s,เวลา){
+    const m=AT.d.meta||{}, ord=s.periods||[], ok=(ป่วยสถานะ_()==='ok'), ฉ=เฉลี่ยไซต์_(s);
+    const คอล=ord.length+7+(ok?2:0);
+    const ช่วง=ord.length ? ป้ายงวด_(ord[0])+' ถึง '+ป้ายงวด_(ord[ord.length-1]) : '—';
+    let h='<section class="atp"><h1>วันไม่มาทำงาน (เทียบวันอ้างอิง) — ไซต์ '+esc(s.site)+'</h1>';
+    h+='<div class="s">งวด '+esc(ช่วง)+' · '+ตน_(s.people.length)+' คน (ทำงานอยู่ '+ตน_(s.n_active)+' · ออกแล้ว '+ตน_(s.n_left)+')'
+      + ' · มาทำงานเฉลี่ย '+(ฉ ? รอย_(ฉ.pct) : '—')+' · ข้อมูลอัปเดตเมื่อ '+esc(m.built_th || '—')+' · แหล่ง: '+esc(m.source || 'ใบทำเงินเดือนของคุณโบ')+'</div>';
+    const โน้ต=m.notes && m.notes[s.site]; const ไม่รวม=รวมค่า_(s.excluded);
+    h+='<div class="def">คำนวณจากยอดวันทำงานในใบเงินเดือน เทียบวันอ้างอิงของไซต์ (ค่าที่คนส่วนใหญ่ทำ) · ไม่ใช่บันทึกรายวันหรือวันลา · ไม่มา = วันอ้างอิง − วันทำงาน (ต่ำสุด 0) · % มา = วันทำงาน ÷ วันอ้างอิง · ยอดรวมคิดเฉพาะงวดที่นับ (n/N) · '
+      + 'ช่องงวด: ตัวหนา = วันไม่มา · "ทำ" = วันทำงานในใบ · ตัวเอียง = ป้ายที่ทำให้ไม่นับ · "—" = ไม่มีวันอ้างอิง · ช่องว่าง = ไม่มีชื่อในใบงวดนั้น'
+      + (โน้ต ? '<br>หมายเหตุไซต์: '+esc(โน้ต) : '')+(ไม่รวม ? '<br>ไม่รวม '+ตน_(ไม่รวม)+' แถวที่จับคู่ทะเบียนไม่ได้' : '')+'</div>';
+    /* หัวตาราง + ท้ายตาราง ซ้ำทุกหน้าที่ไซต์นี้ยาวต่อ (ผลตรวจ ค3) */
+    h+='<table><thead><tr class="sh"><th colspan="'+คอล+'">ไซต์ '+esc(s.site)+' · วันไม่มาทำงาน (เทียบวันอ้างอิง) · งวด '+esc(ช่วง)+'</th></tr>';
+    h+='<tr><th style="width:4%">#</th><th style="width:19%">ชื่อ</th>';
+    ord.forEach(k=>{ const t=อ้างอิงข้อความ_(s,k,true), มี=/วัน/.test(t); h+='<th>'+esc(ป้ายงวด_(k))+'<span class="bh'+(มี ? '' : ' no')+'">'+esc(มี ? 'อ้างอิง '+t : t)+'</span></th>'; });
+    h+='<th>งวดที่นับ</th><th>ทำ / อ้างอิง</th><th>ไม่มา (วัน)</th><th>% มา</th><th>งวด วัน 0</th>'+(ok ? '<th>แจ้งป่วย (วัน)</th><th>ไม่มาโดยไม่ได้แจ้งป่วย (อย่างน้อย · งวดหลัง 5 พ.ย.)</th>' : '')+'</tr></thead>';
+    h+='<tfoot><tr><td colspan="'+คอล+'" class="tf">ไซต์ '+esc(s.site)+' · พิมพ์จากจอ เมื่อ '+esc(เวลา)+' · ข้อมูลอัปเดตเมื่อ '+esc(m.built_th || '—')+' · ข้อมูลภายใน ห้ามเผยแพร่ · '+esc(ป่วยหัว_())+'</td></tr></tfoot><tbody>';
+    const ทำ=เรียงคน_(s.people.filter(p=>!ออกแล้วไหม_(p))), ออก=เรียงคน_(s.people.filter(ออกแล้วไหม_));
+    let ลำดับ=0;
+    const แถว=p=>{
+      ลำดับ++;
+      let r='<tr><td class="c">'+ลำดับ+'</td><td>'+esc(p.name)+' <span class="d" style="display:inline">#'+esc(p.card)+'</span>'
+        + ((p.tags||[]).filter(t=>t!=='ออกแล้ว').map(t=>'<span class="f">'+esc(t)+'</span>').join(''))+'</td>';
+      ord.forEach(k=>{
+        const x=(p.hist||[]).find(y=>y.p===k), g=งวดของ_(k);
+        if(g && g.missing){ r+='<td class="c"><span class="f">ไม่มีใบ</span></td>'; return; }
+        if(!x){ r+='<td></td>'; return; }
+        const ทำ_='<span class="d">ทำ '+ตน_(x.days)+'</span>';
+        if(x.flags && x.flags.length) r+='<td class="c"><span class="f">'+esc(x.flags.map(f=>AT_ป้ายสั้น[f]||f).join(' · '))+'</span>'+ทำ_+'</td>';
+        else if(x.counted) r+='<td class="c"><span class="a">'+ตน_(x.absent)+'</span>'+ทำ_+'</td>';
+        else r+='<td class="c"><span class="a">—</span>'+ทำ_+'</td>';
+      });
+      r+='<td class="c">'+ตน_(p.n)+'/'+ตน_(p.N)+'</td><td class="c">'+((p.n>0) ? ตน_(p.days)+' / '+ตน_(p.base) : 'ทำรวม '+ตน_(p.days_all))+'</td>';
+      r+='<td class="c"><span class="a">'+((p.n>0) ? ตน_(p.absent) : '—')+'</span></td><td class="c">'+รอย_(p.pct)+'</td><td class="c">'+ตน_(Number(p.zero)||0)+'</td>';
+      if(ok) r+='<td class="c">'+ตน_(p.sick)+'</td><td class="c">'+ตน_(ไม่แจ้งคน_(p))+'</td>';
+      return r+'</tr>';
+    };
+    ทำ.forEach(p=>{ h+=แถว(p); });
+    if(ออก.length){ h+='<tr class="grp"><td colspan="'+คอล+'">ออกแล้ว (ตามทะเบียน) '+ตน_(ออก.length)+' คน</td></tr>'; ออก.forEach(p=>{ h+=แถว(p); }); }
+    h+='</tbody></table></section>';
     return h;
   }
 
